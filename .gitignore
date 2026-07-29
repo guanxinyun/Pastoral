@@ -1,0 +1,12 @@
+# Claude Code local config (tooling, not project code)
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
