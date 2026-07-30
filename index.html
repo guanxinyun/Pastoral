@@ -1571,7 +1571,7 @@ window.MVU = MVU;
   'use strict';
 
   const $  = (s, r = document) => r.querySelector(s);
-  const $ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const NS = 'http://www.w3.org/2000/svg';
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1903,7 +1903,7 @@ window.MVU = MVU;
         bubble.style.display = 'block';
       }
     });
-    $('.g-term', container).forEach((el) => {
+    $$('.g-term', container).forEach((el) => {
       el.addEventListener('click', () => {
         const k = el.dataset.g;
         toast('info', k, `当前贡献引力 ${num(get(ec, k, 0), 0)} 点。`);
@@ -1958,12 +1958,12 @@ window.MVU = MVU;
       panelH('食谱', `${recArr.length}`) + recHtml;
     Icon.render(container);
 
-    $('.seg__item', container).forEach((b) => b.addEventListener('click', () => {
+    $$('.seg__item', container).forEach((b) => b.addEventListener('click', () => {
       UI.invCat = b.dataset.cat; renderInventory(container, Render.state);
     }));
     const search = $('#invSearch', container);
     if (search) search.addEventListener('input', () => { UI.invSearch = search.value; renderInventory(container, Render.state); });
-    $('.recipe', container).forEach((r) => r.addEventListener('click', () => {
+    $$('.recipe', container).forEach((r) => r.addEventListener('click', () => {
       triggerSlash(`/setinput 烹制：${r.dataset.recipe}`);
       burst(window.innerWidth / 2, window.innerHeight * 0.7);
     }));
@@ -2026,10 +2026,10 @@ window.MVU = MVU;
 
     container.innerHTML = seg + body;
     Icon.render(container);
-    $('.seg__item', container).forEach((b) => b.addEventListener('click', () => {
+    $$('.seg__item', container).forEach((b) => b.addEventListener('click', () => {
       UI.buildTab = b.dataset.bt; renderBuilding(container, Render.state);
     }));
-    $('[data-build-btn]', container).forEach((btn) => btn.addEventListener('click', (e) => {
+    $$('[data-build-btn]', container).forEach((btn) => btn.addEventListener('click', (e) => {
       e.stopPropagation();
       triggerSlash(`/setinput 建造：${btn.dataset.buildBtn}`);
       burst(window.innerWidth / 2, window.innerHeight * 0.7);
@@ -2065,10 +2065,10 @@ window.MVU = MVU;
       `<div id="tileDetail"></div>`;
     Icon.render(container);
 
-    $('.map-cell.explored', container).forEach((cell) => {
+    $$('.map-cell.explored', container).forEach((cell) => {
       cell.addEventListener('click', () => showTile(container, tiles, +cell.dataset.x, +cell.dataset.y));
     });
-    $('.map-cell.fog.adjacent', container).forEach((cell) => {
+    $$('.map-cell.fog.adjacent', container).forEach((cell) => {
       cell.addEventListener('click', () => {
         triggerSlash(`/setinput 探索：(${cell.dataset.x},${cell.dataset.y})`);
         burst(window.innerWidth / 2, window.innerHeight * 0.7);
@@ -2211,7 +2211,7 @@ window.MVU = MVU;
     }
     container.innerHTML = seg + body;
     Icon.render(container);
-    $('.seg__item', container).forEach((b) => b.addEventListener('click', () => { UI.questTab = b.dataset.qt; renderQuest(container, Render.state); }));
+    $$('.seg__item', container).forEach((b) => b.addEventListener('click', () => { UI.questTab = b.dataset.qt; renderQuest(container, Render.state); }));
   }
 
   /* ---- 农牧 ---- */
@@ -2263,10 +2263,10 @@ window.MVU = MVU;
     container.innerHTML = html;
     Icon.render(container);
     // 农事动作（各自指令不同）
-    $('[data-water]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 浇水：(${b.dataset.water})`); }));
-    $('[data-harvest]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 收获：(${b.dataset.harvest})`); }));
-    $('[data-till]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 开垦：(${b.dataset.till})`); }));
-    $('[data-plant]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 播种：(${b.dataset.plant})`); }));
+    $$('[data-water]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 浇水：(${b.dataset.water})`); }));
+    $$('[data-harvest]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 收获：(${b.dataset.harvest})`); }));
+    $$('[data-till]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 开垦：(${b.dataset.till})`); }));
+    $$('[data-plant]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 播种：(${b.dataset.plant})`); }));
   }
 
   /* ============================================================
@@ -2331,7 +2331,7 @@ window.MVU = MVU;
           <span class="choice__text">${o}</span>
         </button>`;
       }).join('');
-      $('.choice', box).forEach((b) => b.addEventListener('click', () => {
+      $$('.choice', box).forEach((b) => b.addEventListener('click', () => {
         triggerSlash(`/setinput ${b.dataset.plain}`);
         burst(window.innerWidth / 2, window.innerHeight * 0.7);
       }));
@@ -2353,7 +2353,7 @@ window.MVU = MVU;
   'use strict';
 
   const $  = (s, r = document) => r.querySelector(s);
-  const $ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
   /* ---------- 当前标签 ---------- */
   function currentTab() {
@@ -2365,8 +2365,8 @@ window.MVU = MVU;
   function openTab(name) {
     const panel = $(`.panel[data-panel="${name}"]`);
     if (!panel) return;
-    $('.tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === name));
-    $('.panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === name));
+    $$('.tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === name));
+    $$('.panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === name));
     // 面板由 display:none 转 block 时自动重放 inkBleed 翻页动效；立即渲染该面板
     Render.panel(name, Render.state, true);
   }
@@ -2492,14 +2492,14 @@ window.MVU = MVU;
     lastSig = JSON.stringify(Render.state);
 
     // 翻页标签
-    $('.tab').forEach((t) => t.addEventListener('click', () => openTab(t.dataset.tab)));
+    $$('.tab').forEach((t) => t.addEventListener('click', () => openTab(t.dataset.tab)));
 
     // 主题 / 设置
     const themeBtn = $('#themeToggle'); if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
     const setBtn = $('#settingsBtn'); if (setBtn) setBtn.addEventListener('click', openSettings);
 
     // 底栏
-    $('.dock__btn').forEach((b) => b.addEventListener('click', () => dockAction(b.dataset.act)));
+    $$('.dock__btn').forEach((b) => b.addEventListener('click', () => dockAction(b.dataset.act)));
 
     // Esc 关设置
     document.addEventListener('keydown', (e) => {

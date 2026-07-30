@@ -22,8 +22,11 @@ function build() {
   if (!tpl.includes('<!--STYLE-->')) throw new Error('template 缺少 <!--STYLE--> 占位');
   if (!tpl.includes('<!--SCRIPT-->')) throw new Error('template 缺少 <!--SCRIPT--> 占位');
 
-  tpl = tpl.replace('<!--STYLE-->', '<style>\n' + style + '\n</style>');
-  tpl = tpl.replace('<!--SCRIPT-->', '<script>\n' + script + '\n</script>');
+  // 用 split/join 替代 replace，避免 replace 的 $ 特殊替换模式吞掉 JS 中的 $$
+  const styleTag = '<style>\n' + style + '\n</style>';
+  const scriptTag = '<script>\n' + script + '\n</script>';
+  tpl = tpl.split('<!--STYLE-->').join(styleTag);
+  tpl = tpl.split('<!--SCRIPT-->').join(scriptTag);
 
   fs.writeFileSync(path.join(root, 'index.html'), tpl);
   return tpl.length;
