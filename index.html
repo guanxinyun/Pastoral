@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="day">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>暮归旅店 · 奇幻旅店经营志</title>
+  <meta name="description" content="在一个魔法日常化的奇幻世界里，把一家破败的旅店重新开好。" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- ==================== 顶部信息条 ==================== -->
+    <header class="hud-top" role="banner">
+      <!-- 左：日期 + 天气 -->
+      <div class="hud-top__left">
+        <div class="weather-badge" id="weatherBadge" title="今日天气">
+          <span class="ic ic--lg" data-i="sun" id="weatherIcon"></span>
+        </div>
+        <div class="date-block">
+          <div class="date-block__text">
+            <strong id="dateText">第1年 · 春季第3天</strong>
+            <span id="weekdayText">周三 · 晴朗</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 中：旅店名 -->
+      <div class="hud-top__center">
+        <div class="inn-name">
+          <span class="ic" data-i="house" style="--ic:20px"></span>
+          <span class="inn-name__title" id="innName">暮归旅店</span>
+          <span class="inn-name__level" id="innLevel">声望 · 萤火级</span>
+        </div>
+      </div>
+
+      <!-- 右：资金 + 声望 -->
+      <div class="hud-top__right">
+        <div class="funds" title="现有资金">
+          <span class="ic funds__icon" data-i="coin"></span>
+          <div class="col">
+            <span class="funds__label">资金</span>
+            <span class="funds__value" id="fundsValue">3金42银</span>
+          </div>
+        </div>
+        <div class="prestige" title="声望进度">
+          <span class="prestige__label">声望</span>
+          <div class="prestige__track" id="prestigeTrack" role="progressbar" aria-label="声望进度">
+            <div class="prestige__fill" id="prestigeFill" style="--p: 42%"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ==================== 左侧功能图标列 ==================== -->
+    <nav class="rail-left" aria-label="功能导航">
+      <button class="rail-btn" data-panel="overview" data-tip="旅店总览" aria-label="旅店总览">
+        <span class="ic rail-btn__icon" data-i="house"></span>
+      </button>
+      <button class="rail-btn" data-panel="inventory" data-tip="库存管理" aria-label="库存管理">
+        <span class="ic rail-btn__icon" data-i="bag"></span>
+      </button>
+      <button class="rail-btn" data-panel="building" data-tip="建筑管理" aria-label="建筑管理">
+        <span class="ic rail-btn__icon" data-i="hammer"></span>
+      </button>
+      <button class="rail-btn" data-panel="map" data-tip="地图与探索" aria-label="地图与探索">
+        <span class="ic rail-btn__icon" data-i="compass"></span>
+      </button>
+      <button class="rail-btn" data-panel="staff" data-tip="员工管理" aria-label="员工管理">
+        <span class="ic rail-btn__icon" data-i="person"></span>
+      </button>
+      <button class="rail-btn" data-panel="visitor" data-tip="访客管理" aria-label="访客管理">
+        <span class="ic rail-btn__icon" data-i="key"></span>
+      </button>
+      <button class="rail-btn" data-panel="quest" data-tip="任务日志" aria-label="任务日志">
+        <span class="ic rail-btn__icon" data-i="scroll"></span>
+      </button>
+      <button class="rail-btn" data-panel="farm" data-tip="农牧总览" aria-label="农牧总览">
+        <span class="ic rail-btn__icon" data-i="wheat"></span>
+      </button>
+      <div class="rail-spacer"></div>
+      <button class="rail-btn" id="themeToggle" data-tip="切换昼夜" aria-label="切换昼夜主题">
+        <span class="ic rail-btn__icon" data-i="moon"></span>
+      </button>
+      <button class="rail-btn" id="settingsBtn" data-tip="设置" aria-label="设置">
+        <span class="ic rail-btn__icon" data-i="settings"></span>
+      </button>
+    </nav>
+
+    <!-- ==================== 中央叙事区 ==================== -->
+    <main class="stage" id="stage">
+      <div class="stage__scene" aria-hidden="true"></div>
+
+      <section class="narrative" id="narrative" aria-label="叙事记录" aria-live="polite">
+        <div class="narrative__inner" id="narrativeInner">
+          <div class="narrative-day">第1年 · 春季第3天</div>
+
+          <article class="msg">
+            <div class="msg__head">
+              <span class="msg__tag msg__tag--system"><span class="ic" data-i="sparkle" style="--ic:13px"></span>晨记</span>
+              <span class="msg__time">清晨</span>
+            </div>
+            <div class="msg__body">
+              晨雾尚未散尽，旅店的木招牌在风里轻轻晃了一下。你推开吱呀作响的门，灰尘在斜射的日光里浮动——这间祖传的旅店，如今只剩你一个人了。所幸灶台还稳，地窖里还剩半袋<span class="hl">晨露麦粉</span>。先把今天的生意张罗起来吧。
+            </div>
+          </article>
+
+          <article class="msg">
+            <div class="msg__head">
+              <span class="msg__tag msg__tag--guest"><span class="ic" data-i="door" style="--ic:13px"></span>访客</span>
+              <span class="msg__time">上午</span>
+            </div>
+            <div class="msg__body">
+              一位披着<span class="magic">褪色法袍</span>的旅人推门而入，斗篷上还沾着露水。他环顾四周，目光在空荡的大堂停留了片刻，轻声道：<span class="quote">「听说这里的麦酒还算暖人……若不嫌弃，给我来一份热汤便好。」</span>他看起来疲惫，却并不拮据。
+            </div>
+          </article>
+
+          <article class="msg">
+            <div class="msg__head">
+              <span class="msg__tag msg__tag--event"><span class="ic" data-i="sparkle" style="--ic:13px"></span>事件</span>
+              <span class="msg__time">近午</span>
+            </div>
+            <div class="msg__body">
+              后院那口老井里泛起淡淡的<span class="magic">薄荷蓝微光</span>——是井底的<span class="magic">净水符文</span>被春水唤醒了。这或许意味着，今日烹煮的汤水会格外清甜。是否要趁机研发一道新菜？
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- 底部行动轴 -->
+      <div class="action-dock">
+        <div class="action-dock__inner">
+          <span class="action-dock__label">今日可为 ·</span>
+          <button class="chip" data-action="cook"><span class="ic chip__icon" data-i="pot"></span>烹饪</button>
+          <button class="chip" data-action="build"><span class="ic chip__icon" data-i="hammer"></span>建造</button>
+          <button class="chip" data-action="plant"><span class="ic chip__icon" data-i="wheat"></span>种植</button>
+          <button class="chip" data-action="explore"><span class="ic chip__icon" data-i="compass"></span>探索</button>
+          <button class="chip" data-action="social"><span class="ic chip__icon" data-i="person"></span>社交</button>
+          <button class="chip" data-action="rest"><span class="ic chip__icon" data-i="bed"></span>小憩</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- ==================== 右侧快捷操作栏 ==================== -->
+    <aside class="rail-right" aria-label="快捷操作">
+      <span class="rail-right__label">快 捷</span>
+      <button class="quick-btn" id="quickCook" data-tip="快捷烹饪" aria-label="快捷烹饪">
+        <span class="ic quick-btn__icon" data-i="pot"></span>
+      </button>
+      <button class="quick-btn" id="quickWater" data-tip="一键浇灌" aria-label="一键浇灌">
+        <span class="ic quick-btn__icon" data-i="water"></span>
+      </button>
+      <div class="rail-spacer"></div>
+      <button class="end-day-btn" id="endDayBtn" data-tip="结束今天" aria-label="结束今天">
+        <span class="ic end-day-btn__icon" data-i="moon"></span>
+      </button>
+    </aside>
+
+    <!-- ==================== 底部掌柜状态条 ==================== -->
+    <footer class="hud-bottom" role="contentinfo">
+      <!-- 精力 -->
+      <div class="statbar">
+        <span class="statbar__icon"><span class="ic ic--lg" data-i="energy"></span></span>
+        <div class="statbar__body">
+          <div class="statbar__head">
+            <span class="statbar__name">掌柜精力</span>
+            <span class="statbar__val" id="energyVal">78 / 100</span>
+          </div>
+          <div class="bar-track" id="energyTrack">
+            <div class="bar-fill bar-fill--energy" id="energyFill" style="--p: 78%"></div>
+          </div>
+        </div>
+        <button class="mini-rest-btn" id="restBtn" title="快捷休息" aria-label="快捷休息">
+          <span class="ic" data-i="bed" style="--ic:18px"></span>
+        </button>
+      </div>
+
+      <!-- 时段指示器 -->
+      <div class="time-strip" id="timeStrip" role="tablist" aria-label="时段">
+        <button class="time-node" data-time="dawn" data-label="清晨" role="tab" aria-label="清晨">
+          <span class="ic" data-i="sunrise"></span>
+        </button>
+        <button class="time-node is-active" data-time="forenoon" data-label="上午" role="tab" aria-label="上午">
+          <span class="ic" data-i="highnoon"></span>
+        </button>
+        <button class="time-node" data-time="afternoon" data-label="下午" role="tab" aria-label="下午">
+          <span class="ic" data-i="afternoon"></span>
+        </button>
+        <button class="time-node" data-time="dusk" data-label="傍晚" role="tab" aria-label="傍晚">
+          <span class="ic" data-i="sunset"></span>
+        </button>
+        <button class="time-node" data-time="night" data-label="夜晚" role="tab" aria-label="夜晚">
+          <span class="ic" data-i="moon"></span>
+        </button>
+      </div>
+
+      <!-- 压力 -->
+      <div class="statbar" style="justify-content:flex-end">
+        <div class="statbar__body">
+          <div class="statbar__head">
+            <span class="statbar__name">掌柜压力</span>
+            <span class="statbar__val" id="stressVal">34 / 100</span>
+          </div>
+          <div class="bar-track" id="stressTrack">
+            <div class="bar-fill bar-fill--stress" id="stressFill" style="--p: 34%"></div>
+            <div class="cracks"></div>
+          </div>
+        </div>
+        <span class="statbar__icon"><span class="ic ic--lg" data-i="stress"></span></span>
+      </div>
+    </footer>
+
+    <!-- ==================== 侧滑抽屉（8 面板） ==================== -->
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true" role="dialog" aria-label="功能面板">
+      <header class="drawer__head">
+        <span class="ic ic--lg drawer__icon" id="drawerIcon" data-i="house"></span>
+        <h2 class="drawer__title" id="drawerTitle">旅店总览</h2>
+        <button class="drawer__close" id="drawerClose" aria-label="关闭面板">
+          <span class="ic" data-i="close" style="--ic:20px"></span>
+        </button>
+      </header>
+      <div class="drawer__body" id="drawerBody">
+
+        <!-- ========== 面板1：旅店总览 ========== -->
+        <section class="panel is-active" data-panel="overview">
+          <div class="card is-hover">
+            <div class="card__title"><span class="ic card__icon" data-i="house"></span>暮归旅店</div>
+            <div class="row" style="gap:var(--space-4);flex-wrap:wrap">
+              <div class="col"><span class="faint" style="font-size:var(--font-size-2xs)">声望层级</span><span class="serif">萤火级</span></div>
+              <div class="col"><span class="faint" style="font-size:var(--font-size-2xs)">旅店等级</span><span class="serif">Lv.2</span></div>
+              <div class="col"><span class="faint" style="font-size:var(--font-size-2xs)">主营方向</span><span class="serif">乡野小酌</span></div>
+            </div>
+          </div>
+
+          <h3 class="panel-h">六维引力</h3>
+          <div class="radar-wrap">
+            <svg class="radar" id="radarOverview" viewBox="0 0 240 240" aria-label="六维引力雷达图"></svg>
+            <div class="dim-bubble" id="dimBubble">
+              <div class="dim-bubble__title" id="dimBubbleTitle">悬停维度查看来源</div>
+              <div id="dimBubbleBody"></div>
+            </div>
+          </div>
+
+          <h3 class="panel-h">总引力公式</h3>
+          <div class="gravity-formula" id="gravityFormula">
+            <div class="g-term" data-g="fame"><span class="g-term__label">声望</span><span class="g-term__val">12</span></div>
+            <span class="g-plus">+</span>
+            <div class="g-term" data-g="facility"><span class="g-term__label">设施</span><span class="g-term__val">18</span></div>
+            <span class="g-plus">+</span>
+            <div class="g-term" data-g="service"><span class="g-term__label">服务</span><span class="g-term__val">9</span></div>
+            <span class="g-plus">+</span>
+            <div class="g-term" data-g="env"><span class="g-term__label">环境</span><span class="g-term__val">7</span></div>
+            <span class="g-eq">=</span>
+            <div class="g-total"><span class="g-term__label">总引力</span><span class="g-total__val">46</span></div>
+          </div>
+
+          <h3 class="panel-h">当日预报</h3>
+          <div class="card">
+            <div class="row" style="margin-bottom:var(--space-3)">
+              <span class="ic ic--xl" data-i="sun" style="color:var(--color-primary)"></span>
+              <div class="col">
+                <span class="serif" style="font-weight:600">晴朗</span>
+                <span class="faint" style="font-size:var(--font-size-2xs)">日光充足 · 作物生长 +15%</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="row--between row" style="margin-bottom:var(--space-2)"><span class="muted" style="font-size:var(--font-size-xs)">今日引力值</span><span class="num" style="color:var(--color-primary);font-weight:600">46</span></div>
+            <div class="row--between row" style="margin-bottom:var(--space-3)"><span class="muted" style="font-size:var(--font-size-xs)">预估访客池</span><span class="faint" style="font-size:var(--font-size-xs)">4 ~ 6 人</span></div>
+            <div class="list-h" style="margin:0 0 var(--space-2)"><span>预估访客类型</span></div>
+            <div class="row" style="flex-wrap:wrap;gap:6px">
+              <span class="pill pill--amber">流浪旅人 ×2</span>
+              <span class="pill pill--mint">游方术士 ×1</span>
+              <span class="pill">行商 ×1</span>
+              <span class="pill pill--purple">？未知 ×1</span>
+            </div>
+          </div>
+
+          <h3 class="panel-h">注意事项</h3>
+          <ul class="col" style="gap:var(--space-2)">
+            <li class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>后院老井的<span class="magic">净水符文</span>已激活，今日汤水质效提升。</div></li>
+            <li class="notice notice--warn"><span class="ic notice__icon" data-i="warning"></span><div>厨房柴火仅余 3 捆，傍晚前需补充，否则夜间无法供餐。</div></li>
+            <li class="notice notice--info"><span class="ic notice__icon" data-i="sparkle"></span><div>春日第三天，<span class="hl">山莓</span>进入成熟期，可前往林缘采集。</div></li>
+          </ul>
+        </section>
+
+        <!-- ========== 面板2：库存管理 ========== -->
+        <section class="panel" data-panel="inventory">
+          <div class="search">
+            <span class="ic search__icon" data-i="search"></span>
+            <input type="text" id="invSearch" placeholder="搜寻物什……" aria-label="搜索库存" />
+          </div>
+
+          <div class="tabs" id="invTabs" style="margin-top:var(--space-3)">
+            <button class="tab is-active" data-tab="all">全部</button>
+            <button class="tab" data-tab="food">食材</button>
+            <button class="tab" data-tab="nature">自然</button>
+            <button class="tab" data-tab="special">特产</button>
+            <button class="tab" data-tab="magic">魔法</button>
+            <button class="tab" data-tab="product">成品</button>
+          </div>
+
+          <div class="tab-pane is-active" data-pane="all" id="invList">
+            <div class="list-h"><span>食材原料</span><span class="list-h__count">6 种</span></div>
+            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="grain"></span></span><div class="item-row__main"><div class="item-row__name">晨露麦粉</div><div class="item-row__meta">主食 · 春日新磨</div></div><span class="q-tag q-tag--fine">优秀</span><span class="item-row__qty">×12</span></div>
+            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="egg"></span></span><div class="item-row__main"><div class="item-row__name">林间鸡蛋</div><div class="item-row__meta">副食 · 散养</div></div><span class="q-tag q-tag--common">普通</span><span class="item-row__qty">×8</span></div>
+            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="mushroom"></span></span><div class="item-row__main"><div class="item-row__name">苔松茸</div><div class="item-row__meta">山珍 · 林缘采集</div></div><span class="q-tag q-tag--superb">卓越</span><span class="item-row__qty">×3</span></div>
+            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="herb"></span></span><div class="item-row__main"><div class="item-row__name">清露香草</div><div class="item-row__meta">调味 · 井水浸润</div></div><span class="q-tag q-tag--fine">优秀</span><span class="item-row__qty">×5</span></div>
+            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="fish"></span></span><div class="item-row__main"><div class="item-row__name">银鳞溪鱼</div><div class="item-row__meta">荤食 · 清晨捕得</div></div><span class="q-tag q-tag--common">普通</span><span class="item-row__qty">×4</span></div>
+            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="honey"></span></span><div class="item-row__main"><div class="item-row__name">野山蜜</div><div class="item-row__meta">甜味 · 春巢取蜜</div></div><span class="q-tag q-tag--superb">卓越</span><span class="item-row__qty">×2</span></div>
+
+            <div class="list-h"><span>自然材料</span><span class="list-h__count">3 种</span></div>
+            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="wood"></span></span><div class="item-row__main"><div class="item-row__name">干柴火</div><div class="item-row__meta">燃料 · 剩余 3 捆</div></div><span class="q-tag q-tag--common">普通</span><span class="item-row__qty">×3</span></div>
+            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="stone"></span></span><div class="item-row__main"><div class="item-row__name">青石板</div><div class="item-row__meta">建材 · 河床拾得</div></div><span class="q-tag q-tag--common">普通</span><span class="item-row__qty">×14</span></div>
+            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="flower"></span></span><div class="item-row__main"><div class="item-row__name">铃兰</div><div class="item-row__meta">装饰 · 晨采</div></div><span class="q-tag q-tag--fine">优秀</span><span class="item-row__qty">×6</span></div>
+
+            <div class="list-h"><span>魔法材料</span><span class="list-h__count">2 种</span></div>
+            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="gem"></span></span><div class="item-row__main"><div class="item-row__name">净水符石</div><div class="item-row__meta">井底析出 · 薄荷蓝</div></div><span class="q-tag q-tag--legend">传说</span><span class="item-row__qty">×1</span></div>
+            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="sparkle"></span></span><div class="item-row__main"><div class="item-row__name">晨星露</div><div class="item-row__meta">稀料 · 草叶凝结</div></div><span class="q-tag q-tag--fine">优秀</span><span class="item-row__qty">×3</span></div>
+          </div>
+
+          <div class="vine-divider" aria-hidden="true"></div>
+          <h3 class="panel-h">已掌握配方</h3>
+          <div class="recipe">
+            <div class="recipe__head"><span class="ic" data-i="pot" style="color:var(--color-primary);--ic:18px"></span><span class="recipe__name">清露松茸汤</span><span class="recipe__stars">★★☆</span></div>
+            <div class="recipe__mats"><span class="mat-chip ok">苔松茸 ×1</span><span class="mat-chip ok">清露香草 ×1</span><span class="mat-chip ok">净水符石 ×1</span></div>
+            <div class="recipe__foot"><span class="faint" style="font-size:var(--font-size-2xs)">售价 <span class="num" style="color:var(--color-primary)">18 银</span></span><button class="btn btn--primary btn--sm" data-cook="清露松茸汤">烹制</button></div>
+          </div>
+          <div class="recipe">
+            <div class="recipe__head"><span class="ic" data-i="pot" style="color:var(--color-primary);--ic:18px"></span><span class="recipe__name">蜜烤溪鱼</span><span class="recipe__stars">★☆☆</span></div>
+            <div class="recipe__mats"><span class="mat-chip ok">银鳞溪鱼 ×1</span><span class="mat-chip ok">野山蜜 ×1</span><span class="mat-chip no">干柴火 ×0</span></div>
+            <div class="recipe__foot"><span class="faint" style="font-size:var(--font-size-2xs)">售价 <span class="num" style="color:var(--color-primary)">12 银</span></span><button class="btn btn--ghost btn--sm" disabled>柴火不足</button></div>
+          </div>
+          <div class="recipe">
+            <div class="recipe__head"><span class="ic" data-i="pot" style="color:var(--color-primary);--ic:18px"></span><span class="recipe__name">晨露麦饼</span><span class="recipe__stars">★☆☆</span></div>
+            <div class="recipe__mats"><span class="mat-chip ok">晨露麦粉 ×2</span><span class="mat-chip ok">林间鸡蛋 ×1</span></div>
+            <div class="recipe__foot"><span class="faint" style="font-size:var(--font-size-2xs)">售价 <span class="num" style="color:var(--color-primary)">8 银</span></span><button class="btn btn--primary btn--sm" data-cook="晨露麦饼">烹制</button></div>
+          </div>
+        </section>
+
+        <!-- ========== 面板3：建筑管理 ========== -->
+        <section class="panel" data-panel="building">
+          <div class="tabs" id="buildTabs">
+            <button class="tab is-active" data-tab="built">已建成</button>
+            <button class="tab" data-tab="blueprint">蓝图</button>
+          </div>
+
+          <div class="tab-pane is-active" data-pane="built">
+            <div class="building">
+              <div class="building__head"><span class="building__icon"><span class="ic" data-i="kitchen"></span></span><span class="building__name">主灶房</span><span class="building__lv">Lv.2</span><span class="building__status ok">正常</span></div>
+              <div class="dim-bars">
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:80%;background:var(--dim-food)"></div></div><span class="dim-bar__label">美食</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:10%;background:var(--dim-lore)"></div></div><span class="dim-bar__label">知识</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:25%;background:var(--dim-comfort)"></div></div><span class="dim-bar__label">舒适</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:15%;background:var(--dim-adventure)"></div></div><span class="dim-bar__label">冒险</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:20%;background:var(--dim-culture)"></div></div><span class="dim-bar__label">文化</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:10%;background:var(--dim-nature)"></div></div><span class="dim-bar__label">自然</span></div>
+              </div>
+              <div class="row--between row"><span class="faint" style="font-size:var(--font-size-2xs)">维护 2银/天</span><span class="pill pill--amber">符文可升</span></div>
+            </div>
+
+            <div class="building">
+              <div class="building__head"><span class="building__icon"><span class="ic" data-i="garden"></span></span><span class="building__name">后院菜畦</span><span class="building__lv">Lv.1</span><span class="building__status ok">正常</span></div>
+              <div class="dim-bars">
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:15%;background:var(--dim-food)"></div></div><span class="dim-bar__label">美食</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:10%;background:var(--dim-lore)"></div></div><span class="dim-bar__label">知识</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:30%;background:var(--dim-comfort)"></div></div><span class="dim-bar__label">舒适</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:20%;background:var(--dim-adventure)"></div></div><span class="dim-bar__label">冒险</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:15%;background:var(--dim-culture)"></div></div><span class="dim-bar__label">文化</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:70%;background:var(--dim-nature)"></div></div><span class="dim-bar__label">自然</span></div>
+              </div>
+              <div class="row--between row"><span class="faint" style="font-size:var(--font-size-2xs)">维护 1银/天</span><span class="faint" style="font-size:var(--font-size-2xs)">已种 2 垅</span></div>
+            </div>
+
+            <div class="building">
+              <div class="building__head"><span class="building__icon"><span class="ic" data-i="well"></span></span><span class="building__name">老井</span><span class="building__lv">Lv.1</span><span class="building__status fixing">符文活跃</span></div>
+              <div class="dim-bars">
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:25%;background:var(--dim-food)"></div></div><span class="dim-bar__label">美食</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:60%;background:var(--dim-lore)"></div></div><span class="dim-bar__label">知识</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:40%;background:var(--dim-comfort)"></div></div><span class="dim-bar__label">舒适</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:10%;background:var(--dim-adventure)"></div></div><span class="dim-bar__label">冒险</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:55%;background:var(--dim-culture)"></div></div><span class="dim-bar__label">文化</span></div>
+                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:30%;background:var(--dim-nature)"></div></div><span class="dim-bar__label">自然</span></div>
+              </div>
+              <div class="row--between row"><span class="faint" style="font-size:var(--font-size-2xs)">维护 0银/天</span><span class="pill pill--mint">净水符文</span></div>
+            </div>
+          </div>
+
+          <div class="tab-pane" data-pane="blueprint">
+            <div class="building is-ready">
+              <div class="building__head"><span class="building__icon"><span class="ic" data-i="oven"></span></span><span class="building__name">柴烤炉</span><span class="pill pill--amber">可建造</span></div>
+              <p class="faint" style="font-size:var(--font-size-xs);margin-bottom:var(--space-2)">解锁烘焙配方，提升美食与舒适引力。需紧邻主灶房。</p>
+              <ul class="cond-list"><li><span class="ok">✓</span> 主灶房 Lv.2</li><li><span class="ok">✓</span> 掌柜声望达萤火级</li></ul>
+              <div class="cost-list"><span class="cost-item">40 银</span><span class="cost-item">青石板 ×8</span><span class="cost-item">干柴火 ×5</span></div>
+              <button class="btn btn--primary btn--block btn--sm" data-build="柴烤炉">建造</button>
+            </div>
+
+            <div class="building is-locked">
+              <div class="building__head"><span class="building__icon"><span class="ic" data-i="library"></span></span><span class="building__name">阅览书阁</span><span class="pill pill--red">条件未达</span></div>
+              <p class="faint" style="font-size:var(--font-size-xs);margin-bottom:var(--space-2)">吸引游方术士与学者，提升知识与文化引力。</p>
+              <ul class="cond-list"><li><span class="ok">✓</span> 旅店 Lv.2</li><li><span class="no">✗</span> 需掌柜声望达星辉级</li><li><span class="no">✗</span> 需收藏典籍 ×3</li></ul>
+              <div class="cost-list"><span class="cost-item lack">1 金</span><span class="cost-item">青石板 ×20</span><span class="cost-item lack">典籍 ×3</span></div>
+              <button class="btn btn--ghost btn--block btn--sm" disabled title="声望不足、典籍不足">条件未达</button>
+            </div>
+
+            <div class="building is-locked">
+              <div class="building__head"><span class="building__icon"><span class="ic" data-i="brewery"></span></span><span class="building__name">露酿坊</span><span class="pill pill--red">条件未达</span></div>
+              <p class="faint" style="font-size:var(--font-size-xs);margin-bottom:var(--space-2)">酿造麦酒与花蜜酒，夜间营业收益显著提升。</p>
+              <ul class="cond-list"><li><span class="no">✗</span> 需柴烤炉已建成</li><li><span class="ok">✓</span> 拥有野山蜜 ×2</li></ul>
+              <div class="cost-list"><span class="cost-item">80 银</span><span class="cost-item">干柴火 ×8</span><span class="cost-item">野山蜜 ×2</span></div>
+              <button class="btn btn--ghost btn--block btn--sm" disabled title="需先建造柴烤炉">条件未达</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== 面板4：地图与探索 ========== -->
+        <section class="panel" data-panel="map">
+          <div class="search">
+            <span class="ic search__icon" data-i="compass"></span>
+            <input type="text" placeholder="输入坐标如 3,-2 跳转……" aria-label="坐标搜索" />
+          </div>
+          <h3 class="panel-h">旅店周域 · 15×15</h3>
+          <div class="map-grid" id="mapGrid" aria-label="探索地图"></div>
+          <p class="faint center" style="font-size:var(--font-size-2xs);margin-top:var(--space-2)">旅店居中 (0,0) · 点亮处为已知地块 · 闪烁处可探索</p>
+
+          <div id="tileDetail"></div>
+        </section>
+
+        <!-- ========== 面板5：员工管理 ========== -->
+        <section class="panel" data-panel="staff">
+          <div class="row--between row" style="margin-bottom:var(--space-3)">
+            <span class="muted" style="font-size:var(--font-size-xs)">在册员工 2 人</span>
+            <button class="btn btn--primary btn--sm" id="recruitBtn"><span class="ic btn__icon" data-i="plus"></span>招募</button>
+          </div>
+
+          <div class="staff-card">
+            <div class="staff-card__head">
+              <div class="staff-avatar">苏</div>
+              <div class="col" style="flex:1">
+                <div class="row"><span class="staff-card__name">苏半夏</span><span class="class-badge">T2 厨娘</span></div>
+                <span class="staff-card__role">主灶房 · 擅汤羹</span>
+              </div>
+              <svg class="mini-radar" id="radarStaff1" viewBox="0 0 60 60" aria-label="苏半夏五维"></svg>
+            </div>
+            <div class="staff-card__stats">
+              <div class="stat-line"><span class="stat-line__label">精力</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:82%;background:var(--dim-food)"></div></div></div>
+              <div class="stat-line"><span class="stat-line__label">士气</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:68%;background:var(--dim-comfort)"></div></div></div>
+              <div class="stat-line"><span class="stat-line__label">忠诚</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:90%;background:var(--dim-culture)"></div></div></div>
+            </div>
+            <div class="row" style="margin-top:var(--space-2);gap:6px">
+              <span class="pill">技艺 14</span><span class="pill">悟性 9</span><span class="gem-tag gem-tag--light">闪光圣岩</span>
+              <span class="faint" style="font-size:var(--font-size-2xs);margin-left:auto">日薪 6银</span>
+            </div>
+          </div>
+
+          <div class="staff-card low-morale">
+            <div class="staff-card__head">
+              <div class="staff-avatar" style="background:linear-gradient(135deg,var(--ink-brown-soft),var(--ink-brown))">阿</div>
+              <div class="col" style="flex:1">
+                <div class="row"><span class="staff-card__name">阿苔</span><span class="class-badge">T1 杂役</span></div>
+                <span class="staff-card__role">后院 · 擅种植</span>
+              </div>
+              <svg class="mini-radar" id="radarStaff2" viewBox="0 0 60 60" aria-label="阿苔五维"></svg>
+            </div>
+            <div class="staff-card__stats">
+              <div class="stat-line"><span class="stat-line__label">精力</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:55%;background:var(--dim-food)"></div></div></div>
+              <div class="stat-line"><span class="stat-line__label">士气</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:32%;background:var(--dim-comfort)"></div></div></div>
+              <div class="stat-line"><span class="stat-line__label">忠诚</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:48%;background:var(--dim-culture)"></div></div></div>
+            </div>
+            <div class="row" style="margin-top:var(--space-2);gap:6px">
+              <span class="pill">技艺 6</span><span class="pill">悟性 4</span><span class="gem-tag gem-tag--dark">暗影原石</span>
+              <span class="faint" style="font-size:var(--font-size-2xs);margin-left:auto">日薪 2银</span>
+            </div>
+            <div class="notice notice--warn" style="margin-top:var(--space-2);margin-bottom:0"><span class="ic notice__icon" data-i="warning"></span><div style="font-size:var(--font-size-xs)">士气低迷，建议尽快安抚或调整岗位。</div></div>
+          </div>
+        </section>
+
+        <!-- ========== 面板6：访客管理 ========== -->
+        <section class="panel" data-panel="visitor">
+          <div class="row--between row" style="margin-bottom:var(--space-3)">
+            <span class="muted" style="font-size:var(--font-size-xs)">在店访客 3 位</span>
+            <span class="pill pill--amber">客流 适中</span>
+          </div>
+
+          <div class="visitor-card">
+            <div class="visitor-card__head">
+              <span class="ic" data-i="mage" style="--ic:24px;color:var(--color-magic)"></span>
+              <span class="visitor-card__name">褪袍旅人</span>
+              <span class="pill pill--mint">游方术士</span>
+              <div class="satisfaction"><svg viewBox="0 0 44 44"><circle class="satisfaction__track" cx="22" cy="22" r="18"></circle><circle class="satisfaction__fill" id="sat1" cx="22" cy="22" r="18" stroke="var(--color-success)"></circle></svg><span class="satisfaction__val">62</span></div>
+            </div>
+            <div class="visitor-card__tags">
+              <span class="pill pill--green">消费 中</span>
+              <span class="pill">偏好 热汤</span>
+              <span class="pill">偏好 静处</span>
+              <span class="pill pill--purple">好奇 魔法</span>
+            </div>
+          </div>
+
+          <div class="visitor-card special">
+            <div class="visitor-card__head">
+              <span class="ic" data-i="noble" style="--ic:24px;color:var(--color-primary)"></span>
+              <span class="visitor-card__name">绣衣女使</span>
+              <span class="pill pill--amber">特殊访客</span>
+              <div class="satisfaction"><svg viewBox="0 0 44 44"><circle class="satisfaction__track" cx="22" cy="22" r="18"></circle><circle class="satisfaction__fill" id="sat2" cx="22" cy="22" r="18" stroke="var(--color-primary)"></circle></svg><span class="satisfaction__val">45</span></div>
+            </div>
+            <div class="visitor-card__tags">
+              <span class="pill pill--amber">消费 极高</span>
+              <span class="pill">偏好 名菜</span>
+              <span class="pill resist-tag pill--red">抗性 拥挤</span>
+              <span class="pill resist-tag pill--red">抗性 粗陋</span>
+            </div>
+          </div>
+
+          <div class="visitor-card">
+            <div class="visitor-card__head">
+              <span class="ic" data-i="merchant" style="--ic:24px;color:var(--color-text-soft)"></span>
+              <span class="visitor-card__name">驼铃行商</span>
+              <span class="pill">行商</span>
+              <div class="satisfaction"><svg viewBox="0 0 44 44"><circle class="satisfaction__track" cx="22" cy="22" r="18"></circle><circle class="satisfaction__fill" id="sat3" cx="22" cy="22" r="18" stroke="var(--color-warning)"></circle></svg><span class="satisfaction__val">78</span></div>
+            </div>
+            <div class="visitor-card__tags">
+              <span class="pill pill--green">消费 中</span>
+              <span class="pill">偏好 麦酒</span>
+              <span class="pill">偏好 储货</span>
+              <span class="pill">可交易</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== 面板7：任务日志 ========== -->
+        <section class="panel" data-panel="quest">
+          <div class="tabs" id="questTabs">
+            <button class="tab is-active" data-tab="commission">委托</button>
+            <button class="tab" data-tab="bond">羁绊</button>
+            <button class="tab" data-tab="seed">种子追踪</button>
+          </div>
+          <div class="row--between row" style="margin:var(--space-3) 0"><span class="faint" style="font-size:var(--font-size-2xs)">活跃委托上限 3</span><span class="pill pill--amber">2 / 3 活跃</span></div>
+
+          <div class="tab-pane is-active" data-pane="commission">
+            <div class="quest-card">
+              <div class="quest-card__head"><span class="ic" data-i="scroll" style="color:var(--color-primary);--ic:16px"></span><span class="quest-card__name">褪袍旅人的热汤</span><span class="pill pill--mint">限时 傍晚前</span></div>
+              <p class="quest-card__desc">那位疲惫的术士想要一碗暖人的汤。若以井水符文烹煮，或可赢得他的好感。</p>
+              <div class="row--between row"><span class="faint" style="font-size:var(--font-size-2xs)">进度 0 / 1</span><span class="faint" style="font-size:var(--font-size-2xs)">报酬 25银 + 好感</span></div>
+              <div class="quest-progress" style="margin-top:6px"><div class="quest-progress__fill" style="width:0%"></div></div>
+            </div>
+            <div class="quest-card">
+              <div class="quest-card__head"><span class="ic" data-i="scroll" style="color:var(--color-primary);--ic:16px"></span><span class="quest-card__name">山莓成熟时</span><span class="pill">采集</span></div>
+              <p class="quest-card__desc">春日第三天，林缘的山莓该熟了。采些回来，既能入菜也能酿酒。</p>
+              <div class="row--between row"><span class="faint" style="font-size:var(--font-size-2xs)">进度 1 / 5</span><span class="faint" style="font-size:var(--font-size-2xs)">报酬 山莓 ×5</span></div>
+              <div class="quest-progress" style="margin-top:6px"><div class="quest-progress__fill" style="width:20%"></div></div>
+            </div>
+          </div>
+
+          <div class="tab-pane" data-pane="bond">
+            <div class="quest-card" style="border-left-color:var(--color-magic)">
+              <div class="quest-card__head"><span class="ic" data-i="person" style="color:var(--color-magic);--ic:16px"></span><span class="quest-card__name">褪袍旅人</span><span class="bond-stage">阶段一 · 初遇</span></div>
+              <p class="quest-card__desc">他似乎在回避什么，又不肯明说。一碗热汤或许能让他开口。</p>
+              <div class="faint" style="font-size:var(--font-size-2xs)">下一阶段：完成「褪袍旅人的热汤」并满足其魔法偏好。</div>
+            </div>
+            <div class="quest-card" style="border-left-color:var(--color-magic)">
+              <div class="quest-card__head"><span class="ic" data-i="person" style="color:var(--color-magic);--ic:16px"></span><span class="quest-card__name">苏半夏</span><span class="bond-stage">阶段二 · 相熟</span></div>
+              <p class="quest-card__desc">老灶房里她最拿手的是汤羹。近来她总望着后山的方向出神。</p>
+              <div class="faint" style="font-size:var(--font-size-2xs)">下一阶段：声望达星辉级，与其共度一次春祭。</div>
+            </div>
+          </div>
+
+          <div class="tab-pane" data-pane="seed">
+            <div class="notice notice--info"><span class="ic notice__icon" data-i="sparkle"></span><div style="font-size:var(--font-size-xs)">仅显示已激活的任务种子。世界将依据你的选择萌生新的可能。</div></div>
+            <div class="quest-card" style="border-left-color:var(--dim-culture)">
+              <div class="quest-card__head"><span class="ic" data-i="sparkle" style="color:var(--dim-culture);--ic:16px"></span><span class="quest-card__name">老井的低语</span><span class="bond-stage">已激活</span></div>
+              <p class="quest-card__desc">净水符文被春水唤醒，井底似有更深的秘密。持续的探索或许会引来……不速之客。</p>
+            </div>
+            <div class="quest-card" style="border-left-color:var(--dim-nature)">
+              <div class="quest-card__head"><span class="ic" data-i="sparkle" style="color:var(--dim-nature);--ic:16px"></span><span class="quest-card__name">春祭的邀约</span><span class="bond-stage">已激活</span></div>
+              <p class="quest-card__desc">邻村传来春祭的消息。若旅店声望足够，或可获邀设摊。</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== 面板8：农牧总览 ========== -->
+        <section class="panel" data-panel="farm">
+          <h3 class="panel-h">种植区汇总</h3>
+          <div class="crop-plot">
+            <div class="crop-plot__head"><span class="ic" data-i="wheat" style="color:var(--color-success);--ic:18px"></span><span class="crop-plot__name">后院菜畦 · (0,1) · 2×1</span><span class="ic status-icon watered" data-i="water"></span><span class="ic status-icon dry" data-i="fertilize"></span></div>
+            <div class="row--between row" style="margin-bottom:4px"><span class="faint" style="font-size:var(--font-size-2xs)">晨露麦 · 已浇水</span><span class="faint" style="font-size:var(--font-size-2xs)">2 / 4 天</span></div>
+            <div class="grow-bar"><div class="grow-bar__fill" style="width:50%"></div></div>
+          </div>
+          <div class="crop-plot">
+            <div class="crop-plot__head"><span class="ic" data-i="carrot" style="color:var(--color-success);--ic:18px"></span><span class="crop-plot__name">后院菜畦 · (0,2) · 2×1</span><span class="ic status-icon dry" data-i="water"></span><span class="ic status-icon fertilized" data-i="fertilize"></span></div>
+            <div class="row--between row" style="margin-bottom:4px"><span class="faint" style="font-size:var(--font-size-2xs)">紫胡萝卜 · 待浇水</span><span class="faint" style="font-size:var(--font-size-2xs)">1 / 3 天</span></div>
+            <div class="grow-bar"><div class="grow-bar__fill" style="width:33%"></div></div>
+          </div>
+          <div class="crop-plot">
+            <div class="crop-plot__head"><span class="ic" data-i="cabbage" style="color:var(--color-success);--ic:18px"></span><span class="crop-plot__name">林缘隙地 · (3,-1) · 1×1</span><span class="ic status-icon watered" data-i="water"></span><span class="ic status-icon fertilized" data-i="fertilize"></span></div>
+            <div class="row--between row" style="margin-bottom:4px"><span class="faint" style="font-size:var(--font-size-2xs)">霜叶菜 · 已浇水已施肥</span><span class="faint" style="font-size:var(--font-size-2xs)">3 / 3 天 · 可收</span></div>
+            <div class="grow-bar"><div class="grow-bar__fill" style="width:100%"></div></div>
+          </div>
+
+          <h3 class="panel-h">畜牧设施</h3>
+          <div class="livestock-card" style="margin-bottom:var(--space-2)">
+            <div class="row--between row" style="margin-bottom:var(--space-2)"><span class="serif" style="font-weight:600">林间鸡舍</span><span class="pill pill--green">健康 良好</span></div>
+            <div class="row--between row" style="margin-bottom:4px"><span class="faint" style="font-size:var(--font-size-2xs)">饲料倒计时</span><span class="faint" style="font-size:var(--font-size-2xs)">5 / 7 天</span></div>
+            <div class="grow-bar" style="margin-bottom:var(--space-2)"><div class="grow-bar__fill" style="width:71%;background:linear-gradient(90deg,var(--color-warning),var(--amber-bright))"></div></div>
+            <div class="row--between row" style="margin-bottom:4px"><span class="faint" style="font-size:var(--font-size-2xs)">产蛋倒计时</span><span class="faint" style="font-size:var(--font-size-2xs)">1 / 2 天</span></div>
+            <div class="grow-bar"><div class="grow-bar__fill" style="width:50%"></div></div>
+          </div>
+
+          <h3 class="panel-h">堆肥箱</h3>
+          <div class="compost-card">
+            <div class="row--between row" style="margin-bottom:var(--space-2)"><span class="serif" style="font-weight:600;display:flex;align-items:center;gap:6px"><span class="ic" data-i="fertilize" style="color:var(--color-success);--ic:18px"></span>堆肥箱</span><span class="pill pill--green">发酵中</span></div>
+            <div class="row--between row" style="margin-bottom:4px"><span class="faint" style="font-size:var(--font-size-2xs)">距下次产出</span><span class="faint" style="font-size:var(--font-size-2xs)">3 / 5 天</span></div>
+            <div class="grow-bar"><div class="grow-bar__fill" style="width:60%"></div></div>
+          </div>
+        </section>
+
+      </div>
+    </aside>
+  </div>
+
+  <!-- 吐司与粒子层 -->
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
+  <div class="burst-layer" id="burstLayer" aria-hidden="true"></div>
+
+  <!-- 模态根（动态注入） -->
+  <div class="overlay" id="modalRoot" aria-hidden="true"></div>
+
+  <script src="js/icons.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

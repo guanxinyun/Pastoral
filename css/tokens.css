@@ -1,0 +1,189 @@
+/* ============================================================
+   暮归旅店 · 设计令牌系统
+   美学：羊皮纸上的魔法墨水 —— 暖手账质感 + 微妙魔法光效
+   双主题：昼（羊皮纸）/ 夜（深靛蓝烛光）
+   ============================================================ */
+
+:root {
+  /* ---------- 色彩 · 昼（羊皮纸）默认主题 ---------- */
+  --parchment:        hsl(43 53% 91%);   /* #F5ECD7 羊皮纸米白 */
+  --parchment-deep:   hsl(40 48% 84%);   /* 略深的羊皮纸，用于面板分层 */
+  --parchment-edge:   hsl(36 40% 74%);   /* 翘边纸张的暗边 */
+  --ink-brown:        hsl(28 39% 17%);   /* #3C2A1A 暖棕墨色 */
+  --ink-brown-soft:   hsl(28 30% 30%);
+  --ink-green:        hsl(151 26% 24%);  /* #2D4A3E 墨绿 */
+  --amber:            hsl(39 56% 51%);   /* #C9943B 琥珀金 */
+  --amber-bright:     hsl(40 70% 60%);
+  --amber-glow:       hsl(40 80% 55% / 0.45);
+  --mint:             hsl(180 38% 64%);  /* #7EC8C8 薄荷蓝 */
+  --mint-soft:        hsl(180 30% 72%);
+  --ochre-red:        hsl(0 42% 38%);    /* #8B3A3A 暗红赭石 */
+  --ochre-red-soft:   hsl(0 38% 48%);
+
+  /* 语义映射 —— 组件只引用这些 */
+  --color-bg:          var(--parchment);
+  --color-bg-deep:     var(--parchment-deep);
+  --color-surface:     hsl(43 56% 94%);
+  --color-surface-raised: hsl(43 60% 96%);
+  --color-edge:        var(--parchment-edge);
+  --color-border:      hsl(34 35% 68% / 0.55);
+  --color-border-strong: hsl(28 30% 45% / 0.5);
+  --color-text:        var(--ink-brown);
+  --color-text-soft:   var(--ink-brown-soft);
+  --color-text-muted:  hsl(28 18% 42%);
+  --color-text-faint:  hsl(28 14% 55%);
+  --color-primary:     var(--amber);
+  --color-primary-hover: var(--amber-bright);
+  --color-accent:      var(--mint);
+  --color-success:     hsl(151 34% 38%);
+  --color-warning:     hsl(36 65% 48%);
+  --color-danger:      var(--ochre-red);
+  --color-magic:       var(--mint);
+
+  /* 雷达图六维配色 */
+  --dim-food:    hsl(20 70% 52%);    /* 美食 · 琥珀橙 */
+  --dim-lore:    hsl(280 45% 58%);   /* 知识 · 紫 */
+  --dim-comfort: hsl(190 45% 55%);   /* 舒适 · 青 */
+  --dim-adventure: hsl(110 40% 45%); /* 冒险 · 草绿 */
+  --dim-culture: hsl(340 50% 56%);   /* 文化 · 玫红 */
+  --dim-nature:  hsl(85 38% 48%);    /* 自然 · 叶绿 */
+
+  /* ---------- 字体 ---------- */
+  --font-serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong",
+                "霞鹜文楷", "LXGW WenKai", "STKaiti", "KaiTi", serif;
+  --font-kai:   "霞鹜文楷", "LXGW WenKai", "STKaiti", "KaiTi", "Source Han Serif SC", serif;
+  --font-sans:  "Source Han Sans SC", "Noto Sans SC", "HarmonyOS Sans SC",
+                "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono:  "Cascadia Code", "JetBrains Mono", "Fira Code", Consolas, monospace;
+
+  --font-size-2xs: 0.6875rem;
+  --font-size-xs:  0.75rem;
+  --font-size-sm:  0.8125rem;
+  --font-size-base: 0.9375rem;
+  --font-size-md:  1.0625rem;
+  --font-size-lg:  1.25rem;
+  --font-size-xl:  1.5rem;
+  --font-size-2xl: 1.875rem;
+  --font-size-3xl: 2.5rem;
+
+  /* ---------- 间距 ---------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ---------- 圆角 ---------- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+  --radius-full: 9999px;
+
+  /* ---------- 动效 ---------- */
+  --ease-ink:     cubic-bezier(0.4, 0, 0.2, 1);   /* 墨水渗透 */
+  --ease-page:    cubic-bezier(0.16, 1, 0.3, 1);   /* 翻书 */
+  --ease-soft:    cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t-fast: 150ms;
+  --t-base: 240ms;
+  --t-slow: 360ms;
+  --t-slower: 520ms;
+
+  /* ---------- 阴影 · 翘边纸张 ---------- */
+  --shadow-paper: 0 1px 1px hsl(28 30% 20% / 0.06),
+                  0 2px 4px hsl(28 30% 20% / 0.08),
+                  0 6px 14px hsl(28 30% 20% / 0.07);
+  --shadow-raised: 0 1px 2px hsl(28 30% 20% / 0.08),
+                   0 6px 12px hsl(28 30% 20% / 0.1),
+                   0 14px 30px hsl(28 30% 20% / 0.1);
+  --shadow-float:  0 4px 10px hsl(28 30% 20% / 0.12),
+                   0 18px 40px hsl(28 30% 20% / 0.18),
+                   0 30px 70px hsl(28 30% 20% / 0.16);
+  --shadow-inset: inset 0 1px 3px hsl(28 30% 20% / 0.12);
+  --shadow-glow-amber: 0 0 0 1px hsl(40 80% 55% / 0.25),
+                       0 0 16px 2px hsl(40 80% 55% / 0.22);
+  --shadow-glow-mint:  0 0 0 1px hsl(180 50% 60% / 0.3),
+                       0 0 16px 2px hsl(180 50% 60% / 0.22);
+
+  /* ---------- 纹理（内联 SVG，无外部依赖） ---------- */
+  /* 亚麻纤维细纹 */
+  --texture-linen:
+    repeating-linear-gradient(117deg,
+      hsl(28 20% 30% / 0.018) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(27deg,
+      hsl(28 20% 30% / 0.014) 0 1px, transparent 1px 4px);
+  /* 羊皮纸颗粒噪点 */
+  --texture-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  /* 暖光晕 + 旧纸渐褪 */
+  --vignette:
+    radial-gradient(120% 90% at 50% 0%, transparent 55%, hsl(28 30% 20% / 0.08) 100%),
+    radial-gradient(90% 70% at 50% 110%, transparent 60%, hsl(28 30% 20% / 0.06) 100%);
+
+  /* HUD 尺寸 */
+  --hud-top-h: 62px;
+  --hud-bottom-h: 74px;
+  --rail-w: 64px;
+  --rail-right-w: 72px;
+  --drawer-w: 440px;
+}
+
+/* ---------- 夜（深靛蓝烛光）主题 ---------- */
+[data-theme="night"] {
+  --parchment:        hsl(229 38% 16%);   /* #1A1F3A 深靛蓝 */
+  --parchment-deep:   hsl(229 36% 12%);
+  --parchment-edge:   hsl(229 30% 22%);
+  --ink-brown:        hsl(40 40% 88%);    /* 夜间正文转暖白 */
+  --ink-brown-soft:   hsl(40 24% 74%);
+  --ink-green:        hsl(151 30% 55%);
+
+  --color-bg:          var(--parchment);
+  --color-bg-deep:     var(--parchment-deep);
+  --color-surface:     hsl(229 34% 19%);
+  --color-surface-raised: hsl(229 32% 22%);
+  --color-edge:        var(--parchment-edge);
+  --color-border:      hsl(229 24% 45% / 0.4);
+  --color-border-strong: hsl(229 30% 55% / 0.45);
+  --color-text:        var(--ink-brown);
+  --color-text-soft:   var(--ink-brown-soft);
+  --color-text-muted:  hsl(40 16% 64%);
+  --color-text-faint:  hsl(40 12% 52%);
+  --color-primary:     hsl(40 70% 60%);
+  --color-primary-hover: hsl(40 80% 68%);
+  --color-accent:      hsl(180 42% 66%);
+  --color-success:     hsl(151 36% 56%);
+  --color-warning:     hsl(36 70% 60%);
+  --color-danger:      hsl(0 48% 58%);
+  --color-magic:       hsl(180 48% 68%);
+
+  --texture-linen:
+    repeating-linear-gradient(117deg,
+      hsl(220 40% 80% / 0.025) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(27deg,
+      hsl(220 40% 80% / 0.02) 0 1px, transparent 1px 4px);
+  --vignette:
+    radial-gradient(120% 90% at 50% 0%, transparent 50%, hsl(229 50% 4% / 0.5) 100%),
+    radial-gradient(80% 60% at 50% 110%, transparent 55%, hsl(229 50% 4% / 0.45) 100%);
+
+  --shadow-paper: 0 1px 2px hsl(229 60% 3% / 0.4),
+                  0 4px 10px hsl(229 60% 3% / 0.4);
+  --shadow-raised: 0 2px 6px hsl(229 60% 3% / 0.5),
+                   0 14px 32px hsl(229 60% 3% / 0.5);
+  --shadow-float:  0 8px 24px hsl(229 60% 3% / 0.6),
+                   0 28px 64px hsl(229 60% 3% / 0.6);
+  --shadow-glow-amber: 0 0 0 1px hsl(40 80% 55% / 0.35),
+                       0 0 22px 3px hsl(40 80% 55% / 0.28);
+  --shadow-glow-mint:  0 0 0 1px hsl(180 50% 60% / 0.4),
+                       0 0 22px 3px hsl(180 50% 60% / 0.3);
+}
+
+/* 减少动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  :root { --t-fast: 1ms; --t-base: 1ms; --t-slow: 1ms; --t-slower: 1ms; }
+}
