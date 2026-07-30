@@ -171,18 +171,30 @@
       layer.appendChild(s); setTimeout(() => s.remove(), 900);
     }
   }
-  /** 把意图写入酒馆输入框（/setinput），不在本地改状态 */
-  function triggerSlash(cmd) {
-    let ok = false;
+  /** 执行 slash 命令；优先用酒馆原生 triggerSlash（勿覆盖同名全局） */
+  function runSlash(cmd) {
     try {
-      if (typeof executeSlashCommandsWithOptions === 'function') { executeSlashCommandsWithOptions(cmd); ok = true; }
-      else if (typeof executeSlashCommands === 'function') { executeSlashCommands(cmd); ok = true; }
-    } catch (e) { ok = false; }
-    const intent = cmd.replace(/^\/setinput\s*/, '');
-    toast('info', ok ? '已写入输入框' : '意图', intent);
-    return ok;
+      if (typeof triggerSlash === 'function') return triggerSlash(cmd);
+      if (typeof executeSlashCommandsWithOptions === 'function') return executeSlashCommandsWithOptions(cmd);
+      if (typeof executeSlashCommands === 'function') return executeSlashCommands(cmd);
+    } catch (e) { /* ignore */ }
+    return null;
   }
-  window.toast = toast; window.burst = burst; window.triggerSlash = triggerSlash;
+
+  /** 把玩家意图填进卡内 composer（原生输入框已被接管隐藏），由玩家确认后发送 */
+  function intend(text) {
+    const t = String(text || '').trim();
+    if (!t) return false;
+    if (window.Chat && Chat.compose(t)) {
+      toast('info', '已填入输入框', t);
+      return true;
+    }
+    runSlash('/setinput ' + t);
+    toast('info', '意图', t);
+    return false;
+  }
+
+  window.toast = toast; window.burst = burst; window.runSlash = runSlash; window.intend = intend;
 
   /* ---------- 六维雷达 ---------- */
   function polar(cx, cy, r, deg) {
@@ -402,7 +414,7 @@
     const search = $('#invSearch', container);
     if (search) search.addEventListener('input', () => { UI.invSearch = search.value; renderInventory(container, Render.state); });
     $$('.recipe', container).forEach((r) => r.addEventListener('click', () => {
-      triggerSlash(`/setinput 烹制：${r.dataset.recipe}`);
+      intend(`烹制：${r.dataset.recipe}`);
       burst(window.innerWidth / 2, window.innerHeight * 0.7);
     }));
   }
@@ -469,7 +481,7 @@
     }));
     $$('[data-build-btn]', container).forEach((btn) => btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      triggerSlash(`/setinput 建造：${btn.dataset.buildBtn}`);
+      intend(`建造：${btn.dataset.buildBtn}`);
       burst(window.innerWidth / 2, window.innerHeight * 0.7);
     }));
   }
@@ -508,7 +520,7 @@
     });
     $$('.map-cell.fog.adjacent', container).forEach((cell) => {
       cell.addEventListener('click', () => {
-        triggerSlash(`/setinput 探索：(${cell.dataset.x},${cell.dataset.y})`);
+        intend(`探索：(${cell.dataset.x},${cell.dataset.y})`);
         burst(window.innerWidth / 2, window.innerHeight * 0.7);
       });
     });
@@ -535,7 +547,7 @@
       </div>`;
     Icon.render(box);
     $('[data-gather]', box).addEventListener('click', () => {
-      triggerSlash(`/setinput 采集：(${x},${y})`);
+      intend(`采集：(${x},${y})`);
       burst(window.innerWidth / 2, window.innerHeight * 0.7);
     });
   }
@@ -701,10 +713,10 @@
     container.innerHTML = html;
     Icon.render(container);
     // 农事动作（各自指令不同）
-    $$('[data-water]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 浇水：(${b.dataset.water})`); }));
-    $$('[data-harvest]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 收获：(${b.dataset.harvest})`); }));
-    $$('[data-till]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 开垦：(${b.dataset.till})`); }));
-    $$('[data-plant]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 播种：(${b.dataset.plant})`); }));
+    $$('[data-water]', container).forEach((b) => b.addEventListener('click', () => { intend(`浇水：(${b.dataset.water})`); }));
+    $$('[data-harvest]', container).forEach((b) => b.addEventListener('click', () => { intend(`收获：(${b.dataset.harvest})`); }));
+    $$('[data-till]', container).forEach((b) => b.addEventListener('click', () => { intend(`开垦：(${b.dataset.till})`); }));
+    $$('[data-plant]', container).forEach((b) => b.addEventListener('click', () => { intend(`播种：(${b.dataset.plant})`); }));
   }
 
   /* ============================================================
@@ -749,14 +761,6 @@
       try { fn(container, s); } catch (e) { console.error('panel ' + name, e); }
     },
 
-    narrative(rawText) {
-      const el = document.getElementById('narrative');
-      if (!el) return;
-      const html = Extract.extractCleanContent(rawText);
-      if (html && html.trim()) el.innerHTML = html;
-      else el.innerHTML = '<p class="muted">展卷静待故事浮现……</p>';
-    },
-
     choices(rawText) {
       const box = document.getElementById('choices');
       if (!box) return;
@@ -770,7 +774,8 @@
         </button>`;
       }).join('');
       $$('.choice', box).forEach((b) => b.addEventListener('click', () => {
-        triggerSlash(`/setinput ${b.dataset.plain}`);
+        // 填入卡内 composer，玩家可改后再发送
+        intend(b.dataset.plain);
         burst(window.innerWidth / 2, window.innerHeight * 0.7);
       }));
     }

@@ -355,7 +355,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   z-index: 1;
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: stretch;   /* 双页等高 */
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
@@ -364,12 +364,35 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   gap: 0;
 }
 
+/* ===== 沉浸/全屏：书页铺满视口，左右完全等分等高 ===== */
+body.is-immersive { margin: 0; }
+body.is-immersive .book {
+  max-width: none;
+  height: 100vh;
+  padding: 12px;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+body.is-immersive .page {
+  /* 强制等宽：不按内容伸缩，各占一半 */
+  flex: 1 1 0;
+  width: 50%;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+/* 窄屏全屏时仍允许上下堆叠，避免双页挤成条 */
+@media (max-width: 899px) {
+  body.is-immersive .book { flex-wrap: wrap; height: auto; min-height: 100vh; }
+  body.is-immersive .page { width: 100%; flex: 1 1 100%; height: auto; }
+}
+
 /* 书脊：宽屏时居中分隔 */
 .book__spine {
   display: none;
 }
 @media (min-width: 900px) {
-  .book { gap: 0; padding: 18px; }
+  .book { gap: 0; padding: 18px; flex-wrap: nowrap; }
   .book__spine {
     display: block;
     flex: 0 0 14px;
@@ -400,9 +423,9 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   .book__spine::after { bottom: 20px; }
 }
 
-/* 页：羊皮纸卡片 */
+/* 页：羊皮纸卡片 —— 窄屏整行堆叠，宽屏严格等分（见下方 900px 断点） */
 .page {
-  flex: 1 1 420px;
+  flex: 1 1 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -414,6 +437,12 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   box-shadow: var(--shadow-paper);
   position: relative;
 }
+/* 宽屏：双页严格等宽等高，各占一半，不按内容多少伸缩
+   （必须写在 .page 基础规则之后，否则同优先级下被 flex:1 1 100% 覆盖） */
+@media (min-width: 900px) {
+  .page { flex: 1 1 0; width: 50%; }
+}
+
 /* 翘边暗角 */
 .page::before {
   content: "";
@@ -469,7 +498,20 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 }
 
 /* 面板区 */
-.panels { flex: 1; }
+.panels { flex: 1; min-height: 0; }
+/* 全屏时左页内容超高则面板区内部滚动，不撑破书页 */
+body.is-immersive .panels {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+body.is-immersive .panels::-webkit-scrollbar { width: 8px; }
+body.is-immersive .panels::-webkit-scrollbar-track { background: var(--color-bg-deep); border-radius: var(--radius-full); }
+body.is-immersive .panels::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--color-border-strong), var(--color-border));
+  border-radius: var(--radius-full);
+}
+body.is-immersive .panels::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
 .panel { display: none; }
 .panel.is-active {
   display: block;
@@ -538,19 +580,191 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-height: 0;
 }
-.journal__narrative {
+
+/* ===== 全局对话流（伪同层：0 楼渲染所有楼层） ===== */
+.journal__stream {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 6px;
+  /* 非全屏时不自撑高过分；全屏时占满剩余高度并内部滚动 */
+  max-height: 60vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+body.is-immersive .journal__stream {
+  flex: 1;
+  max-height: none;
+  min-height: 0;
+}
+.journal__stream::-webkit-scrollbar { width: 8px; }
+.journal__stream::-webkit-scrollbar-track { background: var(--color-bg-deep); border-radius: var(--radius-full); }
+.journal__stream::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--color-border-strong), var(--color-border));
+  border-radius: var(--radius-full);
+}
+.journal__stream::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+
+/* 气泡 */
+.bub {
+  position: relative;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
   font-family: var(--font-serif);
   font-size: var(--font-size-base);
   line-height: 1.95;
   color: var(--color-text);
-  padding: 4px 6px;
-  /* 保留 AI 内联美化，不覆盖 */
+  transition: border-color var(--t-base) var(--ease-soft), box-shadow var(--t-base) var(--ease-soft);
+  animation: inkBleed var(--t-slow) var(--ease-ink) both;
 }
-.journal__narrative p { margin: 0 0 0.9em; }
-.journal__narrative :last-child { margin-bottom: 0; }
-.journal__narrative blockquote { border-left: 3px solid var(--color-border-strong); padding-left: 12px; margin: 0.6em 0; font-style: italic; color: var(--color-text-soft); }
-.journal__narrative .hl, .journal__narrative [style*="color"] { /* keep inline */ }
+.bub--ai {
+  background: linear-gradient(165deg, hsl(40 40% 88% / 0.06), transparent);
+  border-left: 2px solid var(--color-border-strong);
+}
+.bub--user {
+  background: linear-gradient(165deg, var(--color-surface-raised), var(--color-surface));
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-paper);
+  margin-left: 8%;
+  font-family: var(--font-kai);
+  font-size: var(--font-size-sm);
+}
+.bub--system { opacity: 0.72; font-size: var(--font-size-sm); font-family: var(--font-kai); }
+.bub.is-hidden-msg { opacity: 0.45; }
+.bub:hover { border-color: var(--color-primary); }
+.bub__meta {
+  display: flex; align-items: baseline; gap: 8px;
+  margin-bottom: 4px;
+  font-family: var(--font-kai);
+  font-size: var(--font-size-2xs);
+  color: var(--color-text-muted);
+}
+.bub__who { color: var(--color-primary); }
+.bub__id { font-family: var(--font-mono); opacity: 0.5; margin-left: auto; }
+.bub__body p { margin: 0 0 0.9em; }
+.bub__body :last-child { margin-bottom: 0; }
+.bub__body blockquote {
+  border-left: 3px solid var(--color-border-strong);
+  padding-left: 12px; margin: 0.6em 0;
+  font-style: italic; color: var(--color-text-soft);
+}
+
+/* 打字指示 */
+.bub--typing { animation: none; }
+.typing { display: inline-flex; gap: 5px; align-items: center; }
+.typing i {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--color-primary);
+  animation: typingDot 1.2s ease-in-out infinite;
+}
+.typing i:nth-child(2) { animation-delay: 0.16s; }
+.typing i:nth-child(3) { animation-delay: 0.32s; }
+
+/* 原地编辑 */
+.bub.is-editing { border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); }
+.bub-edit {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-deep);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  line-height: 1.7;
+  resize: vertical;
+  transition: border-color var(--t-base) var(--ease-soft), box-shadow var(--t-base) var(--ease-soft);
+}
+.bub-edit:focus { outline: none; border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); }
+.bub-edit__bar { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
+
+/* 气泡右键菜单 */
+.bub-menu {
+  position: fixed;
+  z-index: 300;
+  min-width: 168px;
+  padding: 5px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-strong);
+  box-shadow: var(--shadow-float);
+  animation: inkBleed var(--t-fast) var(--ease-ink) both;
+}
+.bub-menu__item {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-soft);
+  font-family: var(--font-kai);
+  font-size: var(--font-size-xs);
+  text-align: left;
+  transition: all var(--t-fast) var(--ease-soft);
+}
+.bub-menu__item .ic { --ic: 15px; flex: none; }
+.bub-menu__item:hover { background: var(--color-surface); color: var(--color-primary); }
+.bub-menu__item.is-danger:hover { color: var(--color-danger); }
+.bub-menu__item.is-danger[data-armed="1"] {
+  color: var(--color-danger);
+  background: hsl(0 60% 50% / 0.12);
+}
+.bub-menu__note {
+  padding: 7px 10px;
+  font-family: var(--font-kai);
+  font-size: var(--font-size-2xs);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* ===== composer：接管原生输入框 ===== */
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+.composer__input {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-deep);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-inset);
+  color: var(--color-text);
+  font-family: var(--font-kai);
+  font-size: var(--font-size-sm);
+  line-height: 1.7;
+  resize: none;
+  overflow-y: auto;
+  max-height: 160px;
+  transition: border-color var(--t-base) var(--ease-soft), box-shadow var(--t-base) var(--ease-soft);
+}
+.composer__input::placeholder { color: var(--color-text-muted); opacity: 0.75; }
+.composer__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-glow-amber), var(--shadow-inset);
+}
+.composer__send {
+  flex: none;
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-md);
+  color: hsl(40 60% 96%);
+  background: radial-gradient(circle at 35% 30%, hsl(229 38% 30%), hsl(229 45% 18%));
+  border: 1px solid hsl(229 40% 40% / 0.6);
+  box-shadow: var(--shadow-paper);
+  transition: all var(--t-base) var(--ease-soft);
+}
+.composer__send:hover { color: var(--color-primary); box-shadow: var(--shadow-glow-amber); transform: translateY(-2px); }
+.composer__send:active { transform: translateY(0); }
 
 /* 选项 */
 .journal__choices { display: flex; flex-direction: column; gap: 8px; }
@@ -1017,6 +1231,12 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 /* 金边流光（特殊访客） */
 @keyframes goldShimmer { 0% { background-position: -150% 0; } 100% { background-position: 250% 0; } }
 
+/* 生成中打字点 */
+@keyframes typingDot {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50%      { opacity: 1;   transform: translateY(-3px); }
+}
+
 /* 受 reduced-motion 保护 */
 @media (prefers-reduced-motion: no-preference) {
   .book { animation: bookIntro var(--t-slow) var(--ease-page) both; }
@@ -1061,9 +1281,10 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
         <section class="panel" data-panel="farm"></section>
       </div>
 
-      <!-- 左页页脚：主题切换 -->
+      <!-- 左页页脚：主题切换 / 全屏 / 设置 -->
       <div class="page__foot">
         <button class="mini-btn" id="themeToggle" data-tip="切换昼夜" aria-label="切换昼夜"><span class="ic" data-i="moon"></span></button>
+        <button class="mini-btn" id="fullscreenToggle" data-tip="进入全屏" aria-label="进入全屏" aria-pressed="false"><span class="ic" data-i="expand"></span></button>
         <button class="mini-btn" id="settingsBtn" data-tip="设置" aria-label="设置"><span class="ic" data-i="settings"></span></button>
       </div>
     </section>
@@ -1097,12 +1318,19 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
         </div>
       </header>
 
-      <!-- 正文 + 选项 -->
+      <!-- 全局对话流（伪同层：0 楼渲染全部楼层） + 选项 + 输入 -->
       <div class="journal" id="journal">
-        <article class="journal__narrative" id="narrative" aria-live="polite">
+        <div class="journal__stream" id="stream" aria-live="polite" aria-label="对话记录">
           <p class="muted">正在展卷……</p>
-        </article>
+        </div>
         <div class="journal__choices" id="choices"></div>
+        <form class="composer" id="composer" autocomplete="off">
+          <textarea class="composer__input" id="composerInput" rows="1"
+            placeholder="写下你的行动……（Enter 发送 · Shift+Enter 换行）" aria-label="输入行动"></textarea>
+          <button class="composer__send" id="composerSend" type="button" aria-label="发送" data-tip="发送">
+            <span class="ic" data-i="send"></span>
+          </button>
+        </form>
       </div>
 
       <!-- 底栏：精力 / 压力 / 行动 -->
@@ -1139,6 +1367,221 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   <div class="burst-layer" id="burstLayer" aria-hidden="true"></div>
 
   <script>
+/* === host.js === */
+/* ============================================================
+   伪同层宿主层（Host）
+   1) 唯一宿主判定：仅 0 楼卡片渲染；非 0 楼自我销毁释放性能
+   2) 全局样式绝对接管：跨域注入 CSS 隐藏原生输入框 + 0 楼以外所有气泡
+   3) 沉浸视口：全屏进入/退出（iframe 钉满视口 + 原生 Fullscreen API）
+   本文件必须最先执行（build.js 的 JS 顺序里排第一）
+   ============================================================ */
+const Host = (function () {
+  'use strict';
+
+  const STYLE_ID = 'pastoral-host-takeover';
+  const IMMERSIVE_CLASS = 'pastoral-immersive';
+
+  /** 当前楼层号；非酒馆环境返回 null（独立预览） */
+  function messageId() {
+    try {
+      if (typeof getCurrentMessageId === 'function') return getCurrentMessageId();
+    } catch (e) { /* ignore */ }
+    return null;
+  }
+
+  const inTavern = messageId() !== null;
+  const floor = messageId();
+  /** 唯一宿主：0 楼，或独立预览（无酒馆 API） */
+  const isHost = !inTavern || floor === 0;
+
+  /** 非 0 楼：清空 DOM 自我销毁，释放轮询与渲染开销 */
+  function selfDestruct() {
+    try {
+      document.body.innerHTML = '';
+      document.body.style.display = 'none';
+    } catch (e) { /* ignore */ }
+  }
+
+  /* ---------- 跨域样式接管 ---------- */
+
+  /** 取父窗口 document；跨域受限则返回 null */
+  function parentDoc() {
+    try {
+      if (window.parent === window) return null;
+      const d = window.parent.document;
+      return d && d.body ? d : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** 本卡片所在的 iframe 元素 */
+  function selfFrame() {
+    const d = parentDoc();
+    if (!d) return null;
+    try {
+      const frames = d.querySelectorAll('iframe');
+      for (const f of frames) if (f.contentWindow === window) return f;
+    } catch (e) { /* ignore */ }
+    return null;
+  }
+
+  /**
+   * 注入接管 CSS：
+   * - 永远只显示 0 楼：#chat > .mes:not([mesid="0"]) 隐藏
+   * - 隐藏 0 楼气泡自身的头像/名字/操作条，只留我们的 iframe
+   * - 隐藏原生底部输入区
+   */
+  function injectTakeover() {
+    const d = parentDoc();
+    if (!d) return false;
+    if (d.getElementById(STYLE_ID)) return true;
+
+    const css = `
+/* ===== 暮归旅店 · 伪同层接管（由 0 楼卡片注入） ===== */
+#chat > .mes:not([mesid="0"]) { display: none !important; }
+
+/* 0 楼气泡：去壳，只留前端卡 */
+#chat > .mes[mesid="0"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+#chat > .mes[mesid="0"] .mesAvatarWrapper,
+#chat > .mes[mesid="0"] .ch_name,
+#chat > .mes[mesid="0"] .mes_buttons,
+#chat > .mes[mesid="0"] .mesIDDisplay,
+#chat > .mes[mesid="0"] .mes_timer,
+#chat > .mes[mesid="0"] .tokenCounterDisplay,
+#chat > .mes[mesid="0"] .swipe_left,
+#chat > .mes[mesid="0"] .swipe_right { display: none !important; }
+#chat > .mes[mesid="0"] .mes_block { margin: 0 !important; padding: 0 !important; }
+#chat > .mes[mesid="0"] .mes_text { padding: 0 !important; }
+
+/* 原生输入区：完全隐藏，由卡内 composer 接管 */
+#send_form, #form_sheld { display: none !important; }
+#chat { padding-bottom: 0 !important; }
+
+/* 沉浸模式：iframe 钉满视口 */
+iframe.${IMMERSIVE_CLASS} {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  z-index: 2147483600 !important;
+  background: transparent !important;
+}
+body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
+`;
+    try {
+      const style = d.createElement('style');
+      style.id = STYLE_ID;
+      style.textContent = css;
+      (d.head || d.documentElement).appendChild(style);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /* ---------- 全屏 / 沉浸 ---------- */
+
+  let immersive = false;
+
+  function nativeFullscreenActive() {
+    const d = parentDoc() || document;
+    return !!(d.fullscreenElement || d.webkitFullscreenElement);
+  }
+
+  function requestNativeFullscreen() {
+    // 优先让父窗口整页进入全屏（iframe 无 allowfullscreen 时也有效）
+    const d = parentDoc();
+    const el = d ? d.documentElement : document.documentElement;
+    try {
+      const fn = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (fn) { const p = fn.call(el); if (p && p.catch) p.catch(() => {}); return true; }
+    } catch (e) { /* ignore */ }
+    return false;
+  }
+
+  function exitNativeFullscreen() {
+    const d = parentDoc() || document;
+    try {
+      const fn = d.exitFullscreen || d.webkitExitFullscreen;
+      if (fn && (d.fullscreenElement || d.webkitFullscreenElement)) {
+        const p = fn.call(d); if (p && p.catch) p.catch(() => {});
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  /** 进入/退出沉浸（全屏）；返回最终状态 */
+  function setImmersive(on) {
+    immersive = !!on;
+    const frame = selfFrame();
+    const d = parentDoc();
+
+    if (frame) frame.classList.toggle(IMMERSIVE_CLASS, immersive);
+    if (d && d.body) d.body.classList.toggle(IMMERSIVE_CLASS + '-lock', immersive);
+    document.body.classList.toggle('is-immersive', immersive);
+
+    if (immersive) requestNativeFullscreen();
+    else exitNativeFullscreen();
+
+    window.dispatchEvent(new CustomEvent('pastoral:immersive', { detail: { on: immersive } }));
+    return immersive;
+  }
+
+  function toggleImmersive() { return setImmersive(!immersive); }
+
+  /** 监听外部 Esc 退出原生全屏，同步收起钉满状态 */
+  function watchFullscreenExit() {
+    const d = parentDoc() || document;
+    const onChange = () => {
+      if (immersive && !nativeFullscreenActive()) setImmersive(false);
+    };
+    try {
+      d.addEventListener('fullscreenchange', onChange);
+      d.addEventListener('webkitfullscreenchange', onChange);
+    } catch (e) { /* ignore */ }
+  }
+
+  /* ---------- 初始化 ---------- */
+
+  function init() {
+    if (!isHost) { selfDestruct(); return false; }
+    if (inTavern) {
+      injectTakeover();
+      // 酒馆可能在切换聊天后重建 DOM，补注一次
+      setTimeout(injectTakeover, 1500);
+      watchFullscreenExit();
+      document.body.classList.add('in-tavern');
+    } else {
+      document.body.classList.add('standalone');
+    }
+    return true;
+  }
+
+  return {
+    init,
+    isHost,
+    inTavern,
+    floor,
+    toggleImmersive,
+    setImmersive,
+    get immersive() { return immersive; },
+    injectTakeover
+  };
+})();
+window.Host = Host;
+
+
 /* === icons.js === */
 /* ============================================================
    暮归旅店 · 手绘线稿图标库
@@ -1228,7 +1671,15 @@ const ICONS = {
 
   /* ---------- 作物 ---------- */
   carrot:   '<path d="M12 21 9 8h6z"/><path d="M12 8c-1-2 0-4 2-5-1 2 0 3 1 4M12 8c1-2 3-2 4-1-2 0-2 2-2 3"/>',
-  cabbage:  '<circle cx="12" cy="13" r="5.5"/><path d="M12 7.5c-2 0-3 2-3 4M12 7.5c2 0 3 2 3 4M8 11.5c-2 1-2 3-1 4M16 11.5c2 1 2 3 1 4"/>'
+  cabbage:  '<circle cx="12" cy="13" r="5.5"/><path d="M12 7.5c-2 0-3 2-3 4M12 7.5c2 0 3 2 3 4M8 11.5c-2 1-2 3-1 4M16 11.5c2 1 2 3 1 4"/>',
+
+  /* ---------- 伪同层 / 视口 ---------- */
+  expand:   '<path d="M9.5 4.5H4.5V9.5"/><path d="M14.5 4.5h5V9.5"/><path d="M4.5 14.5v5h5"/><path d="M19.5 14.5v5h-5"/>',
+  compress: '<path d="M4.5 9.5h5v-5"/><path d="M19.5 9.5h-5v-5"/><path d="M4.5 14.5h5v5"/><path d="M19.5 14.5h-5v5"/>',
+  send:     '<path d="M4 12 20.5 4.5 13 21l-2.3-6.7z"/><path d="M10.7 14.3 20.5 4.5"/>',
+  pencil:   '<path d="M4.5 19.5h4l10-10-4-4-10 10z"/><path d="M14.5 5.5l4 4"/><path d="M4.5 19.5 6 15.5"/>',
+  copy:     '<rect x="9" y="9" width="10.5" height="10.5" rx="1.8"/><path d="M15 6.2A1.7 1.7 0 0 0 13.3 4.5H6.2A1.7 1.7 0 0 0 4.5 6.2v7.1A1.7 1.7 0 0 0 6.2 15"/>',
+  trash:    '<path d="M5 7h14"/><path d="M6.5 7 7.5 20h9L17.5 7"/><path d="M10 7V4.8h4V7"/><path d="M10.5 10.5v6M13.5 10.5v6"/>'
 };
 
 const Icon = {
@@ -1523,7 +1974,7 @@ window.Extract = Extract;
 /* ============================================================
    MVU 读取与轮询
    - waitGlobalInitialized('Mvu') 后用 Mvu.getMvuData 取 stat_data
-   - 1s 轮询；rawText 与 stat_data 均未变则跳过
+   - 伪同层：UI 固定在 0 楼，但属性变量永远读【最新一楼】
    - API 不可用（独立预览）回退 SAMPLE_STATE
    ============================================================ */
 const MVU = {
@@ -1540,11 +1991,12 @@ const MVU = {
     }
   },
 
-  /** 取当前楼层 stat_data；不可用则回退样例 */
+  /** 取【最新一楼】stat_data；不可用则回退样例 */
   getState() {
     try {
-      if (this.ready && typeof Mvu !== 'undefined' && typeof getCurrentMessageId === 'function') {
-        const id = getCurrentMessageId();
+      if (this.ready && typeof Mvu !== 'undefined') {
+        // 数据与视口剥离：0 楼渲染，变量永远取最新一楼
+        const id = (typeof getLastMessageId === 'function') ? getLastMessageId() : 'latest';
         const data = Mvu.getMvuData({ type: 'message', message_id: id });
         if (data && data.stat_data) return data.stat_data;
       }
@@ -1553,10 +2005,408 @@ const MVU = {
   },
 
   isLive() {
-    return this.ready && typeof Mvu !== 'undefined' && typeof getCurrentMessageId === 'function';
+    return this.ready && typeof Mvu !== 'undefined' && typeof getLastMessageId === 'function';
   }
 };
 window.MVU = MVU;
+
+
+/* === chat.js === */
+/* ============================================================
+   全局消息接管（Chat）
+   - 0 楼宿主用 getChatMessages('0-' + lastMessageId) 抓取全局对话
+   - Hash 机制（消息数_最后一楼字符数_生成状态）避免无效 DOM 重绘
+   - 气泡右键菜单：编辑 / 复制 / 删除，直接操作对应 message_id
+   - composer：/send + /trigger 接管原生输入框
+   ============================================================ */
+const Chat = (function () {
+  'use strict';
+
+  const POLL_MS = 400;
+  const MAX_RAW = 60000; // 单楼原文超长（如 0 楼卡片源码）跳过渲染
+
+  let lastHash = null;
+  let timer = null;
+  let generating = false;
+  let messages = [];
+
+  /* ---------- 酒馆 API 探测 ---------- */
+  function hasApi() {
+    return typeof getChatMessages === 'function' && typeof getLastMessageId === 'function';
+  }
+
+  function lastId() {
+    try {
+      if (typeof getLastMessageId === 'function') return getLastMessageId();
+    } catch (e) { /* ignore */ }
+    return 0;
+  }
+
+  /* ---------- 生成状态 ---------- */
+  function bindGenerationEvents() {
+    if (typeof eventOn !== 'function' || typeof iframe_events === 'undefined') return;
+    try {
+      eventOn(iframe_events.GENERATION_STARTED, () => { generating = true; });
+      eventOn(iframe_events.GENERATION_ENDED, () => { generating = false; });
+      if (typeof tavern_events !== 'undefined') {
+        eventOn(tavern_events.GENERATION_STOPPED, () => { generating = false; });
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  /* ---------- 抓取全局对话 ---------- */
+  function fetchAll() {
+    if (!hasApi()) return [];
+    try {
+      const arr = getChatMessages('0-' + lastId());
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /** Hash：消息数_最后一楼字符数_生成状态 */
+  function hashOf(list) {
+    const n = list.length;
+    const tail = n ? (list[n - 1].message || '').length : 0;
+    return n + '_' + tail + '_' + (generating ? 1 : 0);
+  }
+
+  /* ---------- 渲染 ---------- */
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /** 单条消息 -> 气泡 DOM */
+  function bubble(msg) {
+    const role = msg.role === 'user' ? 'user' : (msg.role === 'system' ? 'system' : 'ai');
+    const el = document.createElement('article');
+    el.className = 'bub bub--' + role;
+    el.dataset.mid = String(msg.message_id);
+    if (msg.is_hidden) el.classList.add('is-hidden-msg');
+
+    const body = document.createElement('div');
+    body.className = 'bub__body';
+    const raw = msg.message || '';
+
+    if (role === 'ai') {
+      if (raw.length > MAX_RAW) {
+        body.innerHTML = '<p class="muted">（本楼内容为界面源码，已折叠）</p>';
+      } else {
+        const html = Extract.extractCleanContent(raw);
+        body.innerHTML = (html && html.trim())
+          ? html
+          : '<p class="muted">（本楼无可显示正文）</p>';
+      }
+    } else {
+      body.innerHTML = '<p>' + esc(raw).replace(/\n/g, '<br>') + '</p>';
+    }
+
+    const meta = document.createElement('div');
+    meta.className = 'bub__meta';
+    meta.innerHTML = '<span class="bub__who">' + esc(msg.name || (role === 'user' ? '我' : '旅店')) +
+      '</span><span class="bub__id">#' + msg.message_id + '</span>';
+
+    el.appendChild(meta);
+    el.appendChild(body);
+    return el;
+  }
+
+  function nearBottom(box) {
+    return box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+  }
+
+  function renderStream(list) {
+    const box = document.getElementById('stream');
+    if (!box) return;
+    const stick = nearBottom(box);
+    box.innerHTML = '';
+    list.forEach((m) => box.appendChild(bubble(m)));
+    if (generating) {
+      const t = document.createElement('div');
+      t.className = 'bub bub--ai bub--typing';
+      t.innerHTML = '<div class="bub__body"><span class="typing"><i></i><i></i><i></i></span></div>';
+      box.appendChild(t);
+    }
+    if (stick) box.scrollTop = box.scrollHeight;
+  }
+
+  /* ---------- 右键菜单：编辑 / 复制 / 删除 ---------- */
+  function closeMenu() {
+    const m = document.getElementById('bubMenu');
+    if (m) m.remove();
+  }
+
+  function openMenu(x, y, mid) {
+    closeMenu();
+    const isHostFloor = mid === 0;
+    const menu = document.createElement('div');
+    menu.className = 'bub-menu';
+    menu.id = 'bubMenu';
+    menu.setAttribute('role', 'menu');
+
+    const item = (icon, label, fn, danger) => {
+      const b = document.createElement('button');
+      b.className = 'bub-menu__item' + (danger ? ' is-danger' : '');
+      b.setAttribute('role', 'menuitem');
+      b.innerHTML = '<span class="ic" data-i="' + icon + '"></span><span>' + label + '</span>';
+      b.addEventListener('click', (e) => { e.stopPropagation(); fn(b); });
+      return b;
+    };
+
+    menu.appendChild(item('copy', '复制原文', () => { copyMsg(mid); closeMenu(); }));
+
+    if (!isHostFloor) {
+      menu.appendChild(item('pencil', '编辑本楼', () => { closeMenu(); editMsg(mid); }));
+      // 删除：两步确认（不可逆操作）
+      const del = item('trash', '删除本楼', (btn) => {
+        if (btn.dataset.armed === '1') { closeMenu(); deleteMsg(mid); return; }
+        btn.dataset.armed = '1';
+        btn.innerHTML = '<span class="ic" data-i="trash"></span><span>确认删除 #' + mid + '？</span>';
+        Icon.render(btn);
+      }, true);
+      menu.appendChild(del);
+    } else {
+      const note = document.createElement('div');
+      note.className = 'bub-menu__note';
+      note.textContent = '0 楼为界面宿主，不可编辑/删除';
+      menu.appendChild(note);
+    }
+
+    document.body.appendChild(menu);
+    Icon.render(menu);
+
+    // 视口内定位
+    const r = menu.getBoundingClientRect();
+    const px = Math.min(x, window.innerWidth - r.width - 8);
+    const py = Math.min(y, window.innerHeight - r.height - 8);
+    menu.style.left = Math.max(8, px) + 'px';
+    menu.style.top = Math.max(8, py) + 'px';
+
+    setTimeout(() => {
+      const off = (e) => {
+        if (!menu.contains(e.target)) { closeMenu(); document.removeEventListener('mousedown', off); }
+      };
+      document.addEventListener('mousedown', off);
+    }, 0);
+  }
+
+  function msgById(mid) {
+    return messages.find((m) => m.message_id === mid);
+  }
+
+  function copyMsg(mid) {
+    const m = msgById(mid);
+    if (!m) return;
+    const text = m.message || '';
+    const done = () => toast('success', '已复制', '第 ' + mid + ' 楼原文已进剪贴板。');
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
+      } else fallbackCopy(text, done);
+    } catch (e) { fallbackCopy(text, done); }
+  }
+
+  function fallbackCopy(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { toast('warn', '复制失败', '请手动选择文本。'); }
+    ta.remove();
+  }
+
+  /** 原地编辑：气泡换成 textarea，保存写回对应 message_id */
+  function editMsg(mid) {
+    const m = msgById(mid);
+    if (!m) return;
+    const el = document.querySelector('.bub[data-mid="' + mid + '"]');
+    if (!el) return;
+
+    el.classList.add('is-editing');
+    const body = el.querySelector('.bub__body');
+    if (!body) return;
+
+    const ta = document.createElement('textarea');
+    ta.className = 'bub-edit';
+    ta.value = m.message || '';
+    ta.rows = Math.min(18, Math.max(4, (m.message || '').split('\n').length + 1));
+
+    const bar = document.createElement('div');
+    bar.className = 'bub-edit__bar';
+    const save = document.createElement('button');
+    save.className = 'btn btn--sm';
+    save.textContent = '保存';
+    const cancel = document.createElement('button');
+    cancel.className = 'btn btn--ghost btn--sm';
+    cancel.textContent = '取消';
+    bar.appendChild(save);
+    bar.appendChild(cancel);
+
+    body.innerHTML = '';
+    body.appendChild(ta);
+    body.appendChild(bar);
+    ta.focus();
+
+    const restore = () => { el.classList.remove('is-editing'); lastHash = null; poll(); };
+    cancel.addEventListener('click', restore);
+    save.addEventListener('click', async () => {
+      const val = ta.value;
+      save.disabled = true;
+      try {
+        if (typeof setChatMessages === 'function') {
+          await setChatMessages([{ message_id: mid, message: val }], { refresh: 'none' });
+          toast('success', '已保存', '第 ' + mid + ' 楼已更新。');
+        } else {
+          toast('warn', '未连接酒馆', '独立预览无法写回。');
+        }
+      } catch (e) {
+        toast('error', '保存失败', String(e && e.message || e));
+      }
+      restore();
+    });
+  }
+
+  async function deleteMsg(mid) {
+    try {
+      if (typeof deleteChatMessages === 'function') {
+        await deleteChatMessages([mid]);
+        toast('success', '已删除', '第 ' + mid + ' 楼已移除。');
+      } else {
+        toast('warn', '未连接酒馆', '独立预览无法删除。');
+      }
+    } catch (e) {
+      toast('error', '删除失败', String(e && e.message || e));
+    }
+    lastHash = null;
+    poll();
+  }
+
+  /* ---------- composer：接管原生输入 ---------- */
+
+  /** 转义 slash 命令里的管道与花括号 */
+  function escSlash(s) {
+    return String(s).replace(/\|/g, '\\|').replace(/\{\{/g, '\\{\\{');
+  }
+
+  /** 执行 slash 命令（酒馆原生 triggerSlash 优先） */
+  function exec(cmd) {
+    try {
+      if (typeof triggerSlash === 'function') return triggerSlash(cmd);
+      if (typeof executeSlashCommandsWithOptions === 'function') return executeSlashCommandsWithOptions(cmd);
+      if (typeof executeSlashCommands === 'function') return executeSlashCommands(cmd);
+    } catch (e) { /* ignore */ }
+    return null;
+  }
+
+  /** 把文本填入卡内 composer（不发送） */
+  function compose(text) {
+    const ta = document.getElementById('composerInput');
+    if (!ta) return false;
+    ta.value = text;
+    ta.focus();
+    autoGrow(ta);
+    return true;
+  }
+
+  /** 发送：/send 入档 + /trigger 触发生成 */
+  async function send(text) {
+    const body = String(text || '').trim();
+    if (!body) return false;
+    if (!hasApi()) {
+      toast('warn', '未连接酒馆', body);
+      return false;
+    }
+    generating = true;
+    lastHash = null;
+    try {
+      await exec('/send ' + escSlash(body));
+      poll();
+      await exec('/trigger');
+    } catch (e) {
+      toast('error', '发送失败', String(e && e.message || e));
+    }
+    generating = false;
+    lastHash = null;
+    poll();
+    return true;
+  }
+
+  function autoGrow(ta) {
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(160, ta.scrollHeight) + 'px';
+  }
+
+  /* ---------- 轮询 ---------- */
+  function poll() {
+    if (!hasApi()) {
+      // 独立预览：用样例原文渲染单条气泡
+      if (lastHash === 'sample') return;
+      lastHash = 'sample';
+      messages = [{ message_id: 0, role: 'assistant', name: '暮归旅店', message: window.SAMPLE_RAWTEXT || '' }];
+      renderStream(messages);
+      window.dispatchEvent(new CustomEvent('pastoral:chat', { detail: { messages } }));
+      return;
+    }
+    const list = fetchAll();
+    const h = hashOf(list);
+    if (h === lastHash) return;
+    lastHash = h;
+    messages = list;
+    renderStream(list);
+    window.dispatchEvent(new CustomEvent('pastoral:chat', { detail: { messages: list } }));
+  }
+
+  /** 最新一楼原文（供选项提取） */
+  function latestRaw() {
+    if (!messages.length) return window.SAMPLE_RAWTEXT || '';
+    return messages[messages.length - 1].message || '';
+  }
+
+  function init() {
+    bindGenerationEvents();
+
+    const box = document.getElementById('stream');
+    if (box) {
+      box.addEventListener('contextmenu', (e) => {
+        const b = e.target.closest ? e.target.closest('.bub') : null;
+        if (!b || b.classList.contains('is-editing')) return;
+        e.preventDefault();
+        openMenu(e.clientX, e.clientY, Number(b.dataset.mid));
+      });
+    }
+
+    const ta = document.getElementById('composerInput');
+    const btn = document.getElementById('composerSend');
+    if (ta) {
+      ta.addEventListener('input', () => autoGrow(ta));
+      ta.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          const v = ta.value; ta.value = ''; autoGrow(ta);
+          send(v);
+        }
+      });
+    }
+    if (btn && ta) {
+      btn.addEventListener('click', () => {
+        const v = ta.value; ta.value = ''; autoGrow(ta);
+        send(v);
+      });
+    }
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+
+    poll();
+    if (!timer) timer = setInterval(poll, POLL_MS);
+  }
+
+  return { init, poll, send, compose, latestRaw, get messages() { return messages; }, get generating() { return generating; } };
+})();
+window.Chat = Chat;
 
 
 /* === render.js === */
@@ -1733,18 +2583,30 @@ window.MVU = MVU;
       layer.appendChild(s); setTimeout(() => s.remove(), 900);
     }
   }
-  /** 把意图写入酒馆输入框（/setinput），不在本地改状态 */
-  function triggerSlash(cmd) {
-    let ok = false;
+  /** 执行 slash 命令；优先用酒馆原生 triggerSlash（勿覆盖同名全局） */
+  function runSlash(cmd) {
     try {
-      if (typeof executeSlashCommandsWithOptions === 'function') { executeSlashCommandsWithOptions(cmd); ok = true; }
-      else if (typeof executeSlashCommands === 'function') { executeSlashCommands(cmd); ok = true; }
-    } catch (e) { ok = false; }
-    const intent = cmd.replace(/^\/setinput\s*/, '');
-    toast('info', ok ? '已写入输入框' : '意图', intent);
-    return ok;
+      if (typeof triggerSlash === 'function') return triggerSlash(cmd);
+      if (typeof executeSlashCommandsWithOptions === 'function') return executeSlashCommandsWithOptions(cmd);
+      if (typeof executeSlashCommands === 'function') return executeSlashCommands(cmd);
+    } catch (e) { /* ignore */ }
+    return null;
   }
-  window.toast = toast; window.burst = burst; window.triggerSlash = triggerSlash;
+
+  /** 把玩家意图填进卡内 composer（原生输入框已被接管隐藏），由玩家确认后发送 */
+  function intend(text) {
+    const t = String(text || '').trim();
+    if (!t) return false;
+    if (window.Chat && Chat.compose(t)) {
+      toast('info', '已填入输入框', t);
+      return true;
+    }
+    runSlash('/setinput ' + t);
+    toast('info', '意图', t);
+    return false;
+  }
+
+  window.toast = toast; window.burst = burst; window.runSlash = runSlash; window.intend = intend;
 
   /* ---------- 六维雷达 ---------- */
   function polar(cx, cy, r, deg) {
@@ -1964,7 +2826,7 @@ window.MVU = MVU;
     const search = $('#invSearch', container);
     if (search) search.addEventListener('input', () => { UI.invSearch = search.value; renderInventory(container, Render.state); });
     $$('.recipe', container).forEach((r) => r.addEventListener('click', () => {
-      triggerSlash(`/setinput 烹制：${r.dataset.recipe}`);
+      intend(`烹制：${r.dataset.recipe}`);
       burst(window.innerWidth / 2, window.innerHeight * 0.7);
     }));
   }
@@ -2031,7 +2893,7 @@ window.MVU = MVU;
     }));
     $$('[data-build-btn]', container).forEach((btn) => btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      triggerSlash(`/setinput 建造：${btn.dataset.buildBtn}`);
+      intend(`建造：${btn.dataset.buildBtn}`);
       burst(window.innerWidth / 2, window.innerHeight * 0.7);
     }));
   }
@@ -2070,7 +2932,7 @@ window.MVU = MVU;
     });
     $$('.map-cell.fog.adjacent', container).forEach((cell) => {
       cell.addEventListener('click', () => {
-        triggerSlash(`/setinput 探索：(${cell.dataset.x},${cell.dataset.y})`);
+        intend(`探索：(${cell.dataset.x},${cell.dataset.y})`);
         burst(window.innerWidth / 2, window.innerHeight * 0.7);
       });
     });
@@ -2097,7 +2959,7 @@ window.MVU = MVU;
       </div>`;
     Icon.render(box);
     $('[data-gather]', box).addEventListener('click', () => {
-      triggerSlash(`/setinput 采集：(${x},${y})`);
+      intend(`采集：(${x},${y})`);
       burst(window.innerWidth / 2, window.innerHeight * 0.7);
     });
   }
@@ -2263,10 +3125,10 @@ window.MVU = MVU;
     container.innerHTML = html;
     Icon.render(container);
     // 农事动作（各自指令不同）
-    $$('[data-water]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 浇水：(${b.dataset.water})`); }));
-    $$('[data-harvest]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 收获：(${b.dataset.harvest})`); }));
-    $$('[data-till]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 开垦：(${b.dataset.till})`); }));
-    $$('[data-plant]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 播种：(${b.dataset.plant})`); }));
+    $$('[data-water]', container).forEach((b) => b.addEventListener('click', () => { intend(`浇水：(${b.dataset.water})`); }));
+    $$('[data-harvest]', container).forEach((b) => b.addEventListener('click', () => { intend(`收获：(${b.dataset.harvest})`); }));
+    $$('[data-till]', container).forEach((b) => b.addEventListener('click', () => { intend(`开垦：(${b.dataset.till})`); }));
+    $$('[data-plant]', container).forEach((b) => b.addEventListener('click', () => { intend(`播种：(${b.dataset.plant})`); }));
   }
 
   /* ============================================================
@@ -2311,14 +3173,6 @@ window.MVU = MVU;
       try { fn(container, s); } catch (e) { console.error('panel ' + name, e); }
     },
 
-    narrative(rawText) {
-      const el = document.getElementById('narrative');
-      if (!el) return;
-      const html = Extract.extractCleanContent(rawText);
-      if (html && html.trim()) el.innerHTML = html;
-      else el.innerHTML = '<p class="muted">展卷静待故事浮现……</p>';
-    },
-
     choices(rawText) {
       const box = document.getElementById('choices');
       if (!box) return;
@@ -2332,7 +3186,8 @@ window.MVU = MVU;
         </button>`;
       }).join('');
       $$('.choice', box).forEach((b) => b.addEventListener('click', () => {
-        triggerSlash(`/setinput ${b.dataset.plain}`);
+        // 填入卡内 composer，玩家可改后再发送
+        intend(b.dataset.plain);
         burst(window.innerWidth / 2, window.innerHeight * 0.7);
       }));
     }
@@ -2344,13 +3199,16 @@ window.MVU = MVU;
 
 /* === app.js === */
 /* ============================================================
-   暮归旅店 · 双页书交互主控
-   翻页标签切换（inkBleed）/ 底栏动作 / 主题 / 设置
-   1s 轮询：rawText + stat_data 变化才重渲染（逐面板签名比对）
-   所有玩家动作经 /setinput 发给 AI，前端不本地改状态
+   暮归旅店 · 双页书交互主控（伪同层宿主）
+   翻页标签切换（inkBleed）/ 底栏动作 / 主题 / 全屏 / 设置
+   Chat 以 400ms 高频轮询接管全局对话；stat_data 变化才重渲染面板
+   所有玩家动作填入卡内 composer，由玩家确认后 /send + /trigger
    ============================================================ */
 (function () {
   'use strict';
+
+  // 唯一宿主判定：非 0 楼直接自我销毁，不再执行任何渲染与轮询
+  if (!Host.init()) return;
 
   const $  = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -2439,39 +3297,51 @@ window.MVU = MVU;
     return e;
   }
 
-  /* ---------- 底栏动作 ---------- */
+  /* ---------- 全屏（沉浸视口） ---------- */
+  function syncFullscreenBtn() {
+    const b = $('#fullscreenToggle');
+    if (!b) return;
+    const on = Host.immersive;
+    Icon.set(b.querySelector('.ic'), on ? 'compress' : 'expand');
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.setAttribute('aria-label', on ? '退出全屏' : '进入全屏');
+    b.dataset.tip = on ? '退出全屏' : '进入全屏';
+  }
+  function toggleFullscreen() {
+    Host.toggleImmersive();
+    syncFullscreenBtn();
+  }
+
+  /* ---------- 底栏动作：填入 composer，由玩家确认发送 ---------- */
   function dockAction(act) {
     switch (act) {
       case 'cook': openTab('inventory'); toast('info', '灶事', '择一道食谱烹制。'); break;
-      case 'water': triggerSlash('/setinput 浇灌所有农田'); break;
-      case 'rest': triggerSlash('/setinput 小憩片刻，恢复精力'); break;
-      case 'endday': triggerSlash('/setinput 归寝入眠，结束今天'); break;
+      case 'water': Chat.compose('浇灌所有农田'); break;
+      case 'rest': Chat.compose('小憩片刻，恢复精力'); break;
+      case 'endday': Chat.compose('归寝入眠，结束今天'); break;
     }
   }
 
-  /* ---------- 轮询刷新 ---------- */
-  let lastRaw = null, lastSig = null, started = false;
+  /* ---------- 状态轮询（面板/HUD；对话流由 Chat 自行轮询） ---------- */
+  let lastSig = null, lastRaw = null, started = false;
 
   function refresh(force) {
-    const raw = Extract.getRawText();
     const state = MVU.getState();
     const sig = JSON.stringify(state);
-    const rawChanged = force || raw !== lastRaw;
-    const stateChanged = force || sig !== lastSig;
+    const raw = Chat.latestRaw();
 
     Render.state = state;
     Render.raw = raw;
 
-    if (stateChanged) {
+    if (force || sig !== lastSig) {
       Render.hud(state);
       Render.panel(currentTab(), state, false);
     }
-    if (rawChanged) {
-      Render.narrative(raw);
+    if (force || raw !== lastRaw) {
       Render.choices(raw);
     }
-    lastRaw = raw;
     lastSig = sig;
+    lastRaw = raw;
   }
 
   /* ---------- 初始化 ---------- */
@@ -2481,21 +3351,28 @@ window.MVU = MVU;
     // 等待 MVU 就绪
     await MVU.init();
 
+    // 全局消息接管：400ms 高频轮询 + 气泡右键菜单 + composer
+    Chat.init();
+
     // 首屏渲染
     Render.state = MVU.getState();
-    Render.raw = Extract.getRawText();
+    Render.raw = Chat.latestRaw();
     Render.hud(Render.state);
     Render.panel(currentTab(), Render.state, true);
-    Render.narrative(Render.raw);
     Render.choices(Render.raw);
     lastRaw = Render.raw;
     lastSig = JSON.stringify(Render.state);
 
+    // 对话流有变化时立刻重算选项，不等下一次状态轮询
+    window.addEventListener('pastoral:chat', () => refresh(false));
+
     // 翻页标签
     $$('.tab').forEach((t) => t.addEventListener('click', () => openTab(t.dataset.tab)));
 
-    // 主题 / 设置
+    // 主题 / 全屏 / 设置
     const themeBtn = $('#themeToggle'); if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+    const fsBtn = $('#fullscreenToggle'); if (fsBtn) fsBtn.addEventListener('click', toggleFullscreen);
+    syncFullscreenBtn();
     const setBtn = $('#settingsBtn'); if (setBtn) setBtn.addEventListener('click', openSettings);
 
     // 底栏
@@ -2506,7 +3383,10 @@ window.MVU = MVU;
       if (e.key === 'Escape') { const p = document.getElementById('settingsPop'); if (p) p.remove(); }
     });
 
-    // 1s 轮询
+    // 外部退出全屏（Esc / 系统手势）时同步按钮
+    window.addEventListener('pastoral:immersive', syncFullscreenBtn);
+
+    // 1s 状态轮询（对话流由 Chat 以 400ms 独立轮询）
     if (!started) { started = true; setInterval(refresh, 1000); }
 
     // 欢迎语

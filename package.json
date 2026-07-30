@@ -1,0 +1,14 @@
+{
+  "name": "pastoral",
+  "version": "0.2.0",
+  "private": true,
+  "description": "暮归旅店 · 酒馆伪同层双页书前端",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node dev.js",
+    "test": "node build.js && node test/smoke.js && node test/iframe.js && node test/layout.js"
+  },
+  "devDependencies": {
+    "jsdom": "29.1.1"
+  }
+}

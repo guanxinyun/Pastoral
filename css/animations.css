@@ -68,6 +68,12 @@
 /* 金边流光（特殊访客） */
 @keyframes goldShimmer { 0% { background-position: -150% 0; } 100% { background-position: 250% 0; } }
 
+/* 生成中打字点 */
+@keyframes typingDot {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50%      { opacity: 1;   transform: translateY(-3px); }
+}
+
 /* 受 reduced-motion 保护 */
 @media (prefers-reduced-motion: no-preference) {
   .book { animation: bookIntro var(--t-slow) var(--ease-page) both; }

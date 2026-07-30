@@ -10,3 +10,7 @@ desktop.ini
 .vscode/
 .idea/
 *.swp
+
+# Node
+node_modules/
+package-lock.json

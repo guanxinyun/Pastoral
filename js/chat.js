@@ -1,0 +1,395 @@
+/* ============================================================
+   全局消息接管（Chat）
+   - 0 楼宿主用 getChatMessages('0-' + lastMessageId) 抓取全局对话
+   - Hash 机制（消息数_最后一楼字符数_生成状态）避免无效 DOM 重绘
+   - 气泡右键菜单：编辑 / 复制 / 删除，直接操作对应 message_id
+   - composer：/send + /trigger 接管原生输入框
+   ============================================================ */
+const Chat = (function () {
+  'use strict';
+
+  const POLL_MS = 400;
+  const MAX_RAW = 60000; // 单楼原文超长（如 0 楼卡片源码）跳过渲染
+
+  let lastHash = null;
+  let timer = null;
+  let generating = false;
+  let messages = [];
+
+  /* ---------- 酒馆 API 探测 ---------- */
+  function hasApi() {
+    return typeof getChatMessages === 'function' && typeof getLastMessageId === 'function';
+  }
+
+  function lastId() {
+    try {
+      if (typeof getLastMessageId === 'function') return getLastMessageId();
+    } catch (e) { /* ignore */ }
+    return 0;
+  }
+
+  /* ---------- 生成状态 ---------- */
+  function bindGenerationEvents() {
+    if (typeof eventOn !== 'function' || typeof iframe_events === 'undefined') return;
+    try {
+      eventOn(iframe_events.GENERATION_STARTED, () => { generating = true; });
+      eventOn(iframe_events.GENERATION_ENDED, () => { generating = false; });
+      if (typeof tavern_events !== 'undefined') {
+        eventOn(tavern_events.GENERATION_STOPPED, () => { generating = false; });
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  /* ---------- 抓取全局对话 ---------- */
+  function fetchAll() {
+    if (!hasApi()) return [];
+    try {
+      const arr = getChatMessages('0-' + lastId());
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /** Hash：消息数_最后一楼字符数_生成状态 */
+  function hashOf(list) {
+    const n = list.length;
+    const tail = n ? (list[n - 1].message || '').length : 0;
+    return n + '_' + tail + '_' + (generating ? 1 : 0);
+  }
+
+  /* ---------- 渲染 ---------- */
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /** 单条消息 -> 气泡 DOM */
+  function bubble(msg) {
+    const role = msg.role === 'user' ? 'user' : (msg.role === 'system' ? 'system' : 'ai');
+    const el = document.createElement('article');
+    el.className = 'bub bub--' + role;
+    el.dataset.mid = String(msg.message_id);
+    if (msg.is_hidden) el.classList.add('is-hidden-msg');
+
+    const body = document.createElement('div');
+    body.className = 'bub__body';
+    const raw = msg.message || '';
+
+    if (role === 'ai') {
+      if (raw.length > MAX_RAW) {
+        body.innerHTML = '<p class="muted">（本楼内容为界面源码，已折叠）</p>';
+      } else {
+        const html = Extract.extractCleanContent(raw);
+        body.innerHTML = (html && html.trim())
+          ? html
+          : '<p class="muted">（本楼无可显示正文）</p>';
+      }
+    } else {
+      body.innerHTML = '<p>' + esc(raw).replace(/\n/g, '<br>') + '</p>';
+    }
+
+    const meta = document.createElement('div');
+    meta.className = 'bub__meta';
+    meta.innerHTML = '<span class="bub__who">' + esc(msg.name || (role === 'user' ? '我' : '旅店')) +
+      '</span><span class="bub__id">#' + msg.message_id + '</span>';
+
+    el.appendChild(meta);
+    el.appendChild(body);
+    return el;
+  }
+
+  function nearBottom(box) {
+    return box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+  }
+
+  function renderStream(list) {
+    const box = document.getElementById('stream');
+    if (!box) return;
+    const stick = nearBottom(box);
+    box.innerHTML = '';
+    list.forEach((m) => box.appendChild(bubble(m)));
+    if (generating) {
+      const t = document.createElement('div');
+      t.className = 'bub bub--ai bub--typing';
+      t.innerHTML = '<div class="bub__body"><span class="typing"><i></i><i></i><i></i></span></div>';
+      box.appendChild(t);
+    }
+    if (stick) box.scrollTop = box.scrollHeight;
+  }
+
+  /* ---------- 右键菜单：编辑 / 复制 / 删除 ---------- */
+  function closeMenu() {
+    const m = document.getElementById('bubMenu');
+    if (m) m.remove();
+  }
+
+  function openMenu(x, y, mid) {
+    closeMenu();
+    const isHostFloor = mid === 0;
+    const menu = document.createElement('div');
+    menu.className = 'bub-menu';
+    menu.id = 'bubMenu';
+    menu.setAttribute('role', 'menu');
+
+    const item = (icon, label, fn, danger) => {
+      const b = document.createElement('button');
+      b.className = 'bub-menu__item' + (danger ? ' is-danger' : '');
+      b.setAttribute('role', 'menuitem');
+      b.innerHTML = '<span class="ic" data-i="' + icon + '"></span><span>' + label + '</span>';
+      b.addEventListener('click', (e) => { e.stopPropagation(); fn(b); });
+      return b;
+    };
+
+    menu.appendChild(item('copy', '复制原文', () => { copyMsg(mid); closeMenu(); }));
+
+    if (!isHostFloor) {
+      menu.appendChild(item('pencil', '编辑本楼', () => { closeMenu(); editMsg(mid); }));
+      // 删除：两步确认（不可逆操作）
+      const del = item('trash', '删除本楼', (btn) => {
+        if (btn.dataset.armed === '1') { closeMenu(); deleteMsg(mid); return; }
+        btn.dataset.armed = '1';
+        btn.innerHTML = '<span class="ic" data-i="trash"></span><span>确认删除 #' + mid + '？</span>';
+        Icon.render(btn);
+      }, true);
+      menu.appendChild(del);
+    } else {
+      const note = document.createElement('div');
+      note.className = 'bub-menu__note';
+      note.textContent = '0 楼为界面宿主，不可编辑/删除';
+      menu.appendChild(note);
+    }
+
+    document.body.appendChild(menu);
+    Icon.render(menu);
+
+    // 视口内定位
+    const r = menu.getBoundingClientRect();
+    const px = Math.min(x, window.innerWidth - r.width - 8);
+    const py = Math.min(y, window.innerHeight - r.height - 8);
+    menu.style.left = Math.max(8, px) + 'px';
+    menu.style.top = Math.max(8, py) + 'px';
+
+    setTimeout(() => {
+      const off = (e) => {
+        if (!menu.contains(e.target)) { closeMenu(); document.removeEventListener('mousedown', off); }
+      };
+      document.addEventListener('mousedown', off);
+    }, 0);
+  }
+
+  function msgById(mid) {
+    return messages.find((m) => m.message_id === mid);
+  }
+
+  function copyMsg(mid) {
+    const m = msgById(mid);
+    if (!m) return;
+    const text = m.message || '';
+    const done = () => toast('success', '已复制', '第 ' + mid + ' 楼原文已进剪贴板。');
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
+      } else fallbackCopy(text, done);
+    } catch (e) { fallbackCopy(text, done); }
+  }
+
+  function fallbackCopy(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { toast('warn', '复制失败', '请手动选择文本。'); }
+    ta.remove();
+  }
+
+  /** 原地编辑：气泡换成 textarea，保存写回对应 message_id */
+  function editMsg(mid) {
+    const m = msgById(mid);
+    if (!m) return;
+    const el = document.querySelector('.bub[data-mid="' + mid + '"]');
+    if (!el) return;
+
+    el.classList.add('is-editing');
+    const body = el.querySelector('.bub__body');
+    if (!body) return;
+
+    const ta = document.createElement('textarea');
+    ta.className = 'bub-edit';
+    ta.value = m.message || '';
+    ta.rows = Math.min(18, Math.max(4, (m.message || '').split('\n').length + 1));
+
+    const bar = document.createElement('div');
+    bar.className = 'bub-edit__bar';
+    const save = document.createElement('button');
+    save.className = 'btn btn--sm';
+    save.textContent = '保存';
+    const cancel = document.createElement('button');
+    cancel.className = 'btn btn--ghost btn--sm';
+    cancel.textContent = '取消';
+    bar.appendChild(save);
+    bar.appendChild(cancel);
+
+    body.innerHTML = '';
+    body.appendChild(ta);
+    body.appendChild(bar);
+    ta.focus();
+
+    const restore = () => { el.classList.remove('is-editing'); lastHash = null; poll(); };
+    cancel.addEventListener('click', restore);
+    save.addEventListener('click', async () => {
+      const val = ta.value;
+      save.disabled = true;
+      try {
+        if (typeof setChatMessages === 'function') {
+          await setChatMessages([{ message_id: mid, message: val }], { refresh: 'none' });
+          toast('success', '已保存', '第 ' + mid + ' 楼已更新。');
+        } else {
+          toast('warn', '未连接酒馆', '独立预览无法写回。');
+        }
+      } catch (e) {
+        toast('error', '保存失败', String(e && e.message || e));
+      }
+      restore();
+    });
+  }
+
+  async function deleteMsg(mid) {
+    try {
+      if (typeof deleteChatMessages === 'function') {
+        await deleteChatMessages([mid]);
+        toast('success', '已删除', '第 ' + mid + ' 楼已移除。');
+      } else {
+        toast('warn', '未连接酒馆', '独立预览无法删除。');
+      }
+    } catch (e) {
+      toast('error', '删除失败', String(e && e.message || e));
+    }
+    lastHash = null;
+    poll();
+  }
+
+  /* ---------- composer：接管原生输入 ---------- */
+
+  /** 转义 slash 命令里的管道与花括号 */
+  function escSlash(s) {
+    return String(s).replace(/\|/g, '\\|').replace(/\{\{/g, '\\{\\{');
+  }
+
+  /** 执行 slash 命令（酒馆原生 triggerSlash 优先） */
+  function exec(cmd) {
+    try {
+      if (typeof triggerSlash === 'function') return triggerSlash(cmd);
+      if (typeof executeSlashCommandsWithOptions === 'function') return executeSlashCommandsWithOptions(cmd);
+      if (typeof executeSlashCommands === 'function') return executeSlashCommands(cmd);
+    } catch (e) { /* ignore */ }
+    return null;
+  }
+
+  /** 把文本填入卡内 composer（不发送） */
+  function compose(text) {
+    const ta = document.getElementById('composerInput');
+    if (!ta) return false;
+    ta.value = text;
+    ta.focus();
+    autoGrow(ta);
+    return true;
+  }
+
+  /** 发送：/send 入档 + /trigger 触发生成 */
+  async function send(text) {
+    const body = String(text || '').trim();
+    if (!body) return false;
+    if (!hasApi()) {
+      toast('warn', '未连接酒馆', body);
+      return false;
+    }
+    generating = true;
+    lastHash = null;
+    try {
+      await exec('/send ' + escSlash(body));
+      poll();
+      await exec('/trigger');
+    } catch (e) {
+      toast('error', '发送失败', String(e && e.message || e));
+    }
+    generating = false;
+    lastHash = null;
+    poll();
+    return true;
+  }
+
+  function autoGrow(ta) {
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(160, ta.scrollHeight) + 'px';
+  }
+
+  /* ---------- 轮询 ---------- */
+  function poll() {
+    if (!hasApi()) {
+      // 独立预览：用样例原文渲染单条气泡
+      if (lastHash === 'sample') return;
+      lastHash = 'sample';
+      messages = [{ message_id: 0, role: 'assistant', name: '暮归旅店', message: window.SAMPLE_RAWTEXT || '' }];
+      renderStream(messages);
+      window.dispatchEvent(new CustomEvent('pastoral:chat', { detail: { messages } }));
+      return;
+    }
+    const list = fetchAll();
+    const h = hashOf(list);
+    if (h === lastHash) return;
+    lastHash = h;
+    messages = list;
+    renderStream(list);
+    window.dispatchEvent(new CustomEvent('pastoral:chat', { detail: { messages: list } }));
+  }
+
+  /** 最新一楼原文（供选项提取） */
+  function latestRaw() {
+    if (!messages.length) return window.SAMPLE_RAWTEXT || '';
+    return messages[messages.length - 1].message || '';
+  }
+
+  function init() {
+    bindGenerationEvents();
+
+    const box = document.getElementById('stream');
+    if (box) {
+      box.addEventListener('contextmenu', (e) => {
+        const b = e.target.closest ? e.target.closest('.bub') : null;
+        if (!b || b.classList.contains('is-editing')) return;
+        e.preventDefault();
+        openMenu(e.clientX, e.clientY, Number(b.dataset.mid));
+      });
+    }
+
+    const ta = document.getElementById('composerInput');
+    const btn = document.getElementById('composerSend');
+    if (ta) {
+      ta.addEventListener('input', () => autoGrow(ta));
+      ta.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          const v = ta.value; ta.value = ''; autoGrow(ta);
+          send(v);
+        }
+      });
+    }
+    if (btn && ta) {
+      btn.addEventListener('click', () => {
+        const v = ta.value; ta.value = ''; autoGrow(ta);
+        send(v);
+      });
+    }
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+
+    poll();
+    if (!timer) timer = setInterval(poll, POLL_MS);
+  }
+
+  return { init, poll, send, compose, latestRaw, get messages() { return messages; }, get generating() { return generating; } };
+})();
+window.Chat = Chat;

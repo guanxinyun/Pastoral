@@ -1,11 +1,14 @@
 /* ============================================================
-   暮归旅店 · 双页书交互主控
-   翻页标签切换（inkBleed）/ 底栏动作 / 主题 / 设置
-   1s 轮询：rawText + stat_data 变化才重渲染（逐面板签名比对）
-   所有玩家动作经 /setinput 发给 AI，前端不本地改状态
+   暮归旅店 · 双页书交互主控（伪同层宿主）
+   翻页标签切换（inkBleed）/ 底栏动作 / 主题 / 全屏 / 设置
+   Chat 以 400ms 高频轮询接管全局对话；stat_data 变化才重渲染面板
+   所有玩家动作填入卡内 composer，由玩家确认后 /send + /trigger
    ============================================================ */
 (function () {
   'use strict';
+
+  // 唯一宿主判定：非 0 楼直接自我销毁，不再执行任何渲染与轮询
+  if (!Host.init()) return;
 
   const $  = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -94,39 +97,51 @@
     return e;
   }
 
-  /* ---------- 底栏动作 ---------- */
+  /* ---------- 全屏（沉浸视口） ---------- */
+  function syncFullscreenBtn() {
+    const b = $('#fullscreenToggle');
+    if (!b) return;
+    const on = Host.immersive;
+    Icon.set(b.querySelector('.ic'), on ? 'compress' : 'expand');
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.setAttribute('aria-label', on ? '退出全屏' : '进入全屏');
+    b.dataset.tip = on ? '退出全屏' : '进入全屏';
+  }
+  function toggleFullscreen() {
+    Host.toggleImmersive();
+    syncFullscreenBtn();
+  }
+
+  /* ---------- 底栏动作：填入 composer，由玩家确认发送 ---------- */
   function dockAction(act) {
     switch (act) {
       case 'cook': openTab('inventory'); toast('info', '灶事', '择一道食谱烹制。'); break;
-      case 'water': triggerSlash('/setinput 浇灌所有农田'); break;
-      case 'rest': triggerSlash('/setinput 小憩片刻，恢复精力'); break;
-      case 'endday': triggerSlash('/setinput 归寝入眠，结束今天'); break;
+      case 'water': Chat.compose('浇灌所有农田'); break;
+      case 'rest': Chat.compose('小憩片刻，恢复精力'); break;
+      case 'endday': Chat.compose('归寝入眠，结束今天'); break;
     }
   }
 
-  /* ---------- 轮询刷新 ---------- */
-  let lastRaw = null, lastSig = null, started = false;
+  /* ---------- 状态轮询（面板/HUD；对话流由 Chat 自行轮询） ---------- */
+  let lastSig = null, lastRaw = null, started = false;
 
   function refresh(force) {
-    const raw = Extract.getRawText();
     const state = MVU.getState();
     const sig = JSON.stringify(state);
-    const rawChanged = force || raw !== lastRaw;
-    const stateChanged = force || sig !== lastSig;
+    const raw = Chat.latestRaw();
 
     Render.state = state;
     Render.raw = raw;
 
-    if (stateChanged) {
+    if (force || sig !== lastSig) {
       Render.hud(state);
       Render.panel(currentTab(), state, false);
     }
-    if (rawChanged) {
-      Render.narrative(raw);
+    if (force || raw !== lastRaw) {
       Render.choices(raw);
     }
-    lastRaw = raw;
     lastSig = sig;
+    lastRaw = raw;
   }
 
   /* ---------- 初始化 ---------- */
@@ -136,21 +151,28 @@
     // 等待 MVU 就绪
     await MVU.init();
 
+    // 全局消息接管：400ms 高频轮询 + 气泡右键菜单 + composer
+    Chat.init();
+
     // 首屏渲染
     Render.state = MVU.getState();
-    Render.raw = Extract.getRawText();
+    Render.raw = Chat.latestRaw();
     Render.hud(Render.state);
     Render.panel(currentTab(), Render.state, true);
-    Render.narrative(Render.raw);
     Render.choices(Render.raw);
     lastRaw = Render.raw;
     lastSig = JSON.stringify(Render.state);
 
+    // 对话流有变化时立刻重算选项，不等下一次状态轮询
+    window.addEventListener('pastoral:chat', () => refresh(false));
+
     // 翻页标签
     $$('.tab').forEach((t) => t.addEventListener('click', () => openTab(t.dataset.tab)));
 
-    // 主题 / 设置
+    // 主题 / 全屏 / 设置
     const themeBtn = $('#themeToggle'); if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+    const fsBtn = $('#fullscreenToggle'); if (fsBtn) fsBtn.addEventListener('click', toggleFullscreen);
+    syncFullscreenBtn();
     const setBtn = $('#settingsBtn'); if (setBtn) setBtn.addEventListener('click', openSettings);
 
     // 底栏
@@ -161,7 +183,10 @@
       if (e.key === 'Escape') { const p = document.getElementById('settingsPop'); if (p) p.remove(); }
     });
 
-    // 1s 轮询
+    // 外部退出全屏（Esc / 系统手势）时同步按钮
+    window.addEventListener('pastoral:immersive', syncFullscreenBtn);
+
+    // 1s 状态轮询（对话流由 Chat 以 400ms 独立轮询）
     if (!started) { started = true; setInterval(refresh, 1000); }
 
     // 欢迎语

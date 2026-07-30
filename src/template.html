@@ -43,9 +43,10 @@
         <section class="panel" data-panel="farm"></section>
       </div>
 
-      <!-- 左页页脚：主题切换 -->
+      <!-- 左页页脚：主题切换 / 全屏 / 设置 -->
       <div class="page__foot">
         <button class="mini-btn" id="themeToggle" data-tip="切换昼夜" aria-label="切换昼夜"><span class="ic" data-i="moon"></span></button>
+        <button class="mini-btn" id="fullscreenToggle" data-tip="进入全屏" aria-label="进入全屏" aria-pressed="false"><span class="ic" data-i="expand"></span></button>
         <button class="mini-btn" id="settingsBtn" data-tip="设置" aria-label="设置"><span class="ic" data-i="settings"></span></button>
       </div>
     </section>
@@ -79,12 +80,19 @@
         </div>
       </header>
 
-      <!-- 正文 + 选项 -->
+      <!-- 全局对话流（伪同层：0 楼渲染全部楼层） + 选项 + 输入 -->
       <div class="journal" id="journal">
-        <article class="journal__narrative" id="narrative" aria-live="polite">
+        <div class="journal__stream" id="stream" aria-live="polite" aria-label="对话记录">
           <p class="muted">正在展卷……</p>
-        </article>
+        </div>
         <div class="journal__choices" id="choices"></div>
+        <form class="composer" id="composer" autocomplete="off">
+          <textarea class="composer__input" id="composerInput" rows="1"
+            placeholder="写下你的行动……（Enter 发送 · Shift+Enter 换行）" aria-label="输入行动"></textarea>
+          <button class="composer__send" id="composerSend" type="button" aria-label="发送" data-tip="发送">
+            <span class="ic" data-i="send"></span>
+          </button>
+        </form>
       </div>
 
       <!-- 底栏：精力 / 压力 / 行动 -->
