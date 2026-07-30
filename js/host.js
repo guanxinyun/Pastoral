@@ -1,8 +1,8 @@
 /* ============================================================
    伪同层宿主层（Host）
    1) 唯一宿主判定：仅 0 楼卡片渲染；非 0 楼自我销毁释放性能
-   2) 全局样式绝对接管：跨域注入 CSS 隐藏原生输入框 + 0 楼以外所有气泡
-   3) 沉浸视口：全屏进入/退出（iframe 钉满视口 + 原生 Fullscreen API）
+   2) 首层共存：不覆盖宿主楼层、边框、输入框或功能按钮
+   3) 沉浸视口：仅当前 iframe 页面进入/退出全屏
    本文件必须最先执行（build.js 的 JS 顺序里排第一）
    ============================================================ */
 const Host = (function () {
@@ -56,45 +56,17 @@ const Host = (function () {
     return null;
   }
 
-  /**
-   * 注入接管 CSS：
-   * - 永远只显示 0 楼：#chat > .mes:not([mesid="0"]) 隐藏
-   * - 隐藏 0 楼气泡自身的头像/名字/操作条，只留我们的 iframe
-   * - 隐藏原生底部输入区
-   */
+  /** 只注入全屏所需样式；非全屏不改动宿主页面。 */
   function injectTakeover() {
     const d = parentDoc();
     if (!d) return false;
     if (d.getElementById(STYLE_ID)) return true;
 
     const css = `
-/* ===== 暮归旅店 · 伪同层接管（由 0 楼卡片注入） ===== */
-#chat > .mes:not([mesid="0"]) { display: none !important; }
+/* ===== 暮归旅店 · 页面级沉浸（由首层卡片注入） ===== */
+/* 非沉浸时没有宿主覆盖规则；楼层、边框和发送区保持酒馆原样。 */
 
-/* 0 楼气泡：去壳，只留前端卡 */
-#chat > .mes[mesid="0"] {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-#chat > .mes[mesid="0"] .mesAvatarWrapper,
-#chat > .mes[mesid="0"] .ch_name,
-#chat > .mes[mesid="0"] .mes_buttons,
-#chat > .mes[mesid="0"] .mesIDDisplay,
-#chat > .mes[mesid="0"] .mes_timer,
-#chat > .mes[mesid="0"] .tokenCounterDisplay,
-#chat > .mes[mesid="0"] .swipe_left,
-#chat > .mes[mesid="0"] .swipe_right { display: none !important; }
-#chat > .mes[mesid="0"] .mes_block { margin: 0 !important; padding: 0 !important; }
-#chat > .mes[mesid="0"] .mes_text { padding: 0 !important; }
-
-/* 原生输入区：完全隐藏，由卡内 composer 接管 */
-#send_form, #form_sheld { display: none !important; }
-#chat { padding-bottom: 0 !important; }
-
-/* 沉浸模式：iframe 钉满视口 */
+/* 沉浸模式：只将当前页面 iframe 钉满视口 */
 iframe.${IMMERSIVE_CLASS} {
   position: fixed !important;
   inset: 0 !important;
@@ -131,13 +103,13 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
   }
 
   function requestNativeFullscreen() {
-    // 优先让父窗口整页进入全屏（iframe 无 allowfullscreen 时也有效）
-    const d = parentDoc();
-    const el = d ? d.documentElement : document.documentElement;
+    // 只请求当前页面 iframe；不让父页面根节点（连同楼层边框）进入全屏。
+    const frame = selfFrame();
+    const el = frame || document.documentElement;
     try {
       const fn = el.requestFullscreen || el.webkitRequestFullscreen;
       if (fn) { const p = fn.call(el); if (p && p.catch) p.catch(() => {}); return true; }
-    } catch (e) { /* ignore */ }
+    } catch (e) { /* fixed 定位仍作为沉浸降级 */ }
     return false;
   }
 

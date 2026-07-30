@@ -1,8 +1,8 @@
 /* ============================================================
    iframe.js · 跨域样式接管 + 全屏烟雾测试（jsdom 父/子文档）
    把卡片装进模拟酒馆页面的 iframe，验证：
-   1) 注入的接管 CSS 命中「只显示 0 楼」「隐藏原生输入框」
-   2) 全屏按钮给 iframe 加 / 去沉浸类，并锁定父页滚动
+   1) 首层卡与其他楼层、酒馆原生输入区正常共存
+   2) 全屏按钮只放大当前 iframe 页面，并锁定父页滚动
    用法：node test/iframe.js
    ============================================================ */
 const fs = require('fs');
@@ -46,6 +46,9 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
 
   const cwin = iframe.contentWindow;
   const cdoc = cwin.document;
+  let requestedElement = null;
+  iframe.requestFullscreen = async function () { requestedElement = this; pdoc.fullscreenElement = this; };
+  pdoc.exitFullscreen = async function () { pdoc.fullscreenElement = null; };
   Object.assign(cwin, {
     matchMedia: () => ({ matches: false, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} }),
     getCurrentMessageId: () => 0,
@@ -73,21 +76,20 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   cdoc.close();
   await wait(700);
 
-  console.log('\n[1] 跨域样式接管');
+  console.log('\n[1] 首层正常共存');
   const style = pdoc.getElementById('pastoral-host-takeover');
-  ok(!!style, '父文档已注入接管 <style>');
+  ok(!!style, '父文档已注入仅供全屏的 <style>');
   const css = style ? style.textContent : '';
-  ok(/#chat > \.mes:not\(\[mesid="0"\]\)\s*\{\s*display:\s*none/.test(css), '规则：只显示 0 楼');
-  ok(/#send_form[\s\S]*display:\s*none/.test(css), '规则：隐藏原生输入区');
+  ok(!/#chat > \.mes:not\(\[mesid="0"\]\)/.test(css), '不再隐藏其他楼层');
+  ok(!/#send_form[\s\S]*display:\s*none/.test(css), '不再隐藏原生输入区');
 
-  // 用 getComputedStyle 验证规则真的生效（jsdom 支持样式表级联）
   const mes1 = pdoc.querySelector('.mes[mesid="1"]');
   const mes0 = pdoc.querySelector('.mes[mesid="0"]');
   const form = pdoc.getElementById('send_form');
-  ok(pwin.getComputedStyle(mes1).display === 'none', '1 楼实际被隐藏');
+  ok(pwin.getComputedStyle(mes1).display !== 'none', '1 楼仍显示');
   ok(pwin.getComputedStyle(mes0).display !== 'none', '0 楼仍显示');
-  ok(pwin.getComputedStyle(form).display === 'none', '原生输入区实际被隐藏');
-  ok(pwin.getComputedStyle(pdoc.querySelector('.mes[mesid="0"] .ch_name')).display === 'none', '0 楼名字条被去壳');
+  ok(pwin.getComputedStyle(form).display !== 'none', '原生输入区仍显示');
+  ok(pwin.getComputedStyle(pdoc.querySelector('.mes[mesid="0"] .ch_name')).display !== 'none', '0 楼原有名字条未被剥除');
 
   console.log('\n[2] 全屏进入 / 退出');
   const btn = cdoc.getElementById('fullscreenToggle');
@@ -102,6 +104,7 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   ok(btn.getAttribute('aria-pressed') === 'true', '进入：aria-pressed=true');
   ok(btn.dataset.tip === '退出全屏', '进入：提示文案切换');
   ok(pwin.getComputedStyle(iframe).position === 'fixed', 'iframe 实际钉满视口（position:fixed）');
+  ok(requestedElement === iframe, '原生全屏请求目标是当前 iframe，而不是父页面根节点');
 
   btn.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
   await wait(120);

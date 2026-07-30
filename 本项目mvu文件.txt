@@ -217,6 +217,11 @@ export const Schema = z.object({
   }).prefault({}),
 
   农牧: z.object({
+    农田大小: z.object({
+      长: z.coerce.number().prefault(3),
+      宽: z.coerce.number().prefault(3),
+    }).prefault({}),
+
     农田网格: z.record(
       z.string().describe('农田格子坐标'),
       z.object({

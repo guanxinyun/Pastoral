@@ -51,6 +51,23 @@ const Extract = {
     return [];
   },
 
+  /** 提取最后一个完整 UpdateVariable 标签。 */
+  extractUpdateVariable(rawText) {
+    const matches = [...String(rawText || '').matchAll(/<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>/gi)];
+    return matches.length ? matches[matches.length - 1][0] : '';
+  },
+
+  stripUpdateVariable(rawText) {
+    return String(rawText || '').replace(/\s*<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>\s*/gi, '\n').trim();
+  },
+
+  /** 移除原标签后追加新标签，剧情/选项/总结等其他内容保持原顺序。 */
+  replaceUpdateVariable(rawText, updateTag) {
+    const body = this.stripUpdateVariable(rawText);
+    const tag = String(updateTag || '').trim();
+    return tag ? body + (body ? '\n\n' : '') + tag : body;
+  },
+
   /** 正文清理：跑酒馆正则 -> DOM 手术剥结构壳 -> 保留内联美化 */
   extractCleanContent(rawText) {
     if (!rawText) return '';

@@ -29,7 +29,7 @@ function makeChat() {
 /** 在 jsdom 中加载卡片；floor=null 表示无酒馆 API（独立预览） */
 function load(floor, opts = {}) {
   const chat = opts.chat || makeChat();
-  const calls = { slash: [], set: [], del: [] };
+  const calls = { slash: [], set: [], del: [], mvuGet: [] };
 
   const dom = new JSDOM(HTML, {
     runScripts: 'dangerously',
@@ -57,7 +57,7 @@ function load(floor, opts = {}) {
       win.triggerSlash = async (cmd) => { calls.slash.push(cmd); };
       win.waitGlobalInitialized = async () => {};
       win.formatAsTavernRegexedString = (t) => t;
-      win.Mvu = { getMvuData: () => ({ stat_data: null }) };
+      win.Mvu = { getMvuData: (options) => { calls.mvuGet.push(options); return { stat_data: null, marker: 'latest-snapshot' }; } };
       win.eventOn = () => {};
       win.iframe_events = { GENERATION_STARTED: 'a', GENERATION_ENDED: 'b' };
       win.tavern_events = { GENERATION_STOPPED: 'c' };
@@ -82,11 +82,24 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(!!doc.getElementById('pageLeft') && !!doc.getElementById('pageRight'), '双页均在');
     ok(!!doc.getElementById('composerInput'), 'composer 输入框存在');
     ok(!!doc.getElementById('fullscreenToggle'), '全屏按钮存在');
+    doc.getElementById('settingsBtn').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    await wait(30);
+    ok(!!doc.querySelector('[name="apiMode"]') && !!doc.querySelector('[name="secondApiUrl"]'), '设置中包含 API 模式和第二 API 参数');
+    ok(doc.querySelector('[name="secondApiKey"]').type === 'password', 'API Key 使用密码输入框');
+    ok(!!doc.getElementById('retrySecondApi'), '设置中提供手动重试第二 API 操作');
+    doc.querySelector('.settings-pop__close').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
 
     const bubs = doc.querySelectorAll('#stream .bub:not(.bub--typing)');
     ok(bubs.length === 3, '抓取全局对话渲染 3 条气泡（实际 ' + bubs.length + '）');
     const ids = Array.from(bubs).map((b) => b.dataset.mid).join(',');
     ok(ids === '0,1,2', '气泡与 message_id 对应：' + ids);
+
+    // 状态快照来自 lastMessageId，而不是宿主 iframe 所在的 0 楼
+    ok(calls.mvuGet.length > 0 && calls.mvuGet.every((o) => o.type === 'message' && o.message_id === 2),
+      'MVU 始终读取 lastMessageId=2');
+    const snap = win.MVU.getDataSnapshot();
+    ok(snap && snap.marker === 'latest-snapshot' && snap !== win.Mvu.getMvuData({ type: 'message', message_id: 2 }),
+      '可取得完整且独立的最新楼层 MvuData 快照');
 
     // 选项来自【最新一楼】
     const choices = Array.from(doc.querySelectorAll('#choices .choice')).map((c) => c.dataset.plain);

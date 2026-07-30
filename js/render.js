@@ -567,7 +567,11 @@
       const light = (gem.闪光圣岩 || []), dark = (gem.暗影原石 || []);
       return `<div class="staff-card ${morale < 30 ? 'low-morale' : ''}">
         <div class="staff-card__head">
-          <div class="staff-avatar">${(name || '?').slice(0, 1)}</div>
+          <div class="staff-avatar-wrap">
+            <div class="staff-avatar" data-avatar-name="${name}">${(name || '?').slice(0, 1)}</div>
+            <label class="staff-avatar__upload" data-tip="上传头像"><span class="sr-only">为 ${name} 上传头像</span><input type="file" accept="image/*" data-avatar-upload="${name}"><span class="ic" data-i="plus"></span></label>
+            <button class="staff-avatar__remove" type="button" data-avatar-remove="${name}" data-tip="移除头像" aria-label="移除 ${name} 的头像"><span class="ic" data-i="close"></span></button>
+          </div>
           <div style="flex:1"><div class="staff-card__name">${name}</div><div class="staff-card__role">${get(job, '职业', '帮工')} · <span class="class-badge">${get(job, '阶级', 'T1')}</span></div></div>
           <svg class="mini-radar" id="radarStaff${i}" viewBox="0 0 50 50"></svg>
         </div>
@@ -588,7 +592,11 @@
       </div>`;
     }).join('');
     Icon.render(container);
-    staff.forEach(([, m], i) => {
+    staff.forEach(([name, m], i) => {
+      const avatar = $$('[data-avatar-name]', container).find((el) => el.dataset.avatarName === name);
+      if (avatar && window.Assets) Assets.avatarUrl(name).then((url) => {
+        if (url && avatar.isConnected) { avatar.textContent = ''; avatar.style.backgroundImage = `url("${url}")`; avatar.classList.add('has-image'); }
+      });
       const svg = $(`#radarStaff${i}`, container); if (!svg) return;
       const attr = get(m, '属性', {});
       const axes = ['技艺', '悟性', '体力', '亲和', '专注'].map((k) => ({ name: k }));
@@ -596,6 +604,19 @@
       const realVals = ['技艺', '悟性', '体力', '亲和', '专注'].map((k) => num(attr[k], 0));
       drawRadar(svg, axes, realVals, Math.max(15, ...realVals, 1), { size: 50, pad: 4, labelPad: 0, showLabels: false, showVals: false, vertexR: 1.6, dur: 600 });
     });
+    $$('[data-avatar-upload]', container).forEach((input) => input.addEventListener('change', async () => {
+      const file = input.files && input.files[0]; if (!file) return;
+      if (!String(file.type || '').startsWith('image/')) { toast('warn', '头像格式不支持', '请选择图片文件。'); return; }
+      const saved = window.Assets && await Assets.putStaffAvatar(input.dataset.avatarUpload, file);
+      if (!saved) { toast('error', '头像保存失败', '浏览器本地数据库不可用。'); return; }
+      toast('success', '头像已保存', input.dataset.avatarUpload + ' 的头像已存入 IndexedDB。');
+      renderStaff(container, Render.state);
+    }));
+    $$('[data-avatar-remove]', container).forEach((button) => button.addEventListener('click', async () => {
+      if (window.Assets) await Assets.removeStaffAvatar(button.dataset.avatarRemove);
+      toast('info', '头像已移除', '已恢复姓名首字头像。');
+      renderStaff(container, Render.state);
+    }));
   }
 
   /* ---- 访客 ---- */
@@ -665,58 +686,60 @@
   }
 
   /* ---- 农牧 ---- */
+  function farmDetail(key, plot) {
+    const p = plot || {}, state = p.状态 || '荒地', crop = p.作物 || '';
+    const days = num(p.剩余天数, 0), ripe = state === '种植中' && days <= 0;
+    const pct = state === '种植中' && crop ? clamp(100 - days * 18, 5, 100) : 0;
+    return `<div class="crop-plot" data-plot-detail="${key}">
+      <div class="crop-plot__head">
+        <span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'carrot'}" style="--ic:18px;color:${ripe ? 'var(--color-primary)' : 'var(--color-success)'}"></span>
+        <span class="crop-plot__name">田格 (${key}) · ${state}${crop ? ' · ' + crop : ''}</span>
+        <span class="ic status-icon ${p.今日已浇水 ? '已浇水' : '未浇水'}" data-i="${p.今日已浇水 ? 'water' : 'herb'}" title="${p.今日已浇水 ? '已浇水' : '未浇水'}"></span>
+        ${p.已施肥 ? '<span class="ic status-icon 已施肥" data-i="fertilize" title="已施肥"></span>' : ''}
+      </div>
+      ${state === '种植中' && crop ? `<div class="row row--between"><span class="card__sub">${ripe ? '已成熟' : `约 ${days} 日后成熟`}</span><span class="card__sub">品质修正 ${num(p.品质修正, 0)}</span></div><div class="grow-bar"><div class="grow-bar__fill" style="width:${pct}%"></div></div>` : ''}
+      <div class="row farm-detail__actions">
+        ${state === '种植中' && crop ? (ripe ? `<button class="btn btn--primary btn--sm" data-harvest="${key}"><span class="ic btn__icon" data-i="bag"></span>收获</button>` : `<button class="btn btn--sm" data-water="${key}"><span class="ic btn__icon" data-i="water"></span>浇水</button>`) : ''}
+        ${state === '荒地' ? `<button class="btn btn--sm" data-till="${key}"><span class="ic btn__icon" data-i="hammer"></span>开垦</button>` : ''}
+        ${state === '已开垦' ? `<button class="btn btn--sm" data-plant="${key}"><span class="ic btn__icon" data-i="grain"></span>播种</button>` : ''}
+      </div>
+    </div>`;
+  }
+
+  function bindFarmActions(container) {
+    $$('[data-water]', container).forEach((b) => b.addEventListener('click', () => intend(`浇水：(${b.dataset.water})`)));
+    $$('[data-harvest]', container).forEach((b) => b.addEventListener('click', () => intend(`收获：(${b.dataset.harvest})`)));
+    $$('[data-till]', container).forEach((b) => b.addEventListener('click', () => intend(`开垦：(${b.dataset.till})`)));
+    $$('[data-plant]', container).forEach((b) => b.addEventListener('click', () => intend(`播种：(${b.dataset.plant})`)));
+  }
+
   function renderFarm(container, s) {
-    const farm = get(s, '农牧', {});
-    const plots = entries(get(farm, '农田网格', {}));
-    const comp = get(farm, '堆肥箱', {});
-    const live = entries(get(farm, '畜牧', {}));
-    let html = panelH('农田', `${plots.length} 块`);
-    html += plots.length ? plots.map(([key, p]) => {
-      const state = (p && p.状态) || '荒地';
-      const crop = (p && p.作物) || '';
-      const days = num(p && p.剩余天数, 0);
-      const watered = p && p.今日已浇水, fert = p && p.已施肥;
-      const total = days > 0 ? days : 1;
-      // 估算生长进度：状态种植中时，无明确总期，用剩余天数反推不可靠，仅作展示
-      const pct = state === '种植中' ? (crop ? clamp(100 - days * 18, 5, 100) : 0) : 0;
-      const ripe = state === '种植中' && days <= 0;
-      const x = num(p && p.x, 0), y = num(p && p.y, 0);
-      return `<div class="crop-plot" data-plot="${x},${y}">
-        <div class="crop-plot__head">
-          <span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'carrot'}" style="--ic:18px;color:${ripe ? 'var(--color-primary)' : 'var(--color-success)'}"></span>
-          <span class="crop-plot__name">(${x},${y}) · ${state}${crop ? ' · ' + crop : ''}</span>
-          <span class="ic status-icon ${watered ? '已浇水' : '未浇水'}" data-i="${watered ? 'water' : 'herb'}" title="${watered ? '已浇水' : '未浇水'}"></span>
-          ${fert ? '<span class="ic status-icon 已施肥" data-i="fertilize" title="已施肥"></span>' : ''}
-        </div>
-        ${state === '种植中' && crop ? `<div class="row row--between" style="margin:3px 0"><span class="card__sub">${ripe ? '已成熟' : `约 ${days} 日后成熟`}</span>${p && p.品质修正 ? `<span class="card__sub">品质修正 ${p.品质修正}</span>` : ''}</div><div class="grow-bar"><div class="grow-bar__fill" style="width:${pct}%"></div></div>` : ''}
-        <div class="row" style="gap:6px;margin-top:6px">
-          ${state === '种植中' && crop ? (ripe ? `<button class="btn btn--primary btn--sm" data-harvest="${x},${y}"><span class="ic btn__icon" data-i="bag"></span>收获</button>` : `<button class="btn btn--sm" data-water="${x},${y}"><span class="ic btn__icon" data-i="water"></span>浇水</button>`) : ''}
-          ${state === '荒地' ? `<button class="btn btn--sm" data-till="${x},${y}"><span class="ic btn__icon" data-i="hammer"></span>开垦</button>` : ''}
-          ${state === '已开垦' ? `<button class="btn btn--sm" data-plant="${x},${y}"><span class="ic btn__icon" data-i="grain"></span>播种</button>` : ''}
-        </div>
-      </div>`;
-    }).join('') : emptyState('wheat', '无农田', '前往地图开垦新田。');
-
-    html += panelH('堆肥箱');
-    html += `<div class="card"><div class="row row--between"><span class="card__sub">状态 · ${(comp && comp.状态) || '空'}</span><span class="card__sub">倒计时 · <span class="num">${num(comp && comp.倒计时, 0)}</span></span></div></div>`;
-
-    html += panelH('畜牧', `${live.length}`);
-    html += live.length ? live.map(([name, l]) => {
-      const hp = clamp(num(get(l, '健康度', 0), 0), 0, 100);
-      const col = hp >= 50 ? 'var(--color-success)' : 'var(--color-danger)';
-      return `<div class="livestock-card"><div class="building__head"><span class="ic building__icon" data-i="garden"></span><span class="building__name">${name}</span></div>
-        <div class="row row--between"><span class="card__sub">饲料 · ${num(get(l, '饲料倒计时', 0), 0)} 日</span><span class="card__sub">产出 · ${num(get(l, '产出倒计时', 0), 0)} 日</span></div>
-        <div class="stat-line" style="margin-top:4px"><span class="stat-line__label">健康 ${hp}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${hp}%;background:${col}"></div></div></div>
-      </div>`;
-    }).join('') : emptyState('garden', '无牲畜', '建造畜牧设施后将显示于此。');
-
-    container.innerHTML = html;
-    Icon.render(container);
-    // 农事动作（各自指令不同）
-    $$('[data-water]', container).forEach((b) => b.addEventListener('click', () => { intend(`浇水：(${b.dataset.water})`); }));
-    $$('[data-harvest]', container).forEach((b) => b.addEventListener('click', () => { intend(`收获：(${b.dataset.harvest})`); }));
-    $$('[data-till]', container).forEach((b) => b.addEventListener('click', () => { intend(`开垦：(${b.dataset.till})`); }));
-    $$('[data-plant]', container).forEach((b) => b.addEventListener('click', () => { intend(`播种：(${b.dataset.plant})`); }));
+    const farm = get(s, '农牧', {}), size = get(farm, '农田大小', {});
+    const height = Math.max(1, Math.floor(num(size.长, 3))), width = Math.max(1, Math.floor(num(size.宽, 3)));
+    const records = get(farm, '农田网格', {}) || {}, inRange = new Set(), cells = [];
+    for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+      const key = `${x},${y}`, p = records[key] || { x, y, 状态: '荒地' };
+      inRange.add(key);
+      const state = p.状态 || '荒地', crop = p.作物 || '', ripe = state === '种植中' && num(p.剩余天数, 0) <= 0;
+      cells.push(`<button class="farm-cell ${state === '种植中' ? 'is-planted' : state === '已开垦' ? 'is-tilled' : 'is-wild'} ${ripe ? 'is-ripe' : ''}" type="button" data-plot="${key}" aria-label="田格${key}，${state}${crop ? '，' + crop : ''}"><span class="farm-cell__coord">${x},${y}</span><span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'garden'}"></span><span class="farm-cell__name">${crop || state}</span></button>`);
+    }
+    const overflow = entries(records).filter(([key]) => !inRange.has(key));
+    const comp = get(farm, '堆肥箱', {}), live = entries(get(farm, '畜牧', {}));
+    let html = panelH('旅店农田', `${width}×${height}`);
+    html += `<div class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>点击田格查看状态与农事操作；坐标从 (0,0) 开始。</div></div>`;
+    html += `<div class="farm-grid" style="grid-template-columns:repeat(${width},minmax(0,1fr))">${cells.join('')}</div><div id="farmDetail"></div>`;
+    if (overflow.length) html += panelH('范围外田格', `${overflow.length}`) + `<div class="farm-overflow">${overflow.map(([key, p]) => farmDetail(key, p)).join('')}</div>`;
+    html += panelH('堆肥箱') + `<div class="card"><div class="row row--between"><span class="card__sub">状态 · ${(comp && comp.状态) || '空'}</span><span class="card__sub">倒计时 · <span class="num">${num(comp && comp.倒计时, 0)}</span></span></div></div>`;
+    html += panelH('畜牧', `${live.length}`) + (live.length ? live.map(([name, l]) => {
+      const hp = clamp(num(get(l, '健康度', 0), 0), 0, 100), col = hp >= 50 ? 'var(--color-success)' : 'var(--color-danger)';
+      return `<div class="livestock-card"><div class="building__head"><span class="ic building__icon" data-i="garden"></span><span class="building__name">${name}</span></div><div class="row row--between"><span class="card__sub">饲料 · ${num(get(l, '饲料倒计时', 0), 0)} 日</span><span class="card__sub">产出 · ${num(get(l, '产出倒计时', 0), 0)} 日</span></div><div class="stat-line"><span class="stat-line__label">健康 ${hp}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${hp}%;background:${col}"></div></div></div></div>`;
+    }).join('') : emptyState('garden', '无牲畜', '建造畜牧设施后将显示于此。'));
+    container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+    $$('.farm-cell', container).forEach((cell) => cell.addEventListener('click', () => {
+      $$('.farm-cell', container).forEach((x) => x.classList.toggle('is-active', x === cell));
+      const detail = $('#farmDetail', container); detail.innerHTML = farmDetail(cell.dataset.plot, records[cell.dataset.plot]);
+      Icon.render(detail); bindFarmActions(detail);
+    }));
   }
 
   /* ============================================================

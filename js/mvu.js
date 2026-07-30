@@ -18,17 +18,35 @@ const MVU = {
     }
   },
 
-  /** 取【最新一楼】stat_data；不可用则回退样例 */
-  getState() {
+  latestMessageId() {
+    try {
+      return (typeof getLastMessageId === 'function') ? getLastMessageId() : 'latest';
+    } catch (e) {
+      return 'latest';
+    }
+  },
+
+  clone(value) {
+    if (value == null) return value;
+    try { if (typeof structuredClone === 'function') return structuredClone(value); } catch (e) { /* JSON fallback */ }
+    return JSON.parse(JSON.stringify(value));
+  },
+
+  /** 取 lastMessageId 对应的完整 MvuData 独立快照。 */
+  getDataSnapshot() {
     try {
       if (this.ready && typeof Mvu !== 'undefined') {
-        // 数据与视口剥离：0 楼渲染，变量永远取最新一楼
-        const id = (typeof getLastMessageId === 'function') ? getLastMessageId() : 'latest';
-        const data = Mvu.getMvuData({ type: 'message', message_id: id });
-        if (data && data.stat_data) return data.stat_data;
+        const data = Mvu.getMvuData({ type: 'message', message_id: this.latestMessageId() });
+        if (data) return this.clone(data);
       }
     } catch (e) { /* fall through */ }
-    return window.SAMPLE_STATE;
+    return { stat_data: this.clone(window.SAMPLE_STATE) };
+  },
+
+  /** 取【最新一楼】stat_data；不可用则回退样例 */
+  getState() {
+    const data = this.getDataSnapshot();
+    return data && data.stat_data ? data.stat_data : window.SAMPLE_STATE;
   },
 
   isLive() {

@@ -1025,6 +1025,18 @@ body.is-immersive .journal__stream {
 .tile-detail { margin-top: 10px; animation: inkBleed var(--t-slow) var(--ease-ink) both; }
 
 /* ---------- 种植/畜牧 ---------- */
+.farm-grid { display: grid; gap: 6px; padding: 8px; border-radius: var(--radius-md); background: var(--color-bg-deep); border: 1px solid var(--color-border); box-shadow: var(--shadow-inset); }
+.farm-cell { position: relative; min-width: 0; min-height: 64px; aspect-ratio: 1; display: grid; place-items: center; gap: 2px; padding: 7px 4px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-muted); transition: border-color var(--t-base), box-shadow var(--t-base), transform var(--t-base), background var(--t-base); }
+.farm-cell:hover, .farm-cell.is-active { border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); transform: translateY(-2px); }
+.farm-cell.is-tilled { color: var(--color-warning); background: hsl(36 45% 45% / 0.1); }
+.farm-cell.is-planted { color: var(--color-success); background: hsl(151 34% 42% / 0.1); }
+.farm-cell.is-ripe { color: var(--color-primary); box-shadow: 0 0 0 1px var(--amber-glow); }
+.farm-cell .ic { --ic: 22px; }
+.farm-cell__coord { position: absolute; top: 3px; left: 5px; font-family: var(--font-mono); font-size: 9px; color: var(--color-text-faint); }
+.farm-cell__name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-kai); font-size: 10px; }
+#farmDetail { margin-top: 8px; }
+.farm-overflow { display: grid; gap: 6px; }
+.farm-detail__actions { gap: 6px; margin-top: 7px; flex-wrap: wrap; }
 .crop-plot { padding: 10px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); }
 .crop-plot + .crop-plot { margin-top: 6px; }
 .crop-plot__head { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
@@ -1044,7 +1056,15 @@ body.is-immersive .journal__stream {
 .staff-card:hover { border-color: var(--color-primary); box-shadow: var(--shadow-paper); transform: translateY(-2px); }
 .staff-card.low-morale { filter: saturate(0.6); }
 .staff-card__head { display: flex; align-items: center; gap: 10px; }
-.staff-avatar { width: 40px; height: 40px; flex: none; border-radius: var(--radius-sm); display: grid; place-items: center; font-family: var(--font-serif); font-size: var(--font-size-md); font-weight: 700; color: hsl(40 60% 96%); background: linear-gradient(135deg, var(--ink-green), hsl(151 26% 32%)); border: 1px solid var(--color-border-strong); }
+.staff-avatar-wrap { position: relative; width: 48px; height: 48px; flex: none; }
+.staff-avatar { width: 48px; height: 48px; border-radius: var(--radius-sm); display: grid; place-items: center; overflow: hidden; background-size: cover; background-position: center; font-family: var(--font-serif); font-size: var(--font-size-md); font-weight: 700; color: hsl(40 60% 96%); background-color: var(--ink-green); background-image: linear-gradient(135deg, var(--ink-green), hsl(151 26% 32%)); border: 1px solid var(--color-border-strong); }
+.staff-avatar.has-image { background-color: var(--color-surface); }
+.staff-avatar__upload, .staff-avatar__remove { position: absolute; bottom: -5px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: var(--radius-full); background: var(--color-surface-raised); border: 1px solid var(--color-border-strong); color: var(--color-text-soft); cursor: pointer; transition: color var(--t-fast), border-color var(--t-fast), transform var(--t-fast); }
+.staff-avatar__upload { left: -5px; }
+.staff-avatar__remove { right: -5px; }
+.staff-avatar__upload:hover, .staff-avatar__remove:hover { color: var(--color-primary); border-color: var(--color-primary); transform: translateY(-1px); }
+.staff-avatar__upload .ic, .staff-avatar__remove .ic { --ic: 12px; }
+.staff-avatar__upload input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .staff-card__name { font-family: var(--font-serif); font-weight: 600; font-size: var(--font-size-sm); }
 .staff-card__role { font-size: 11px; color: var(--color-text-muted); font-family: var(--font-kai); }
 .mini-radar { width: 50px; height: 50px; flex: none; }
@@ -1150,13 +1170,32 @@ body.is-immersive .journal__stream {
 .btn__icon { --ic: 16px; }
 
 /* ---------- 设置浮卡 ---------- */
-.settings-pop { position: fixed; top: 12px; right: 12px; z-index: 250; width: min(320px, 86vw); padding: 14px; border-radius: var(--radius-lg); background: linear-gradient(165deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border-strong); box-shadow: var(--shadow-float); animation: toastIn var(--t-slow) var(--ease-page) both; }
+.settings-pop { position: fixed; top: 12px; right: 12px; z-index: 250; width: min(390px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow-y: auto; padding: 14px; border-radius: var(--radius-lg); background: linear-gradient(165deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border-strong); box-shadow: var(--shadow-float); animation: toastIn var(--t-slow) var(--ease-page) both; }
 .settings-pop__head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border); }
 .settings-pop__title { font-family: var(--font-serif); font-weight: 700; font-size: var(--font-size-md); flex: 1; }
 .settings-pop__close { width: 30px; height: 30px; display: grid; place-items: center; border-radius: var(--radius-sm); color: var(--color-text-muted); transition: all var(--t-base); }
 .settings-pop__close:hover { color: var(--color-danger); background: var(--color-bg-deep); }
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .set-row__title { font-family: var(--font-kai); font-size: var(--font-size-sm); font-weight: 600; }
+.set-help { font-size: var(--font-size-2xs); }
+.settings-form { display: grid; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border); }
+.set-api { display: grid; gap: 9px; margin: 0; padding: 10px; border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.set-api[hidden] { display: none; }
+.set-api legend { padding: 0 6px; font-family: var(--font-kai); font-size: var(--font-size-xs); color: var(--color-primary); }
+.set-field { display: grid; gap: 4px; }
+.set-field__label { font-family: var(--font-kai); font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.set-input { width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-deep); color: var(--color-text); font-family: var(--font-sans); font-size: var(--font-size-sm); transition: border-color var(--t-base), box-shadow var(--t-base); }
+.set-input:focus { outline: none; border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); }
+.set-notice { margin-top: var(--space-3); margin-bottom: 0; }
+
+/* ---------- 每日总结模态框 ---------- */
+.modal-backdrop { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: var(--space-4); background: hsl(229 35% 8% / 0.72); backdrop-filter: blur(5px); }
+.daily-modal { width: min(520px, 100%); max-height: min(680px, calc(100vh - 32px)); overflow-y: auto; padding: var(--space-6); border-radius: var(--radius-xl); background: linear-gradient(165deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border-strong); box-shadow: var(--shadow-float); animation: toastIn var(--t-slow) var(--ease-page) both; }
+.daily-modal__head { display: flex; align-items: center; gap: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-border); }
+.daily-modal__head > .ic { color: var(--color-primary); }
+.daily-modal__head h2 { flex: 1; font-size: var(--font-size-xl); }
+.daily-modal__body { max-width: 72ch; padding: var(--space-6) 0; white-space: pre-wrap; line-height: 1.85; font-family: var(--font-kai); color: var(--color-text-soft); }
+.daily-modal__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
 
 
 
@@ -1371,8 +1410,8 @@ body.is-immersive .journal__stream {
 /* ============================================================
    伪同层宿主层（Host）
    1) 唯一宿主判定：仅 0 楼卡片渲染；非 0 楼自我销毁释放性能
-   2) 全局样式绝对接管：跨域注入 CSS 隐藏原生输入框 + 0 楼以外所有气泡
-   3) 沉浸视口：全屏进入/退出（iframe 钉满视口 + 原生 Fullscreen API）
+   2) 首层共存：不覆盖宿主楼层、边框、输入框或功能按钮
+   3) 沉浸视口：仅当前 iframe 页面进入/退出全屏
    本文件必须最先执行（build.js 的 JS 顺序里排第一）
    ============================================================ */
 const Host = (function () {
@@ -1426,45 +1465,17 @@ const Host = (function () {
     return null;
   }
 
-  /**
-   * 注入接管 CSS：
-   * - 永远只显示 0 楼：#chat > .mes:not([mesid="0"]) 隐藏
-   * - 隐藏 0 楼气泡自身的头像/名字/操作条，只留我们的 iframe
-   * - 隐藏原生底部输入区
-   */
+  /** 只注入全屏所需样式；非全屏不改动宿主页面。 */
   function injectTakeover() {
     const d = parentDoc();
     if (!d) return false;
     if (d.getElementById(STYLE_ID)) return true;
 
     const css = `
-/* ===== 暮归旅店 · 伪同层接管（由 0 楼卡片注入） ===== */
-#chat > .mes:not([mesid="0"]) { display: none !important; }
+/* ===== 暮归旅店 · 页面级沉浸（由首层卡片注入） ===== */
+/* 非沉浸时没有宿主覆盖规则；楼层、边框和发送区保持酒馆原样。 */
 
-/* 0 楼气泡：去壳，只留前端卡 */
-#chat > .mes[mesid="0"] {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-#chat > .mes[mesid="0"] .mesAvatarWrapper,
-#chat > .mes[mesid="0"] .ch_name,
-#chat > .mes[mesid="0"] .mes_buttons,
-#chat > .mes[mesid="0"] .mesIDDisplay,
-#chat > .mes[mesid="0"] .mes_timer,
-#chat > .mes[mesid="0"] .tokenCounterDisplay,
-#chat > .mes[mesid="0"] .swipe_left,
-#chat > .mes[mesid="0"] .swipe_right { display: none !important; }
-#chat > .mes[mesid="0"] .mes_block { margin: 0 !important; padding: 0 !important; }
-#chat > .mes[mesid="0"] .mes_text { padding: 0 !important; }
-
-/* 原生输入区：完全隐藏，由卡内 composer 接管 */
-#send_form, #form_sheld { display: none !important; }
-#chat { padding-bottom: 0 !important; }
-
-/* 沉浸模式：iframe 钉满视口 */
+/* 沉浸模式：只将当前页面 iframe 钉满视口 */
 iframe.${IMMERSIVE_CLASS} {
   position: fixed !important;
   inset: 0 !important;
@@ -1501,13 +1512,13 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
   }
 
   function requestNativeFullscreen() {
-    // 优先让父窗口整页进入全屏（iframe 无 allowfullscreen 时也有效）
-    const d = parentDoc();
-    const el = d ? d.documentElement : document.documentElement;
+    // 只请求当前页面 iframe；不让父页面根节点（连同楼层边框）进入全屏。
+    const frame = selfFrame();
+    const el = frame || document.documentElement;
     try {
       const fn = el.requestFullscreen || el.webkitRequestFullscreen;
       if (fn) { const p = fn.call(el); if (p && p.catch) p.catch(() => {}); return true; }
-    } catch (e) { /* ignore */ }
+    } catch (e) { /* fixed 定位仍作为沉浸降级 */ }
     return false;
   }
 
@@ -1820,6 +1831,7 @@ const SAMPLE_STATE = {
     }
   },
   农牧: {
+    农田大小: { 长: 3, 宽: 3 },
     农田网格: {
       "0,1": { x: 0, y: 1, 状态: "种植中", 作物: "春小麦", 剩余天数: 2, 今日已浇水: true, 已施肥: false, 品质修正: 0, 过熟天数: 0 },
       "0,2": { x: 0, y: 2, 状态: "种植中", 作物: "紫胡萝卜", 剩余天数: 1, 今日已浇水: false, 已施肥: true, 品质修正: 0, 过熟天数: 0 },
@@ -1908,6 +1920,23 @@ const Extract = {
     return [];
   },
 
+  /** 提取最后一个完整 UpdateVariable 标签。 */
+  extractUpdateVariable(rawText) {
+    const matches = [...String(rawText || '').matchAll(/<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>/gi)];
+    return matches.length ? matches[matches.length - 1][0] : '';
+  },
+
+  stripUpdateVariable(rawText) {
+    return String(rawText || '').replace(/\s*<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>\s*/gi, '\n').trim();
+  },
+
+  /** 移除原标签后追加新标签，剧情/选项/总结等其他内容保持原顺序。 */
+  replaceUpdateVariable(rawText, updateTag) {
+    const body = this.stripUpdateVariable(rawText);
+    const tag = String(updateTag || '').trim();
+    return tag ? body + (body ? '\n\n' : '') + tag : body;
+  },
+
   /** 正文清理：跑酒馆正则 -> DOM 手术剥结构壳 -> 保留内联美化 */
   extractCleanContent(rawText) {
     if (!rawText) return '';
@@ -1991,17 +2020,35 @@ const MVU = {
     }
   },
 
-  /** 取【最新一楼】stat_data；不可用则回退样例 */
-  getState() {
+  latestMessageId() {
+    try {
+      return (typeof getLastMessageId === 'function') ? getLastMessageId() : 'latest';
+    } catch (e) {
+      return 'latest';
+    }
+  },
+
+  clone(value) {
+    if (value == null) return value;
+    try { if (typeof structuredClone === 'function') return structuredClone(value); } catch (e) { /* JSON fallback */ }
+    return JSON.parse(JSON.stringify(value));
+  },
+
+  /** 取 lastMessageId 对应的完整 MvuData 独立快照。 */
+  getDataSnapshot() {
     try {
       if (this.ready && typeof Mvu !== 'undefined') {
-        // 数据与视口剥离：0 楼渲染，变量永远取最新一楼
-        const id = (typeof getLastMessageId === 'function') ? getLastMessageId() : 'latest';
-        const data = Mvu.getMvuData({ type: 'message', message_id: id });
-        if (data && data.stat_data) return data.stat_data;
+        const data = Mvu.getMvuData({ type: 'message', message_id: this.latestMessageId() });
+        if (data) return this.clone(data);
       }
     } catch (e) { /* fall through */ }
-    return window.SAMPLE_STATE;
+    return { stat_data: this.clone(window.SAMPLE_STATE) };
+  },
+
+  /** 取【最新一楼】stat_data；不可用则回退样例 */
+  getState() {
+    const data = this.getDataSnapshot();
+    return data && data.stat_data ? data.stat_data : window.SAMPLE_STATE;
   },
 
   isLive() {
@@ -2028,6 +2075,11 @@ const Chat = (function () {
   let lastHash = null;
   let timer = null;
   let generating = false;
+  let busy = false;
+  let composedKind = 'normal';
+  let requestSeq = 0;
+  let generationCycle = 0;
+  const generationWaiters = [];
   let messages = [];
 
   /* ---------- 酒馆 API 探测 ---------- */
@@ -2047,9 +2099,14 @@ const Chat = (function () {
     if (typeof eventOn !== 'function' || typeof iframe_events === 'undefined') return;
     try {
       eventOn(iframe_events.GENERATION_STARTED, () => { generating = true; });
-      eventOn(iframe_events.GENERATION_ENDED, () => { generating = false; });
+      const finish = () => {
+        generating = false;
+        generationCycle++;
+        generationWaiters.splice(0).forEach((resolve) => resolve(generationCycle));
+      };
+      eventOn(iframe_events.GENERATION_ENDED, finish);
       if (typeof tavern_events !== 'undefined') {
-        eventOn(tavern_events.GENERATION_STOPPED, () => { generating = false; });
+        eventOn(tavern_events.GENERATION_STOPPED, finish);
       }
     } catch (e) { /* ignore */ }
   }
@@ -2303,38 +2360,100 @@ const Chat = (function () {
     return null;
   }
 
-  /** 把文本填入卡内 composer（不发送） */
-  function compose(text) {
+  /** 把文本填入卡内 composer（不发送），可附带归寝等请求类型。 */
+  function compose(text, kind) {
     const ta = document.getElementById('composerInput');
     if (!ta) return false;
     ta.value = text;
+    composedKind = kind || 'normal';
     ta.focus();
     autoGrow(ta);
     return true;
   }
 
-  /** 发送：/send 入档 + /trigger 触发生成 */
-  async function send(text) {
+  function setBusy(on) {
+    busy = !!on;
+    const ta = document.getElementById('composerInput');
+    const btn = document.getElementById('composerSend');
+    if (ta) ta.disabled = busy;
+    if (btn) { btn.disabled = busy; btn.setAttribute('aria-busy', busy ? 'true' : 'false'); }
+  }
+
+  function waitForGenerationEnd(startCycle, timeout) {
+    if (generationCycle > startCycle) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      const done = () => { clearTimeout(timer); resolve(true); };
+      const timer = setTimeout(() => {
+        const index = generationWaiters.indexOf(done);
+        if (index >= 0) generationWaiters.splice(index, 1);
+        resolve(false);
+      }, timeout || 120000);
+      generationWaiters.push(done);
+    });
+  }
+
+  async function waitForMainReply(beforeId, token, startCycle) {
+    const ended = await waitForGenerationEnd(startCycle, 120000);
+    const started = Date.now();
+    while (token === requestSeq && Date.now() - started < 5000) {
+      const id = lastId();
+      if (id > beforeId) {
+        const latest = (typeof getChatMessages === 'function' ? getChatMessages(id) : [])[0];
+        if (!latest || latest.role !== 'user') return id;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    }
+    if (!ended) console.warn('[Pastoral][MainAPI]', '未收到生成结束事件，按当前最新楼层降级处理');
+    return lastId();
+  }
+
+  /** 唯一发送入口：主剧情完成后按模式执行变量后处理。 */
+  async function handleUnifiedRequest(text, options) {
     const body = String(text || '').trim();
-    if (!body) return false;
+    if (!body || busy) return false;
     if (!hasApi()) {
       toast('warn', '未连接酒馆', body);
       return false;
     }
+    const purpose = options && options.kind || composedKind || 'normal';
+    composedKind = 'normal';
+    const token = ++requestSeq;
+    const beforeId = lastId();
+    const startCycle = generationCycle;
+    const baseline = window.MVU && MVU.getDataSnapshot ? MVU.getDataSnapshot() : null;
+    const mode = window.Settings ? Settings.load().apiMode : 'single';
+    setBusy(true);
     generating = true;
     lastHash = null;
+    console.info('[Pastoral][MainAPI]', '开始', { beforeId, purpose });
     try {
       await exec('/send ' + escSlash(body));
       poll();
       await exec('/trigger');
+      const messageId = await waitForMainReply(beforeId, token, startCycle);
+      console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
+      if (window.ApiEngine) {
+        let outcome = null;
+        if (purpose === 'endday') outcome = await ApiEngine.processEndday({ baseline, messageId, purpose });
+        else if (mode === 'multi') outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose });
+        if (purpose === 'endday' && outcome && outcome.ok) {
+          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: { summary: outcome.summary, source: outcome.source } }));
+        }
+      }
+      return true;
     } catch (e) {
+      console.error('[Pastoral][MainAPI]', '发送失败', e);
       toast('error', '发送失败', String(e && e.message || e));
+      return false;
+    } finally {
+      generating = false;
+      lastHash = null;
+      setBusy(false);
+      poll();
     }
-    generating = false;
-    lastHash = null;
-    poll();
-    return true;
   }
+
+  const send = handleUnifiedRequest;
 
   function autoGrow(ta) {
     ta.style.height = 'auto';
@@ -2388,7 +2507,7 @@ const Chat = (function () {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           const v = ta.value; ta.value = ''; autoGrow(ta);
-          send(v);
+          handleUnifiedRequest(v);
         }
       });
     }
@@ -2404,7 +2523,7 @@ const Chat = (function () {
     if (!timer) timer = setInterval(poll, POLL_MS);
   }
 
-  return { init, poll, send, compose, latestRaw, get messages() { return messages; }, get generating() { return generating; } };
+  return { init, poll, send, handleUnifiedRequest, compose, latestRaw, get messages() { return messages; }, get generating() { return generating; }, get busy() { return busy; } };
 })();
 window.Chat = Chat;
 
@@ -2979,7 +3098,11 @@ window.Chat = Chat;
       const light = (gem.闪光圣岩 || []), dark = (gem.暗影原石 || []);
       return `<div class="staff-card ${morale < 30 ? 'low-morale' : ''}">
         <div class="staff-card__head">
-          <div class="staff-avatar">${(name || '?').slice(0, 1)}</div>
+          <div class="staff-avatar-wrap">
+            <div class="staff-avatar" data-avatar-name="${name}">${(name || '?').slice(0, 1)}</div>
+            <label class="staff-avatar__upload" data-tip="上传头像"><span class="sr-only">为 ${name} 上传头像</span><input type="file" accept="image/*" data-avatar-upload="${name}"><span class="ic" data-i="plus"></span></label>
+            <button class="staff-avatar__remove" type="button" data-avatar-remove="${name}" data-tip="移除头像" aria-label="移除 ${name} 的头像"><span class="ic" data-i="close"></span></button>
+          </div>
           <div style="flex:1"><div class="staff-card__name">${name}</div><div class="staff-card__role">${get(job, '职业', '帮工')} · <span class="class-badge">${get(job, '阶级', 'T1')}</span></div></div>
           <svg class="mini-radar" id="radarStaff${i}" viewBox="0 0 50 50"></svg>
         </div>
@@ -3000,7 +3123,11 @@ window.Chat = Chat;
       </div>`;
     }).join('');
     Icon.render(container);
-    staff.forEach(([, m], i) => {
+    staff.forEach(([name, m], i) => {
+      const avatar = $$('[data-avatar-name]', container).find((el) => el.dataset.avatarName === name);
+      if (avatar && window.Assets) Assets.avatarUrl(name).then((url) => {
+        if (url && avatar.isConnected) { avatar.textContent = ''; avatar.style.backgroundImage = `url("${url}")`; avatar.classList.add('has-image'); }
+      });
       const svg = $(`#radarStaff${i}`, container); if (!svg) return;
       const attr = get(m, '属性', {});
       const axes = ['技艺', '悟性', '体力', '亲和', '专注'].map((k) => ({ name: k }));
@@ -3008,6 +3135,19 @@ window.Chat = Chat;
       const realVals = ['技艺', '悟性', '体力', '亲和', '专注'].map((k) => num(attr[k], 0));
       drawRadar(svg, axes, realVals, Math.max(15, ...realVals, 1), { size: 50, pad: 4, labelPad: 0, showLabels: false, showVals: false, vertexR: 1.6, dur: 600 });
     });
+    $$('[data-avatar-upload]', container).forEach((input) => input.addEventListener('change', async () => {
+      const file = input.files && input.files[0]; if (!file) return;
+      if (!String(file.type || '').startsWith('image/')) { toast('warn', '头像格式不支持', '请选择图片文件。'); return; }
+      const saved = window.Assets && await Assets.putStaffAvatar(input.dataset.avatarUpload, file);
+      if (!saved) { toast('error', '头像保存失败', '浏览器本地数据库不可用。'); return; }
+      toast('success', '头像已保存', input.dataset.avatarUpload + ' 的头像已存入 IndexedDB。');
+      renderStaff(container, Render.state);
+    }));
+    $$('[data-avatar-remove]', container).forEach((button) => button.addEventListener('click', async () => {
+      if (window.Assets) await Assets.removeStaffAvatar(button.dataset.avatarRemove);
+      toast('info', '头像已移除', '已恢复姓名首字头像。');
+      renderStaff(container, Render.state);
+    }));
   }
 
   /* ---- 访客 ---- */
@@ -3077,58 +3217,60 @@ window.Chat = Chat;
   }
 
   /* ---- 农牧 ---- */
+  function farmDetail(key, plot) {
+    const p = plot || {}, state = p.状态 || '荒地', crop = p.作物 || '';
+    const days = num(p.剩余天数, 0), ripe = state === '种植中' && days <= 0;
+    const pct = state === '种植中' && crop ? clamp(100 - days * 18, 5, 100) : 0;
+    return `<div class="crop-plot" data-plot-detail="${key}">
+      <div class="crop-plot__head">
+        <span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'carrot'}" style="--ic:18px;color:${ripe ? 'var(--color-primary)' : 'var(--color-success)'}"></span>
+        <span class="crop-plot__name">田格 (${key}) · ${state}${crop ? ' · ' + crop : ''}</span>
+        <span class="ic status-icon ${p.今日已浇水 ? '已浇水' : '未浇水'}" data-i="${p.今日已浇水 ? 'water' : 'herb'}" title="${p.今日已浇水 ? '已浇水' : '未浇水'}"></span>
+        ${p.已施肥 ? '<span class="ic status-icon 已施肥" data-i="fertilize" title="已施肥"></span>' : ''}
+      </div>
+      ${state === '种植中' && crop ? `<div class="row row--between"><span class="card__sub">${ripe ? '已成熟' : `约 ${days} 日后成熟`}</span><span class="card__sub">品质修正 ${num(p.品质修正, 0)}</span></div><div class="grow-bar"><div class="grow-bar__fill" style="width:${pct}%"></div></div>` : ''}
+      <div class="row farm-detail__actions">
+        ${state === '种植中' && crop ? (ripe ? `<button class="btn btn--primary btn--sm" data-harvest="${key}"><span class="ic btn__icon" data-i="bag"></span>收获</button>` : `<button class="btn btn--sm" data-water="${key}"><span class="ic btn__icon" data-i="water"></span>浇水</button>`) : ''}
+        ${state === '荒地' ? `<button class="btn btn--sm" data-till="${key}"><span class="ic btn__icon" data-i="hammer"></span>开垦</button>` : ''}
+        ${state === '已开垦' ? `<button class="btn btn--sm" data-plant="${key}"><span class="ic btn__icon" data-i="grain"></span>播种</button>` : ''}
+      </div>
+    </div>`;
+  }
+
+  function bindFarmActions(container) {
+    $$('[data-water]', container).forEach((b) => b.addEventListener('click', () => intend(`浇水：(${b.dataset.water})`)));
+    $$('[data-harvest]', container).forEach((b) => b.addEventListener('click', () => intend(`收获：(${b.dataset.harvest})`)));
+    $$('[data-till]', container).forEach((b) => b.addEventListener('click', () => intend(`开垦：(${b.dataset.till})`)));
+    $$('[data-plant]', container).forEach((b) => b.addEventListener('click', () => intend(`播种：(${b.dataset.plant})`)));
+  }
+
   function renderFarm(container, s) {
-    const farm = get(s, '农牧', {});
-    const plots = entries(get(farm, '农田网格', {}));
-    const comp = get(farm, '堆肥箱', {});
-    const live = entries(get(farm, '畜牧', {}));
-    let html = panelH('农田', `${plots.length} 块`);
-    html += plots.length ? plots.map(([key, p]) => {
-      const state = (p && p.状态) || '荒地';
-      const crop = (p && p.作物) || '';
-      const days = num(p && p.剩余天数, 0);
-      const watered = p && p.今日已浇水, fert = p && p.已施肥;
-      const total = days > 0 ? days : 1;
-      // 估算生长进度：状态种植中时，无明确总期，用剩余天数反推不可靠，仅作展示
-      const pct = state === '种植中' ? (crop ? clamp(100 - days * 18, 5, 100) : 0) : 0;
-      const ripe = state === '种植中' && days <= 0;
-      const x = num(p && p.x, 0), y = num(p && p.y, 0);
-      return `<div class="crop-plot" data-plot="${x},${y}">
-        <div class="crop-plot__head">
-          <span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'carrot'}" style="--ic:18px;color:${ripe ? 'var(--color-primary)' : 'var(--color-success)'}"></span>
-          <span class="crop-plot__name">(${x},${y}) · ${state}${crop ? ' · ' + crop : ''}</span>
-          <span class="ic status-icon ${watered ? '已浇水' : '未浇水'}" data-i="${watered ? 'water' : 'herb'}" title="${watered ? '已浇水' : '未浇水'}"></span>
-          ${fert ? '<span class="ic status-icon 已施肥" data-i="fertilize" title="已施肥"></span>' : ''}
-        </div>
-        ${state === '种植中' && crop ? `<div class="row row--between" style="margin:3px 0"><span class="card__sub">${ripe ? '已成熟' : `约 ${days} 日后成熟`}</span>${p && p.品质修正 ? `<span class="card__sub">品质修正 ${p.品质修正}</span>` : ''}</div><div class="grow-bar"><div class="grow-bar__fill" style="width:${pct}%"></div></div>` : ''}
-        <div class="row" style="gap:6px;margin-top:6px">
-          ${state === '种植中' && crop ? (ripe ? `<button class="btn btn--primary btn--sm" data-harvest="${x},${y}"><span class="ic btn__icon" data-i="bag"></span>收获</button>` : `<button class="btn btn--sm" data-water="${x},${y}"><span class="ic btn__icon" data-i="water"></span>浇水</button>`) : ''}
-          ${state === '荒地' ? `<button class="btn btn--sm" data-till="${x},${y}"><span class="ic btn__icon" data-i="hammer"></span>开垦</button>` : ''}
-          ${state === '已开垦' ? `<button class="btn btn--sm" data-plant="${x},${y}"><span class="ic btn__icon" data-i="grain"></span>播种</button>` : ''}
-        </div>
-      </div>`;
-    }).join('') : emptyState('wheat', '无农田', '前往地图开垦新田。');
-
-    html += panelH('堆肥箱');
-    html += `<div class="card"><div class="row row--between"><span class="card__sub">状态 · ${(comp && comp.状态) || '空'}</span><span class="card__sub">倒计时 · <span class="num">${num(comp && comp.倒计时, 0)}</span></span></div></div>`;
-
-    html += panelH('畜牧', `${live.length}`);
-    html += live.length ? live.map(([name, l]) => {
-      const hp = clamp(num(get(l, '健康度', 0), 0), 0, 100);
-      const col = hp >= 50 ? 'var(--color-success)' : 'var(--color-danger)';
-      return `<div class="livestock-card"><div class="building__head"><span class="ic building__icon" data-i="garden"></span><span class="building__name">${name}</span></div>
-        <div class="row row--between"><span class="card__sub">饲料 · ${num(get(l, '饲料倒计时', 0), 0)} 日</span><span class="card__sub">产出 · ${num(get(l, '产出倒计时', 0), 0)} 日</span></div>
-        <div class="stat-line" style="margin-top:4px"><span class="stat-line__label">健康 ${hp}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${hp}%;background:${col}"></div></div></div>
-      </div>`;
-    }).join('') : emptyState('garden', '无牲畜', '建造畜牧设施后将显示于此。');
-
-    container.innerHTML = html;
-    Icon.render(container);
-    // 农事动作（各自指令不同）
-    $$('[data-water]', container).forEach((b) => b.addEventListener('click', () => { intend(`浇水：(${b.dataset.water})`); }));
-    $$('[data-harvest]', container).forEach((b) => b.addEventListener('click', () => { intend(`收获：(${b.dataset.harvest})`); }));
-    $$('[data-till]', container).forEach((b) => b.addEventListener('click', () => { intend(`开垦：(${b.dataset.till})`); }));
-    $$('[data-plant]', container).forEach((b) => b.addEventListener('click', () => { intend(`播种：(${b.dataset.plant})`); }));
+    const farm = get(s, '农牧', {}), size = get(farm, '农田大小', {});
+    const height = Math.max(1, Math.floor(num(size.长, 3))), width = Math.max(1, Math.floor(num(size.宽, 3)));
+    const records = get(farm, '农田网格', {}) || {}, inRange = new Set(), cells = [];
+    for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+      const key = `${x},${y}`, p = records[key] || { x, y, 状态: '荒地' };
+      inRange.add(key);
+      const state = p.状态 || '荒地', crop = p.作物 || '', ripe = state === '种植中' && num(p.剩余天数, 0) <= 0;
+      cells.push(`<button class="farm-cell ${state === '种植中' ? 'is-planted' : state === '已开垦' ? 'is-tilled' : 'is-wild'} ${ripe ? 'is-ripe' : ''}" type="button" data-plot="${key}" aria-label="田格${key}，${state}${crop ? '，' + crop : ''}"><span class="farm-cell__coord">${x},${y}</span><span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'garden'}"></span><span class="farm-cell__name">${crop || state}</span></button>`);
+    }
+    const overflow = entries(records).filter(([key]) => !inRange.has(key));
+    const comp = get(farm, '堆肥箱', {}), live = entries(get(farm, '畜牧', {}));
+    let html = panelH('旅店农田', `${width}×${height}`);
+    html += `<div class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>点击田格查看状态与农事操作；坐标从 (0,0) 开始。</div></div>`;
+    html += `<div class="farm-grid" style="grid-template-columns:repeat(${width},minmax(0,1fr))">${cells.join('')}</div><div id="farmDetail"></div>`;
+    if (overflow.length) html += panelH('范围外田格', `${overflow.length}`) + `<div class="farm-overflow">${overflow.map(([key, p]) => farmDetail(key, p)).join('')}</div>`;
+    html += panelH('堆肥箱') + `<div class="card"><div class="row row--between"><span class="card__sub">状态 · ${(comp && comp.状态) || '空'}</span><span class="card__sub">倒计时 · <span class="num">${num(comp && comp.倒计时, 0)}</span></span></div></div>`;
+    html += panelH('畜牧', `${live.length}`) + (live.length ? live.map(([name, l]) => {
+      const hp = clamp(num(get(l, '健康度', 0), 0), 0, 100), col = hp >= 50 ? 'var(--color-success)' : 'var(--color-danger)';
+      return `<div class="livestock-card"><div class="building__head"><span class="ic building__icon" data-i="garden"></span><span class="building__name">${name}</span></div><div class="row row--between"><span class="card__sub">饲料 · ${num(get(l, '饲料倒计时', 0), 0)} 日</span><span class="card__sub">产出 · ${num(get(l, '产出倒计时', 0), 0)} 日</span></div><div class="stat-line"><span class="stat-line__label">健康 ${hp}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${hp}%;background:${col}"></div></div></div></div>`;
+    }).join('') : emptyState('garden', '无牲畜', '建造畜牧设施后将显示于此。'));
+    container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+    $$('.farm-cell', container).forEach((cell) => cell.addEventListener('click', () => {
+      $$('.farm-cell', container).forEach((x) => x.classList.toggle('is-active', x === cell));
+      const detail = $('#farmDetail', container); detail.innerHTML = farmDetail(cell.dataset.plot, records[cell.dataset.plot]);
+      Icon.render(detail); bindFarmActions(detail);
+    }));
   }
 
   /* ============================================================
@@ -3243,38 +3385,86 @@ window.Chat = Chat;
   function openSettings() {
     const existing = document.getElementById('settingsPop');
     if (existing) { existing.remove(); return; }
-    const pop = h('div', { class: 'settings-pop', id: 'settingsPop', role: 'dialog', 'aria-label': '设置' });
+    const cfg = Settings.load();
+    const pop = h('section', { class: 'settings-pop', id: 'settingsPop', role: 'dialog', 'aria-label': '设置' });
     const close = () => pop.remove();
 
     pop.appendChild(h('div', { class: 'settings-pop__head' }, [
       h('span', { class: 'ic', html: Icon.get('settings') }),
       h('span', { class: 'settings-pop__title' }, '掌柜手记'),
-      h('button', { class: 'settings-pop__close', 'aria-label': '关闭', onclick: close },
+      h('button', { class: 'settings-pop__close', type: 'button', 'aria-label': '关闭', onclick: close },
         h('span', { class: 'ic', html: Icon.get('close') }))
     ]));
 
-    const themeBtn = h('button', { class: 'btn btn--ghost btn--sm' },
+    const themeBtn = h('button', { class: 'btn btn--ghost btn--sm', type: 'button' },
       document.documentElement.getAttribute('data-theme') === 'night' ? '当前：夜 · 切昼' : '当前：昼 · 切夜');
     themeBtn.addEventListener('click', () => {
       toggleTheme();
       themeBtn.textContent = document.documentElement.getAttribute('data-theme') === 'night' ? '当前：夜 · 切昼' : '当前：昼 · 切夜';
     });
     pop.appendChild(h('div', { class: 'set-row' }, [
-      h('div', null, [
-        h('div', { class: 'set-row__title' }, '昼夜主题'),
-        h('div', { class: 'faint', style: 'font-size:var(--font-size-2xs)' }, '羊皮纸昼景 / 靛蓝烛夜')
-      ]),
+      h('div', {}, [h('div', { class: 'set-row__title' }, '昼夜主题'), h('div', { class: 'faint set-help' }, '羊皮纸昼景 / 靛蓝烛夜')]),
       themeBtn
     ]));
 
-    pop.appendChild(h('div', { class: 'notice notice--info', style: 'margin-top:var(--space-3)' }, [
+    const form = h('form', { class: 'settings-form', id: 'apiSettingsForm' });
+    const mode = h('select', { class: 'set-input', name: 'apiMode', 'aria-label': 'API 模式' }, [
+      h('option', { value: 'single' }, '单 API'), h('option', { value: 'multi' }, '多 API')
+    ]);
+    mode.value = cfg.apiMode;
+    form.appendChild(h('label', { class: 'set-field' }, [h('span', { class: 'set-field__label' }, 'API 模式'), mode]));
+
+    const apiBox = h('fieldset', { class: 'set-api', id: 'secondApiFields' });
+    apiBox.appendChild(h('legend', {}, '第二 API'));
+    const field = (label, name, value, type, min) => h('label', { class: 'set-field' }, [
+      h('span', { class: 'set-field__label' }, label),
+      h('input', { class: 'set-input', name, value, type: type || 'text', min: min == null ? null : min, autocomplete: name === 'secondApiKey' ? 'off' : null })
+    ]);
+    apiBox.appendChild(field('URL', 'secondApiUrl', cfg.secondApi.url, 'url'));
+    apiBox.appendChild(field('API Key', 'secondApiKey', cfg.secondApi.key, 'password'));
+    apiBox.appendChild(field('模型名', 'secondApiModel', cfg.secondApi.model));
+    apiBox.appendChild(field('超时时间（ms）', 'secondApiTimeout', cfg.secondApi.timeout, 'number', 1000));
+    apiBox.appendChild(field('最大重试次数', 'secondApiRetries', cfg.secondApi.maxRetries, 'number', 0));
+    form.appendChild(apiBox);
+
+    const syncMode = () => { apiBox.hidden = mode.value !== 'multi'; };
+    mode.addEventListener('change', syncMode); syncMode();
+    const save = h('button', { class: 'btn btn--primary btn--block', type: 'submit' }, '保存 API 设置');
+    form.appendChild(save);
+    const retry = h('button', { class: 'btn btn--ghost btn--block', id: 'retrySecondApi', type: 'button' }, '重新调用上次失败的第二 API');
+    retry.disabled = !(window.ApiEngine && ApiEngine.lastFailure);
+    retry.addEventListener('click', async () => {
+      retry.disabled = true; retry.textContent = '正在重试…';
+      try {
+        const result = await ApiEngine.retryLastFailure();
+        if (result && result.ok) { toast('success', '第二 API 重试成功', '变量已重新计算并写回最新楼层。'); close(); }
+        else toast('error', '重试失败', '主模型变量保持不变。');
+      } catch (e) { toast('error', '无法重试', e && e.message || String(e)); }
+      finally { retry.textContent = '重新调用上次失败的第二 API'; retry.disabled = !(window.ApiEngine && ApiEngine.lastFailure); }
+    });
+    form.appendChild(retry);
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const next = Settings.save({ apiMode: mode.value, secondApi: {
+        url: form.elements.secondApiUrl.value,
+        key: form.elements.secondApiKey.value,
+        model: form.elements.secondApiModel.value,
+        timeout: form.elements.secondApiTimeout.value,
+        maxRetries: form.elements.secondApiRetries.value
+      } });
+      if (next.apiMode === 'multi' && !Settings.isSecondApiComplete(next)) {
+        toast('warn', '设置已保存', '第二 API 配置尚不完整，调用时将自动降级。');
+      } else toast('success', '设置已保存', next.apiMode === 'multi' ? '双轨 API 已启用。' : '当前使用单 API。');
+    });
+    pop.appendChild(form);
+
+    pop.appendChild(h('div', { class: 'notice notice--info set-notice' }, [
       h('span', { class: 'ic notice__icon', html: Icon.get('info') }),
-      h('div', null, '本界面由酒馆助手驱动，状态读自 MVU 变量；动作经 /setinput 写入输入框，由 AI 推进世界。')
+      h('div', {}, '状态始终读取最新楼层 MVU 快照；第二 API 只负责变量计算，失败时自动保留主模型结果。')
     ]));
 
     document.body.appendChild(pop);
     Icon.render(pop);
-    // 点击浮卡外部关闭
     setTimeout(() => {
       const handler = (e) => { if (!pop.contains(e.target)) { close(); document.removeEventListener('mousedown', handler); } };
       document.addEventListener('mousedown', handler);
@@ -3283,7 +3473,7 @@ window.Chat = Chat;
 
   function h(tag, attrs = {}, children = []) {
     const e = document.createElement(tag);
-    Object.entries(attrs).forEach(([k, v]) => {
+    Object.entries(attrs || {}).forEach(([k, v]) => {
       if (v === null || v === undefined) return;
       if (k === 'class') e.className = v;
       else if (k === 'html') e.innerHTML = v;
@@ -3318,8 +3508,36 @@ window.Chat = Chat;
       case 'cook': openTab('inventory'); toast('info', '灶事', '择一道食谱烹制。'); break;
       case 'water': Chat.compose('浇灌所有农田'); break;
       case 'rest': Chat.compose('小憩片刻，恢复精力'); break;
-      case 'endday': Chat.compose('归寝入眠，结束今天'); break;
+      case 'endday': Chat.compose('归寝入眠，结束今天', 'endday'); break;
     }
+  }
+
+  /* ---------- 每日总结模态框 ---------- */
+  function showDailySummary(detail) {
+    const old = document.getElementById('dailySummary'); if (old) old.remove();
+    const previous = document.activeElement;
+    const backdrop = h('div', { class: 'modal-backdrop', id: 'dailySummary' });
+    const dialog = h('section', { class: 'daily-modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'dailySummaryTitle' });
+    const close = () => { backdrop.remove(); if (previous && previous.focus) previous.focus(); };
+    dialog.appendChild(h('header', { class: 'daily-modal__head' }, [
+      h('span', { class: 'ic', html: Icon.get('moon') }),
+      h('h2', { id: 'dailySummaryTitle' }, '今日账簿'),
+      h('button', { class: 'settings-pop__close', type: 'button', 'aria-label': '关闭每日总结', onclick: close }, h('span', { class: 'ic', html: Icon.get('close') }))
+    ]));
+    dialog.appendChild(h('div', { class: 'daily-modal__body' }, String(detail && detail.summary || '').trim() || '日结完成，变量已更新。'));
+    dialog.appendChild(h('div', { class: 'daily-modal__foot' }, [h('span', { class: 'faint' }, detail && detail.source === 'second' ? '由第二 API 结算' : '由当前主 API 结算'), h('button', { class: 'btn btn--primary', type: 'button', onclick: close }, '合上账簿')]));
+    backdrop.appendChild(dialog); document.body.appendChild(backdrop); Icon.render(dialog);
+    const focusables = () => Array.from(dialog.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
+    const first = focusables()[0]; if (first) first.focus();
+    backdrop.addEventListener('mousedown', (e) => { if (e.target === backdrop) close(); });
+    backdrop.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key !== 'Tab') return;
+      const nodes = focusables(); if (!nodes.length) return;
+      const a = nodes[0], z = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); }
+      else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
+    });
   }
 
   /* ---------- 状态轮询（面板/HUD；对话流由 Chat 自行轮询） ---------- */
@@ -3365,6 +3583,7 @@ window.Chat = Chat;
 
     // 对话流有变化时立刻重算选项，不等下一次状态轮询
     window.addEventListener('pastoral:chat', () => refresh(false));
+    window.addEventListener('pastoral:daily-summary', (e) => showDailySummary(e.detail || {}));
 
     // 翻页标签
     $$('.tab').forEach((t) => t.addEventListener('click', () => openTab(t.dataset.tab)));

@@ -14,6 +14,11 @@ const Chat = (function () {
   let lastHash = null;
   let timer = null;
   let generating = false;
+  let busy = false;
+  let composedKind = 'normal';
+  let requestSeq = 0;
+  let generationCycle = 0;
+  const generationWaiters = [];
   let messages = [];
 
   /* ---------- 酒馆 API 探测 ---------- */
@@ -33,9 +38,14 @@ const Chat = (function () {
     if (typeof eventOn !== 'function' || typeof iframe_events === 'undefined') return;
     try {
       eventOn(iframe_events.GENERATION_STARTED, () => { generating = true; });
-      eventOn(iframe_events.GENERATION_ENDED, () => { generating = false; });
+      const finish = () => {
+        generating = false;
+        generationCycle++;
+        generationWaiters.splice(0).forEach((resolve) => resolve(generationCycle));
+      };
+      eventOn(iframe_events.GENERATION_ENDED, finish);
       if (typeof tavern_events !== 'undefined') {
-        eventOn(tavern_events.GENERATION_STOPPED, () => { generating = false; });
+        eventOn(tavern_events.GENERATION_STOPPED, finish);
       }
     } catch (e) { /* ignore */ }
   }
@@ -289,38 +299,100 @@ const Chat = (function () {
     return null;
   }
 
-  /** 把文本填入卡内 composer（不发送） */
-  function compose(text) {
+  /** 把文本填入卡内 composer（不发送），可附带归寝等请求类型。 */
+  function compose(text, kind) {
     const ta = document.getElementById('composerInput');
     if (!ta) return false;
     ta.value = text;
+    composedKind = kind || 'normal';
     ta.focus();
     autoGrow(ta);
     return true;
   }
 
-  /** 发送：/send 入档 + /trigger 触发生成 */
-  async function send(text) {
+  function setBusy(on) {
+    busy = !!on;
+    const ta = document.getElementById('composerInput');
+    const btn = document.getElementById('composerSend');
+    if (ta) ta.disabled = busy;
+    if (btn) { btn.disabled = busy; btn.setAttribute('aria-busy', busy ? 'true' : 'false'); }
+  }
+
+  function waitForGenerationEnd(startCycle, timeout) {
+    if (generationCycle > startCycle) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      const done = () => { clearTimeout(timer); resolve(true); };
+      const timer = setTimeout(() => {
+        const index = generationWaiters.indexOf(done);
+        if (index >= 0) generationWaiters.splice(index, 1);
+        resolve(false);
+      }, timeout || 120000);
+      generationWaiters.push(done);
+    });
+  }
+
+  async function waitForMainReply(beforeId, token, startCycle) {
+    const ended = await waitForGenerationEnd(startCycle, 120000);
+    const started = Date.now();
+    while (token === requestSeq && Date.now() - started < 5000) {
+      const id = lastId();
+      if (id > beforeId) {
+        const latest = (typeof getChatMessages === 'function' ? getChatMessages(id) : [])[0];
+        if (!latest || latest.role !== 'user') return id;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    }
+    if (!ended) console.warn('[Pastoral][MainAPI]', '未收到生成结束事件，按当前最新楼层降级处理');
+    return lastId();
+  }
+
+  /** 唯一发送入口：主剧情完成后按模式执行变量后处理。 */
+  async function handleUnifiedRequest(text, options) {
     const body = String(text || '').trim();
-    if (!body) return false;
+    if (!body || busy) return false;
     if (!hasApi()) {
       toast('warn', '未连接酒馆', body);
       return false;
     }
+    const purpose = options && options.kind || composedKind || 'normal';
+    composedKind = 'normal';
+    const token = ++requestSeq;
+    const beforeId = lastId();
+    const startCycle = generationCycle;
+    const baseline = window.MVU && MVU.getDataSnapshot ? MVU.getDataSnapshot() : null;
+    const mode = window.Settings ? Settings.load().apiMode : 'single';
+    setBusy(true);
     generating = true;
     lastHash = null;
+    console.info('[Pastoral][MainAPI]', '开始', { beforeId, purpose });
     try {
       await exec('/send ' + escSlash(body));
       poll();
       await exec('/trigger');
+      const messageId = await waitForMainReply(beforeId, token, startCycle);
+      console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
+      if (window.ApiEngine) {
+        let outcome = null;
+        if (purpose === 'endday') outcome = await ApiEngine.processEndday({ baseline, messageId, purpose });
+        else if (mode === 'multi') outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose });
+        if (purpose === 'endday' && outcome && outcome.ok) {
+          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: { summary: outcome.summary, source: outcome.source } }));
+        }
+      }
+      return true;
     } catch (e) {
+      console.error('[Pastoral][MainAPI]', '发送失败', e);
       toast('error', '发送失败', String(e && e.message || e));
+      return false;
+    } finally {
+      generating = false;
+      lastHash = null;
+      setBusy(false);
+      poll();
     }
-    generating = false;
-    lastHash = null;
-    poll();
-    return true;
   }
+
+  const send = handleUnifiedRequest;
 
   function autoGrow(ta) {
     ta.style.height = 'auto';
@@ -374,7 +446,7 @@ const Chat = (function () {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           const v = ta.value; ta.value = ''; autoGrow(ta);
-          send(v);
+          handleUnifiedRequest(v);
         }
       });
     }
@@ -390,6 +462,6 @@ const Chat = (function () {
     if (!timer) timer = setInterval(poll, POLL_MS);
   }
 
-  return { init, poll, send, compose, latestRaw, get messages() { return messages; }, get generating() { return generating; } };
+  return { init, poll, send, handleUnifiedRequest, compose, latestRaw, get messages() { return messages; }, get generating() { return generating; }, get busy() { return busy; } };
 })();
 window.Chat = Chat;
