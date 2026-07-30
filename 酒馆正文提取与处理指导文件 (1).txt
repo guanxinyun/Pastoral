@@ -1,0 +1,619 @@
+```markdown
+# 酒馆正文提取与处理指导文件
+
+---
+
+## 一、背景与核心问题
+
+在 SillyTavern（酒馆）生态中，不同角色卡的正文格式千差万别：
+
+- 有的用 `<maintext></maintext>` 包裹正文
+- 有的用 `<maintxt></maintxt>`、`<content></content>`、`<story></story>` 等
+- 有的根本没有包裹标签，直接生成正文
+- 有的会在正文外层套 `<html><body></body></html>` 结构
+- 有的正文中包含人工思维链（需要被正则切掉）
+- 有的正文中某些文字带有内联美化（颜色、发光、闪烁等动画效果），这些属于正文内容，应该保留
+- 有的正则会把某些标记替换成带HTML美化的剧情小总结
+- 有的用到了"XX以上截断/XX以下截断"的正则逻辑
+- 有的会生成折叠面板、布局容器等结构性HTML
+
+**最终目标：** 从任意格式的酒馆消息中，提取出干净的正文内容，剥离结构性包装（布局容器、外壳），但保留内联美化（文字颜色、发光效果等），然后套上我们自己的前端样式。
+
+---
+
+## 二、酒馆助手提供的关键API
+
+### 2.1 获取原始文本
+
+```javascript
+const messageId = getCurrentMessageId();
+const messages = getChatMessages(messageId);
+const rawText = messages[0]?.message || '';
+```
+
+- `rawText` 是该楼层的原始文本，未经任何正则处理
+
+### 2.2 对文本应用酒馆正则
+
+```javascript
+formatAsTavernRegexedString(
+  text: string,
+  source: 'user_input' | 'ai_output' | 'slash_command' | 'world_info' | 'reasoning',
+  destination: 'display' | 'prompt',
+  options?: { depth?: number, character_name?: string }
+): string
+```
+
+**作用：** 遍历所有已启用的酒馆正则（全局 + 角色卡局部），按顺序对文本执行 find → replace。
+
+**典型用法：**
+```javascript
+const afterRegex = formatAsTavernRegexedString(rawText, 'ai_output', 'display', { depth: 0 });
+```
+
+**处理效果包括但不限于：**
+- 切掉人工思维链
+- 处理"XX以上截断/XX以下截断"
+- 把自定义标签替换成美化HTML
+- 把小总结替换成美化版本
+- 内联文字美化（颜色、发光等）会被加上
+
+**注意：** 返回的是字符串（可能包含HTML），不是纯文本。
+
+### 2.3 完整渲染流水线
+
+```javascript
+formatAsDisplayedMessage(text: string, options?: { message_id?: number }): string
+```
+
+**作用：** 替换宏 → 应用正则 → 转成HTML。返回的是完整的HTML字符串。
+
+### 2.4 获取已渲染的DOM
+
+```javascript
+retrieveDisplayedMessage(message_id: number): JQuery<HTMLDivElement>
+```
+
+**作用：** 获取酒馆页面上该楼已渲染的消息内容DOM。返回jQuery对象。
+
+### 2.5 四种方式对比
+
+| 方法 | 正则处理 | 宏替换 | HTML转换 | 返回类型 |
+|------|---------|--------|----------|---------|
+| `getChatMessages().message` | ❌ | ❌ | ❌ | 原始字符串 |
+| `formatAsTavernRegexedString()` | ✅ | ❌ | ❌ | 正则处理后字符串 |
+| `formatAsDisplayedMessage()` | ✅ | ✅ | ✅ | 完整HTML字符串 |
+| `retrieveDisplayedMessage()` | ✅ | ✅ | ✅ | jQuery DOM对象 |
+
+---
+
+## 三、正文提取策略
+
+### 3.1 推荐的处理流水线
+
+```
+原始文本 (getChatMessages)
+  ↓
+酒馆正则处理 (formatAsTavernRegexedString)
+  → 切掉思维链
+  → 执行所有正则替换（包括美化）
+  → 处理截断逻辑
+  ↓
+结构性HTML剥离 (extractCleanContent)
+  → 去掉 <html><body> 等外壳标签
+  → 解包纯布局容器 (div.wrapper 等)
+  → 保留内联美化 (span颜色、text-shadow等)
+  ↓
+注入自定义前端容器
+  → 套上自己的样式框架
+```
+
+### 3.2 核心提取函数
+
+```javascript
+/**
+ * 从原始文本中提取干净的正文内容
+ * 保留内联美化（span颜色、发光效果等），剥离结构性包装
+ *
+ * @param {string} rawText - 从 getChatMessages 获取的原始文本
+ * @returns {string} - 清理后的HTML字符串，可直接用 innerHTML 渲染
+ */
+function extractCleanContent(rawText) {
+  // 第一步：让酒馆正则处理文本
+  const regexed = formatAsTavernRegexedString(
+    rawText,
+    'ai_output',
+    'display',
+    { depth: 0 }
+  );
+
+  // 第二步：放进临时DOM进行手术
+  const temp = document.createElement('div');
+  temp.innerHTML = regexed;
+
+  // 2a. 删除绝对不要的元素
+  temp.querySelectorAll('script, style, link').forEach(el => el.remove());
+
+  // 2b. 解包已知的结构性标签
+  const structuralTags = ['html', 'head', 'body', 'header', 'footer', 'nav'];
+  structuralTags.forEach(tag => {
+    temp.querySelectorAll(tag).forEach(el => {
+      el.replaceWith(...el.childNodes);
+    });
+  });
+
+  // 2c. 智能解包纯布局容器
+  unwrapStructuralContainers(temp);
+
+  return temp.innerHTML.trim();
+}
+```
+
+### 3.3 智能容器解包函数
+
+```javascript
+/**
+ * 解包"纯结构性"容器
+ *
+ * 判断标准：
+ * - 是 div / section / article / aside / main 标签
+ * - 没有直接的文本内容（自身不包含文字，只嵌套子元素）
+ * - 没有设置内容美化相关的CSS属性（color、text-shadow、animation等）
+ * - 有布局相关的CSS属性（width、height、display、position等）
+ * - 或者ID/class名称暗示它是容器（wrapper、container等）
+ *
+ * 内联美化元素（带 color、text-shadow、animation 的 span 等）不会被解包
+ */
+function unwrapStructuralContainers(container) {
+  const wrapperSelectors = 'div, section, article, aside, main';
+  let wrappers = [...container.querySelectorAll(wrapperSelectors)];
+
+  // 按DOM深度排序，最深的先处理（从内往外解包）
+  wrappers.sort((a, b) => getDepth(b) - getDepth(a));
+
+  wrappers.forEach(el => {
+    if (isPureWrapper(el)) {
+      el.replaceWith(...el.childNodes);
+    }
+  });
+}
+
+/**
+ * 获取元素的DOM深度
+ */
+function getDepth(el) {
+  let depth = 0;
+  let node = el;
+  while (node.parentElement) {
+    depth++;
+    node = node.parentElement;
+  }
+  return depth;
+}
+
+/**
+ * 判断一个元素是否是"纯包装壳"（应该被解包）
+ *
+ * 返回 true 表示应该解包（去掉标签，保留子节点）
+ * 返回 false 表示应该保留（这是有意义的美化元素）
+ */
+function isPureWrapper(el) {
+  // 规则1：如果有直接的文字内容，就不是纯包装
+  for (const child of el.childNodes) {
+    if (child.nodeType === Node.TEXT_NODE && child.textContent.trim()) {
+      return false;
+    }
+  }
+
+  // 规则2：如果有内容美化的 inline style，就不是纯包装
+  const inlineStyle = (el.getAttribute('style') || '').toLowerCase();
+  const contentStyleKeywords = [
+    'color', 'text-shadow', 'text-decoration',
+    'font-weight', 'font-style', 'font-size', 'font-family',
+    'background-color', 'background-image', 'background:',
+    'animation', 'filter', 'opacity',
+    'border-radius', 'box-shadow',
+    'letter-spacing', 'line-height', 'text-align',
+    'transform', 'transition',
+  ];
+  for (const keyword of contentStyleKeywords) {
+    if (inlineStyle.includes(keyword)) {
+      return false;
+    }
+  }
+
+  // 规则3：如果 class 名暗示这是内容美化效果，就不是纯包装
+  const className = (el.className || '').toString();
+  const contentClassPatterns = [
+    /glow/i, /shine/i, /sparkle/i, /fade/i, /highlight/i,
+    /color/i, /accent/i, /emphasis/i, /effect/i, /anim/i,
+    /text[-_]/i, /font[-_]/i, /italic/i, /bold/i,
+    /gradient/i, /shadow/i, /pulse/i, /flash/i, /blink/i,
+    /dialogue/i, /speech/i, /quote/i, /narrat/i,
+  ];
+  for (const pattern of contentClassPatterns) {
+    if (pattern.test(className)) {
+      return false;
+    }
+  }
+
+  // 规则4：如果 ID/class 名暗示这是容器/布局，就是纯包装
+  const idAndClass = ((el.id || '') + ' ' + className).toLowerCase();
+  const wrapperPatterns = [
+    /wrapper/i, /container/i, /layout/i, /outer/i,
+    /main[-_]?text/i, /main[-_]?content/i,
+    /content[-_]?box/i, /content[-_]?wrapper/i,
+    /message[-_]?body/i, /story[-_]?box/i,
+    /frame/i, /shell/i, /page/i,
+  ];
+  for (const pattern of wrapperPatterns) {
+    if (pattern.test(idAndClass)) {
+      return true;
+    }
+  }
+
+  // 规则5：只有一个子元素且自身无文本 → 很可能是套娃包装
+  if (el.children.length === 1 && !hasDirectText(el)) {
+    return true;
+  }
+
+  // 规则6：如果 inline style 只有布局属性 → 纯包装
+  if (inlineStyle) {
+    const layoutOnlyKeywords = [
+      'display', 'flex', 'grid',
+      'width', 'height', 'max-width', 'max-height', 'min-width', 'min-height',
+      'margin', 'padding',
+      'position', 'top', 'left', 'right', 'bottom',
+      'overflow', 'z-index', 'gap', 'justify', 'align',
+    ];
+    const styleProps = inlineStyle.split(';').map(s => s.trim().split(':')[0].trim()).filter(Boolean);
+    const allLayout = styleProps.every(prop =>
+      layoutOnlyKeywords.some(kw => prop.includes(kw))
+    );
+    if (allLayout && styleProps.length > 0) {
+      return true;
+    }
+  }
+
+  // 默认：不确定的不解包
+  return false;
+}
+
+/**
+ * 检查元素是否有直接的文本子节点
+ */
+function hasDirectText(el) {
+  for (const child of el.childNodes) {
+    if (child.nodeType === Node.TEXT_NODE && child.textContent.trim()) {
+      return true;
+    }
+  }
+  return false;
+}
+```
+
+---
+
+## 四、备选提取模式
+
+根据不同的需求场景，可以选择不同的提取激进程度：
+
+### 4.1 模式A：保留内联美化（推荐）
+
+使用上面的 `extractCleanContent()` 函数。剥掉外壳，保留内容中的美化效果。
+
+适用于：你的前端只是提供外框和基础排版，愿意展示卡作者在文字上的美化效果。
+
+### 4.2 模式B：白名单过滤（激进）
+
+只保留指定的HTML标签，其他全部解包或删除。
+
+```javascript
+/**
+ * 激进模式：只保留白名单标签
+ * 适用于前端完全自己设计，不想要别人的任何美化
+ */
+function extractTextWithBasicFormat(rawText) {
+  const regexed = formatAsTavernRegexedString(
+    rawText, 'ai_output', 'display', { depth: 0 }
+  );
+
+  const temp = document.createElement('div');
+  temp.innerHTML = regexed;
+
+  temp.querySelectorAll('script, style, link').forEach(el => el.remove());
+
+  // 白名单：只保留这些标签
+  const allowedTags = new Set([
+    'P', 'BR', 'HR',
+    'EM', 'I', 'STRONG', 'B', 'U', 'S', 'DEL',
+    'SPAN',       // 保留 span（可能有颜色/特效）
+    'BLOCKQUOTE', // 保留引用块
+    'UL', 'OL', 'LI',  // 保留列表
+    'H1', 'H2', 'H3', 'H4', 'H5', 'H6',  // 保留标题
+  ]);
+
+  function cleanNode(node) {
+    const children = [...node.childNodes];
+    children.forEach(child => {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        if (!allowedTags.has(child.tagName)) {
+          // 不在白名单：保留子节点，删除标签本身
+          const fragment = document.createDocumentFragment();
+          while (child.firstChild) {
+            fragment.appendChild(child.firstChild);
+          }
+          child.replaceWith(fragment);
+        } else {
+          cleanNode(child);
+        }
+      }
+    });
+  }
+
+  cleanNode(temp);
+  return temp.innerHTML.trim();
+}
+```
+
+### 4.3 模式C：纯文本提取（最激进）
+
+完全不要任何HTML，只要文字。
+
+```javascript
+function extractPureText(rawText) {
+  const regexed = formatAsTavernRegexedString(
+    rawText, 'ai_output', 'display', { depth: 0 }
+  );
+
+  const temp = document.createElement('div');
+  temp.innerHTML = regexed;
+
+  temp.querySelectorAll('script, style, link').forEach(el => el.remove());
+
+  // 在块级元素前后加换行，避免文字粘连
+  temp.querySelectorAll('p, div, br, hr, h1, h2, h3, h4, h5, h6, blockquote, li')
+    .forEach(el => {
+      el.insertAdjacentText('afterend', '\n');
+    });
+
+  const text = temp.textContent || '';
+  // 清理多余空行
+  return text.replace(/\n{3,}/g, '\n\n').trim();
+}
+```
+
+### 4.4 模式D：直接使用酒馆渲染结果
+
+完全不自己处理，直接用酒馆的完整渲染。
+
+```javascript
+function useFullRenderedContent(rawText, messageId) {
+  const html = formatAsDisplayedMessage(rawText, { message_id: messageId });
+  return html;
+}
+```
+
+---
+
+## 五、在前端卡中的集成方式
+
+### 5.1 完整使用示例
+
+```javascript
+let lastRawText = '';
+
+async function updateDisplay() {
+  const messageId = getCurrentMessageId();
+  const messages = getChatMessages(messageId);
+  const rawText = messages[0]?.message || '';
+
+  if (rawText === lastRawText) return;
+  lastRawText = rawText;
+
+  // ===== 提取正文 =====
+  const cleanContent = extractCleanContent(rawText);
+
+  // ===== 渲染到你的前端容器 =====
+  const contentBox = document.getElementById('story-content');
+  contentBox.innerHTML = cleanContent;
+}
+
+// 初始化 + 轮询更新
+$(async () => {
+  await waitGlobalInitialized('Mvu');
+  updateDisplay();
+  setInterval(updateDisplay, 1000);
+});
+```
+
+### 5.2 CSS注意事项
+
+```css
+/* 你自己的正文容器样式 */
+.your-content-wrapper {
+  padding: 20px;
+  line-height: 1.8;
+  font-size: 15px;
+  color: #e0e0e0;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/*
+ * 关键：不要用通配符覆盖所有子元素的样式
+ * 别人的内联美化通过 style="" 属性设置，
+ * 有更高的CSS优先级，通常能正常显示
+ * 但要确保你不用 !important 覆盖这些属性
+ */
+
+/* 安全的段落样式 */
+.your-content-wrapper p {
+  margin-bottom: 0.8em;
+}
+
+/* 安全的引用块样式 */
+.your-content-wrapper blockquote {
+  border-left: 3px solid rgba(255, 255, 255, 0.2);
+  padding-left: 12px;
+  margin-left: 0;
+  font-style: italic;
+}
+
+/* 如果别人的美化用了 @keyframes 动画，
+   由于 <style> 标签已被移除，动画会失效。
+   如果需要保留动画，在 extractCleanContent 中
+   不要删除 <style> 标签，改为将其内容
+   提取并注入到你的容器中 */
+```
+
+### 5.3 保留 `<style>` 中的动画定义（可选增强）
+
+如果某些卡的美化效果依赖 `<style>` 块中定义的 `@keyframes` 动画，你可以选择不删除 `<style>`，而是提取并隔离它：
+
+```javascript
+function extractCleanContentWithAnimations(rawText) {
+  const regexed = formatAsTavernRegexedString(
+    rawText, 'ai_output', 'display', { depth: 0 }
+  );
+
+  const temp = document.createElement('div');
+  temp.innerHTML = regexed;
+
+  // 提取 <style> 中的 @keyframes 定义
+  let animationCSS = '';
+  temp.querySelectorAll('style').forEach(styleEl => {
+    const css = styleEl.textContent || '';
+    // 只保留 @keyframes 定义
+    const keyframeMatches = css.match(/@keyframes\s+[\w-]+\s*\{[^}]*(\{[^}]*\}[^}]*)*\}/g);
+    if (keyframeMatches) {
+      animationCSS += keyframeMatches.join('\n');
+    }
+    styleEl.remove();
+  });
+
+  temp.querySelectorAll('script, link').forEach(el => el.remove());
+
+  const structuralTags = ['html', 'head', 'body', 'header', 'footer', 'nav'];
+  structuralTags.forEach(tag => {
+    temp.querySelectorAll(tag).forEach(el => {
+      el.replaceWith(...el.childNodes);
+    });
+  });
+
+  unwrapStructuralContainers(temp);
+
+  return {
+    html: temp.innerHTML.trim(),
+    css: animationCSS
+  };
+}
+
+// 使用时
+const { html, css } = extractCleanContentWithAnimations(rawText);
+contentBox.innerHTML = html;
+if (css) {
+  let styleEl = document.getElementById('extracted-animations');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'extracted-animations';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = css;
+}
+```
+
+---
+
+## 六、选项提取（附带）
+
+如果需要从消息中提取选项内容，在正则处理之前从原始文本中提取：
+
+```javascript
+/**
+ * 从原始文本中提取选项
+ * 注意：选项提取应在正则处理之前进行，因为正则可能会修改选项标签
+ */
+function extractOptions(rawText) {
+  // 尝试多种常见的选项标签
+  const optionPatterns = [
+    /<option>([\s\S]*?)<\/option>/gi,
+    /<options>([\s\S]*?)<\/options>/gi,
+    /<choice>([\s\S]*?)<\/choice>/gi,
+    /<choices>([\s\S]*?)<\/choices>/gi,
+    /<select>([\s\S]*?)<\/select>/gi,
+  ];
+
+  for (const pattern of optionPatterns) {
+    const matches = rawText.match(pattern);
+    if (matches && matches.length > 0) {
+      // 取最后一个匹配
+      const lastMatch = matches[matches.length - 1];
+      const cleaned = lastMatch.replace(/<\/?(?:option|options|choice|choices|select)>/gi, '');
+      const options = cleaned
+        .split('\n')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+      if (options.length > 0) return options;
+    }
+  }
+
+  return [];
+}
+```
+
+---
+
+## 七、故障排查指南
+
+### 7.1 正文为空
+
+**可能原因：** 所有内容都被正则切掉了。
+**排查方式：** 先用 `getChatMessages` 获取原始文本确认内容存在，再逐步检查正则处理结果。
+
+```javascript
+const raw = messages[0]?.message || '';
+console.log('原始文本长度:', raw.length);
+const regexed = formatAsTavernRegexedString(raw, 'ai_output', 'display', { depth: 0 });
+console.log('正则处理后长度:', regexed.length);
+```
+
+### 7.2 内联美化效果丢失
+
+**可能原因：**
+1. `<style>` 块被删除，但动画效果依赖其中的 `@keyframes`
+2. 你的CSS用了 `!important` 覆盖了内联样式
+3. `isPureWrapper()` 错误地将美化容器判定为纯包装
+
+**排查方式：** 临时跳过解包步骤观察效果。
+
+### 7.3 结构性容器没有被剥离
+
+**可能原因：** 容器的class名/id不在识别范围内。
+**解决方式：** 在 `wrapperPatterns` 数组中添加该容器的标识模式。
+
+### 7.4 正则正则处理后出现意外内容
+
+**可能原因：** 某些正则依赖特定的上下文或楼层深度。
+**解决方式：** 调整 `formatAsTavernRegexedString` 的 `depth` 参数，或检查正则配置。
+
+---
+
+## 八、API调用规则提醒
+
+酒馆助手的所有函数都是**直接暴露在全局环境**中的：
+
+- ❌ `window.TavernHelper.formatAsTavernRegexedString()`
+- ❌ `TavernHelper.getChatMessages()`
+- ✅ `formatAsTavernRegexedString()`
+- ✅ `getChatMessages()`
+
+内置了 `lodash`（`_`）和 `jquery`（`$`），无需 import 即可使用。
+```
+
+---
+
+这份文件覆盖了从API选择、提取策略、四种激进程度的模式、CSS注意事项、动画保留、到故障排查的完整链路。直接交给 Claude Code 就能用。
+

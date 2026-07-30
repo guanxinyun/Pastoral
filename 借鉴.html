@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>暮色微光旅店 - 魔法经营手账</title>
+  
+  <!-- 引入古典学术感字体与中文手账感字体 -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=LXGW+WenKai+TC:wght@300;400;700&family=Noto+Serif+SC:wght@400;700&display=swap">
+  
+  <style>
+    /* ==========================================================================
+       1. 全局设计系统 & 主题变量
+       ========================================================================== */
+    :root {
+      /* 基础调色盘 (羊皮纸与墨水) */
+      --color-parchment: #F5ECD7;
+      --color-parchment-dark: #E6D8B8;
+      --color-ink-dark: #3C2A1A;
+      --color-ink-green: #2D4A3E;
+      --color-amber-gold: #C9943B;
+      --color-mint-blue: #7EC8C8;
+      --color-danger-ochre: #8B3A3A;
+      --color-night-indigo: #1A1F3A;
+      
+      /* 材质与边框 */
+      --wood-border: #4A3319;
+      --leather-cover: #2D1A12;
+      
+      /* 缓动曲线 */
+      --transition-smooth: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-bounce: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      
+      /* 时间滤镜叠加 (默认上午 - 温暖阳光) */
+      --time-vignette: radial-gradient(circle, rgba(245,236,215,0) 60%, rgba(60,42,26,0.15) 100%);
+    }
+
+    /* 傍晚氛围 */
+    .theme-evening {
+      --time-vignette: radial-gradient(circle, rgba(197,113,76,0.1) 50%, rgba(26,31,58,0.3) 100%);
+    }
+    /* 夜晚氛围 */
+    .theme-night {
+      --color-parchment: #D4C5A3;
+      --color-parchment-dark: #C2B08B;
+      --time-vignette: radial-gradient(circle, rgba(26,31,58,0.1) 40%, rgba(10,12,24,0.7) 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: #120A07;
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(30,20,15,0.8), rgba(10,5,3,1)),
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      font-family: 'HarmonyOS Sans', 'Segoe UI', system-ui, sans-serif;
+      color: var(--color-ink-dark);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* 柔和的环境光叠加，烘托时间流逝 */
+    #ambient-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      background: var(--time-vignette);
+      z-index: 10;
+      transition: var(--transition-smooth);
+    }
+
+    /* ==========================================================================
+       2. 魔法账册主体布局 (双页古籍)
+       ========================================================================== */
+    #desk-wrapper {
+      position: relative;
+      width: 1480px;
+      height: 900px;
+      background: var(--leather-cover);
+      padding: 16px;
+      border-radius: 20px;
+      box-shadow: 
+        0 40px 100px rgba(0,0,0,0.8),
+        inset 0 0 30px rgba(0,0,0,0.5),
+        0 4px 0 #1b0f0a;
+      border: 8px solid var(--wood-border);
+      display: flex;
+      transform: scale(0.95);
+      animation: bookIntro 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    }
+
+    @keyframes bookIntro {
+      0% { transform: scale(0.85) translateY(40px); opacity: 0; }
+      100% { transform: scale(0.95) translateY(0); opacity: 1; }
+    }
+
+    /* 书脊金属中轴 */
+    #book-spine {
+      position: absolute;
+      left: 50%;
+      top: 16px;
+      bottom: 16px;
+      width: 12px;
+      background: linear-gradient(to right, #2a1b12, #5a3f29, #2a1b12);
+      transform: translateX(-50%);
+      z-index: 5;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      border-radius: 4px;
+    }
+
+    /* 单个页面基盘 */
+    .book-page {
+      width: 50%;
+      height: 100%;
+      background: var(--color-parchment);
+      position: relative;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: inset 0 0 60px rgba(60,42,26,0.12);
+    }
+
+    .page-left {
+      border-radius: 12px 0 0 12px;
+      border-right: 1px solid rgba(0,0,0,0.1);
+      /* 模拟左侧页面的弯曲阴影 */
+      background-image: linear-gradient(to right, var(--color-parchment) 94%, var(--color-parchment-dark) 100%);
+    }
+
+    .page-right {
+      border-radius: 0 12px 12px 0;
+      border-left: 1px solid rgba(255,255,255,0.1);
+      background-image: linear-gradient(to left, var(--color-parchment) 94%, var(--color-parchment-dark) 100%);
+    }
+
+    /* 纸张微翘边物理质感 */
+    .paper-curl-left::after {
+      content: "";
+      position: absolute;
+      left: 0; bottom: 0;
+      width: 40px; height: 10px;
+      box-shadow: 0 10px 15px rgba(0,0,0,0.15);
+      transform: rotate(-2deg);
+      z-index: -1;
+    }
+
+    /* ==========================================================================
+       3. 顶部 HUD 与底部状态栏 (Journal 专属)
+       ========================================================================== */
+    .hud-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px dashed rgba(60,42,26,0.2);
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+
+    .header-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .weather-icon {
+      width: 36px;
+      height: 36px;
+      fill: var(--color-ink-dark);
+      animation: weatherPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes weatherPulse {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-3px) scale(1.05); }
+    }
+
+    .date-text {
+      font-family: 'LXGW WenKai TC', serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .hotel-badge {
+      text-align: center;
+    }
+
+    .hotel-name {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--color-ink-green);
+    }
+
+    .hotel-stars {
+      display: flex;
+      justify-content: center;
+      gap: 3px;
+      margin-top: 2px;
+    }
+
+    .star-icon {
+      width: 14px;
+      height: 14px;
+      fill: var(--color-amber-gold);
+    }
+
+    .header-wealth {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .coins {
+      display: flex;
+      gap: 12px;
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .coin-unit {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .coin-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .fame-bar-container {
+      width: 150px;
+      height: 8px;
+      background: rgba(60,42,26,0.15);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid rgba(60,42,26,0.2);
+      position: relative;
+    }
+
+    .fame-fill {
+      width: 65%;
+      height: 100%;
+      background: var(--color-amber-gold);
+      border-radius: 3px;
+      transition: width 0.8s ease;
+    }
+
+    /* 底部掌柜状态栏 */
+    .hud-footer {
+      margin-top: auto;
+      border-top: 2px dashed rgba(60,42,26,0.2);
+      padding-top: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status-group {
+      display: flex;
+      gap: 20px;
+      flex-grow: 1;
+    }
+
+    .status-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 140px;
+    }
+
+    .status-label {
+      font-family: 'LXGW WenKai TC', serif;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-bar {
+      height: 12px;
+      background: rgba(0,0,0,0.08);
+      border-radius: 6px;
+      border: 1px solid rgba(60,42,26,0.2);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 100%;
+      transition: var(--transition-smooth);
+    }
+
+    .energy-fill {
+      background: linear-gradient(to right, var(--color-danger-ochre), var(--color-amber-gold));
+    }
+
+    .stress-fill {
+      background: linear-gradient(to right, var(--color-mint-blue), #80579e);
+    }
+
+    /* 精力条不足20%呼吸闪烁 */
+    .low-energy {
+      animation: alertBreathe 1.5s infinite alternate;
+    }
+    @keyframes alertBreathe {
+      0% { box-shadow: 0 0 2px var(--color-danger-ochre); }
+      100% { box-shadow: 0 0 10px var(--color-danger-ochre); }
+    }
+
+    /* 快捷操作栏 */
+    .quick-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ==========================================================================
+       4. 左侧标签页系统 (账簿操作区)
+       ========================================================================== */
+    #ledger-container {
+      display: flex;
+      height: 100%;
+      position: relative;
+    }
+
+    /* 仿皮革/青铜制索引书签 */
+    #ledger-tabs {
+      position: absolute;
+      left: -58px;
+      top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 2;
+    }
+
+    .ledger-tab {
+      width: 42px;
+      height: 48px;
+      background: var(--color-ink-dark);
+      color: var(--color-parchment);
+      border-radius: 6px 0 0 6px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: -4px 4px 8px rgba(0,0,0,0.4);
+      transition: var(--transition-bounce);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-right: none;
+    }
+
+    .ledger-tab:hover {
+      width: 50px;
+      transform: translateX(-4px);
+      background: var(--color-ink-green);
+    }
+
+    .ledger-tab.active {
+      width: 54px;
+      transform: translateX(-8px);
+      background: var(--color-amber-gold);
+      color: var(--color-ink-dark);
+    }
+
+    .ledger-tab svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    .ledger-panel {
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      animation: inkBleed 0.45s ease-out forwards;
+    }
+
+    .ledger-panel.active {
+      display: flex;
+    }
+
+    @keyframes inkBleed {
+      0% { filter: blur(3px) opacity(0); transform: scale(0.98); }
+      100% { filter: blur(0) opacity(1); transform: scale(1); }
+    }
+
+    /* 通用内部滚动板 */
+    .panel-scroll-area {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding-right: 8px;
+      margin-top: 15px;
+    }
+
+    .panel-scroll-area::-webkit-scrollbar {
+      width: 6px;
+    }
+    .panel-scroll-area::-webkit-scrollbar-thumb {
+      background: rgba(60,42,26,0.2);
+      border-radius: 3px;
+    }
+
+    .panel-title {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 1.5rem;
+      border-bottom: 2px solid var(--color-ink-dark);
+      padding-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ==========================================================================
+       5. 左右具体面板精细化样式 (Pro Max 高端渲染)
+       ========================================================================== */
+
+    /* [1] 旅店总览: 含有六维雷达图 */
+    .radar-box {
+      display: flex;
+      justify-content: center;
+      margin: 15px 0;
+      position: relative;
+    }
+    .radar-svg {
+      width: 200px;
+      height: 200px;
+    }
+    .radar-polygon {
+      fill: rgba(201, 148, 59, 0.25);
+      stroke: var(--color-amber-gold);
+      stroke-width: 2px;
+      transition: var(--transition-smooth);
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .parchment-card {
+      background: rgba(60,42,26,0.03);
+      border: 1px solid rgba(60,42,26,0.15);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: inset 0 0 15px rgba(60,42,26,0.04);
+      position: relative;
+      transition: var(--transition-bounce);
+    }
+
+    .parchment-card:hover {
+      background: rgba(60,42,26,0.05);
+      border-color: var(--color-amber-gold);
+    }
+
+    .card-title-mini {
+      font-family: 'LXGW WenKai TC', serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      color: var(--color-ink-green);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* [2] 仓库系统：质感网格 */
+    .filter-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--color-ink-dark);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-family: 'LXGW WenKai TC', serif;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--color-ink-dark);
+      color: var(--color-parchment);
+    }
+
+    .item-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .inventory-item {
+      aspect-ratio: 1;
+      border: 1px solid rgba(60,42,26,0.2);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: rgba(255,255,255,0.25);
+      cursor: pointer;
+      transition: var(--transition-bounce);
+    }
+
+    .inventory-item:hover {
+      transform: translateY(-3px) scale(1.03);
+      border-color: var(--color-amber-gold);
+      box-shadow: 0 4px 10px rgba(126,200,200,0.15);
+    }
+
+    .item-qty {
+      position: absolute;
+      bottom: 4px;
+      right: 6px;
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .item-quality {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .quality-epic { background: var(--color-amber-gold); }
+    .quality-magic { background: var(--color-mint-blue); }
+    .quality-common { background: var(--color-ink-dark); }
+
+    /* [3] 建造图纸列表 */
+    .blueprint-card {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      border-left: 4px solid var(--color-ink-green);
+    }
+
+    .blueprint-card.locked {
+      opacity: 0.6;
+      border-left-color: var(--color-danger-ochre);
+    }
+
+    /* [4] 网格探索地图 */
+    .map-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .map-tile {
+      aspect-ratio: 1;
+      border: 1px solid rgba(60,42,26,0.25);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: var(--transition-bounce);
+      background: rgba(60,42,26,0.05);
+    }
+
+    .map-tile:hover {
+      background: rgba(126,200,200,0.2);
+      border-color: var(--color-mint-blue);
+    }
+
+    .map-tile.fog {
+      background: repeating-linear-gradient(45deg, #2d2015, #2d2015 4px, #3d2c1e 4px, #3d2c1e 8px);
+      color: rgba(255,255,255,0.25);
+      border-color: rgba(0,0,0,0.4);
+    }
+
+    /* [5] 员工卡片 */
+    .staff-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .staff-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .staff-portrait {
+      width: 100%;
+      height: 80px;
+      background: rgba(60,42,26,0.1);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-mini-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+    }
+
+    /* ==========================================================================
+       6. 叙事终端区 (右侧 Journal 交互区)
+       ========================================================================== */
+    #journal-container {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      height: calc(100% - 130px); /* 扣除顶部HUD与底部 footer */
+      padding: 10px 0;
+    }
+
+    /* 书本正文展示区 */
+    #story-viewport {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding-right: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    #story-viewport::-webkit-scrollbar {
+      width: 6px;
+    }
+    #story-viewport::-webkit-scrollbar-thumb {
+      background: rgba(60,42,26,0.15);
+      border-radius: 3px;
+    }
+
+    .story-bubble {
+      animation: inkBleed 0.6s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+    }
+
+    .narrator-text {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--color-ink-dark);
+      letter-spacing: 0.5px;
+    }
+
+    .dialogue-wrapper {
+      background: rgba(45,74,62,0.04);
+      border-left: 3px solid var(--color-ink-green);
+      padding: 10px 15px;
+      margin: 8px 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .speaker-name {
+      font-family: 'LXGW WenKai TC', serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--color-ink-green);
+      margin-bottom: 4px;
+    }
+
+    .speaker-content {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    /* 选项组样式 */
+    .story-choices {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .choice-btn {
+      background: url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' viewBox='0 0 100 100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 5 L100 0 L95 100 L5 95 Z' fill='none' stroke='%233C2A1A' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 100% 100%;
+      border: none;
+      padding: 12px 20px;
+      text-align: left;
+      font-family: 'LXGW WenKai TC', serif;
+      font-size: 0.95rem;
+      color: var(--color-ink-dark);
+      cursor: pointer;
+      transition: var(--transition-bounce);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .choice-btn:hover {
+      background-color: rgba(201, 148, 59, 0.1);
+      transform: translateX(4px);
+      color: var(--color-amber-gold);
+    }
+
+    /* ==========================================================================
+       7. 蜡章按钮 & 微小魔法动画
+       ========================================================================== */
+    .button-wax {
+      background: var(--color-ink-dark);
+      color: var(--color-parchment);
+      border: 1px solid rgba(255,255,255,0.1);
+      font-family: 'LXGW WenKai TC', serif;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: var(--transition-bounce);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 2px 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .button-wax:hover {
+      background: var(--color-ink-green);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(45,74,62,0.3);
+    }
+
+    .button-wax:active {
+      transform: translateY(1px);
+    }
+
+    .button-wax-alert {
+      background: var(--color-danger-ochre);
+    }
+    .button-wax-alert:hover {
+      background: #a84a4a;
+    }
+
+    /* 魔法星屑微尘特效 */
+    .magic-sparkle {
+      position: absolute;
+      pointer-events: none;
+      background: radial-gradient(circle, var(--color-mint-blue) 0%, rgba(255,255,255,0) 70%);
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      animation: magicSparkleAnim 0.8s ease-out forwards;
+      z-index: 100;
+    }
+
+    @keyframes magicSparkleAnim {
+      0% { transform: scale(0.5) translate(0, 0); opacity: 1; }
+      100% { transform: scale(1.5) translate(var(--mx, 30px), var(--my, -30px)); opacity: 0; }
+    }
+
+    /* ==========================================================================
+       8. 全屏结算夜幕覆层
+       ========================================================================== */
+    #night-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(26, 31, 58, 0.96);
+      z-index: 200;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      color: var(--color-parchment);
+      font-family: 'LXGW WenKai TC', serif;
+    }
+
+    .overlay-paper {
+      width: 500px;
+      background: var(--color-parchment);
+      color: var(--color-ink-dark);
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      border: 2px solid var(--color-amber-gold);
+      animation: ledgerDrop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes ledgerDrop {
+      0% { transform: translateY(-100px) rotate(-3deg); opacity: 0; }
+      100% { transform: translateY(0) rotate(0); opacity: 1; }
+    }
+
+    .settlement-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 15px 0;
+      border-bottom: 1px dashed rgba(60,42,26,0.2);
+      padding-bottom: 8px;
+    }
+  </style>
+</head>
+<body class="theme-morning">
+
+  <!-- 环境氛围叠层 -->
+  <div id="ambient-overlay"></div>
+
+  <!-- 绘图纸边缘粗糙化 SVG 滤镜（Potion Craft 风格核心） -->
+  <svg style="position: absolute; width: 0; height: 0;" xmlns="http://www.w3.org/2000/svg">
+    <filter id="handdrawn-edge">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+  </svg>
+
+  <div id="desk-wrapper">
+    <!-- 书脊 -->
+    <div id="book-spine"></div>
+
+    <!-- 左侧页面：掌柜账簿 -->
+    <div class="book-page page-left paper-curl-left">
+      <!-- 仿皮革书签选项卡 -->
+      <div id="ledger-tabs">
+        <div class="ledger-tab active" onclick="switchLedgerTab('overview')" title="旅店总览">
+          <svg viewBox="0 0 24 24"><path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 4.5l5 4.5v6H7v-6l5-4.5z"/></svg>
+        </div>
+        <div class="ledger-tab" onclick="switchLedgerTab('inventory')" title="行囊与食谱">
+          <svg viewBox="0 0 24 24"><path d="M19 8H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-7 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-8V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v4h6z"/></svg>
+        </div>
+        <div class="ledger-tab" onclick="switchLedgerTab('build')" title="工程建造">
+          <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.3C.5 6.7.9 9.8 2.9 11.8c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.1z"/></svg>
+        </div>
+        <div class="ledger-tab" onclick="switchLedgerTab('map')" title="秘境探索">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.53c-.26-.81-1-1.4-1.9-1.4h-1v-3c0-.55-.45-1-1-1h-6v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.4z"/></svg>
+        </div>
+        <div class="ledger-tab" onclick="switchLedgerTab('staff')" title="雇员名录">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        </div>
+        <div class="ledger-tab" onclick="switchLedgerTab('guests')" title="宾客盈门">
+          <svg viewBox="0 0 24 24"><path d="M12.65 11.3c.95-.3 1.63-1.2 1.63-2.26 0-1.3-.98-2.36-2.28-2.36-1.3 0-2.28 1.06-2.28 2.36 0 1.05.68 1.95 1.63 2.26C9.25 11.6 7 13.52 7 16h10c0-2.48-2.25-4.4-4.35-4.7zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+        </div>
+      </div>
+
+      <!-- [1] 旅店总览面板 -->
+      <div id="panel-overview" class="ledger-panel active">
+        <h2 class="panel-title">旅店纪要</h2>
+        <div class="panel-scroll-area">
+          <div class="radar-box" title="六维吸引力指标">
+            <svg class="radar-svg" viewBox="0 0 200 200">
+              <!-- 背景蛛网网格 -->
+              <polygon points="100,20 170,60 170,140 100,180 30,140 30,60" fill="none" stroke="rgba(60,42,26,0.15)" stroke-width="1"/>
+              <polygon points="100,50 145,75 145,125 100,150 55,125 55,75" fill="none" stroke="rgba(60,42,26,0.15)" stroke-width="1"/>
+              <line x1="100" y1="20" x2="100" y2="180" stroke="rgba(60,42,26,0.15)"/>
+              <line x1="30" y1="60" x2="170" y2="140" stroke="rgba(60,42,26,0.15)"/>
+              <line x1="30" y1="140" x2="170" y2="60" stroke="rgba(60,42,26,0.15)"/>
+              <!-- 数据填充区域 -->
+              <polygon id="radar-shape" class="radar-polygon" points="100,45 150,70 140,110 100,160 65,120 45,75" />
+              <!-- 文字标注 -->
+              <text x="100" y="15" font-family="'LXGW WenKai TC'" font-size="10" text-anchor="middle">美味</text>
+              <text x="185" y="60" font-family="'LXGW WenKai TC'" font-size="10" text-anchor="start">安逸</text>
+              <text x="185" y="145" font-family="'LXGW WenKai TC'" font-size="10" text-anchor="start">奥秘</text>
+              <text x="100" y="195" font-family="'LXGW WenKai TC'" font-size="10" text-anchor="middle">自然</text>
+              <text x="15" y="145" font-family="'LXGW WenKai TC'" font-size="10" text-anchor="end">民俗</text>
+              <text x="15" y="60" font-family="'LXGW WenKai TC'" font-size="10" text-anchor="end">探险</text>
+            </svg>
+          </div>
+
+          <div class="overview-grid">
+            <div class="parchment-card">
+              <div class="card-title-mini">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                今日气象预报
+              </div>
+              <p style="font-size:0.85rem; line-height:1.4;">上午：和煦晴空。森林露水蒸发，植物生长加速。妖精系访客吸引力提高20%。</p>
+            </div>
+            <div class="parchment-card">
+              <div class="card-title-mini">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6.2-6.2 4 4 6.3-6.29L22 12V6z"/></svg>
+                引力公式可视化
+              </div>
+              <p style="font-size:0.85rem; line-height:1.4;">基础引力(45) + 橡木吧台(12) + 魔力泉流(20) = 当前总值(87)。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- [2] 仓库与食谱面板 -->
+      <div id="panel-inventory" class="ledger-panel">
+        <h2 class="panel-title">随身行囊</h2>
+        <div class="filter-bar">
+          <button class="filter-btn active" onclick="filterItems('all')">全部</button>
+          <button class="filter-btn" onclick="filterItems('ingredient')">食材</button>
+          <button class="filter-btn" onclick="filterItems('magic')">神秘物</button>
+          <button class="filter-btn" onclick="filterItems('crafted')">熟食</button>
+        </div>
+        <div class="panel-scroll-area">
+          <div class="item-grid" id="inventory-grid-elem">
+            <!-- 动态渲染生成 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- [3] 建造管理面板 -->
+      <div id="panel-build" class="ledger-panel">
+        <h2 class="panel-title">蓝图施工</h2>
+        <div class="panel-scroll-area">
+          <div class="blueprint-card parchment-card">
+            <div style="flex-grow:1;">
+              <div class="card-title-mini" style="font-size: 1.1rem;">精巧妖精暖炉</div>
+              <p style="font-size:0.85rem; line-height:1.4; color:rgba(60,42,26,0.8);">为冬日到来的宾客提供极其融洽的升温。安逸引力大幅上涨。</p>
+              <p style="font-size:0.8rem; margin-top:6px; color:var(--color-ink-green);">消耗：橡木板 ×10, 魔能微尘 ×5, 120铜</p>
+            </div>
+            <button class="button-wax" onclick="buildFacility('fairy_heater', 120)" style="align-self: center;">筑造</button>
+          </div>
+
+          <div class="blueprint-card parchment-card locked">
+            <div style="flex-grow:1;">
+              <div class="card-title-mini" style="font-size: 1.1rem; color:var(--color-danger-ochre)">
+                深渊酿酒瓮 (未解锁)
+              </div>
+              <p style="font-size:0.85rem; line-height:1.4; color:rgba(60,42,26,0.8);">需要旅店星级达到3级。极度吸引冒险者及虚空生命，但会招致卫兵警惕。</p>
+            </div>
+            <button class="button-wax" style="align-self: center; background:gray;" disabled>封禁</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- [4] 地图与探索面板 -->
+      <div id="panel-map" class="ledger-panel">
+        <div class="panel-title">
+          <span>森林图志</span>
+          <span style="font-size: 0.85rem; color: var(--color-ink-green);" id="explore-energy-cost">单次探索耗能: 15</span>
+        </div>
+        <div class="panel-scroll-area">
+          <div class="map-grid" id="exploration-map">
+            <!-- JS 循环生成 5x5 的格网 -->
+          </div>
+          <div class="parchment-card" style="margin-top: 15px;" id="map-detail-card">
+            <div class="card-title-mini" id="map-detail-title">荒野营地 (0, 0)</div>
+            <p style="font-size:0.85rem;" id="map-detail-desc">旅店立足的废墟。周围生长着野生日光莓与魔萤草。安全区。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- [5] 雇员管理面板 -->
+      <div id="panel-staff" class="ledger-panel">
+        <h2 class="panel-title">契约随从</h2>
+        <div class="panel-scroll-area">
+          <div class="staff-grid" id="staff-grid-elem">
+            <!-- 动态渲染生成 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- [6] 访客管理面板 -->
+      <div id="panel-guests" class="ledger-panel">
+        <h2 class="panel-title">堂内座上宾</h2>
+        <div class="panel-scroll-area" id="guests-list-elem">
+          <!-- 动态渲染 -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 右侧页面：冒险日志 / LLM 互动终端 -->
+    <div class="book-page page-right">
+      <!-- 顶部信息栏 (HUD) -->
+      <div class="hud-header">
+        <div class="header-date">
+          <!-- 晴天太阳图标 -->
+          <svg class="weather-icon" viewBox="0 0 24 24" id="weather-svg-icon">
+            <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-12.37c-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.38.39-1.02 0-1.41zm-12.37 12.37c-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.38.39-1.02 0-1.41z"/>
+          </svg>
+          <div class="date-text" id="hud-date-text">第1年 · 春季第3天</div>
+        </div>
+        
+        <div class="hotel-badge">
+          <div class="hotel-name">微光旅宿</div>
+          <div class="hotel-stars">
+            <!-- 二星 -->
+            <svg class="star-icon" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <svg class="star-icon" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </div>
+        </div>
+
+        <div class="header-wealth">
+          <div class="coins" id="wealth-counter">
+            <!-- 铜币/银币结算 -->
+            <span class="coin-unit" style="color: var(--color-amber-gold);">
+              <span id="coin-gold">0</span>
+              <svg class="coin-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+            </span>
+            <span class="coin-unit" style="color: #A0A0A0;">
+              <span id="coin-silver">2</span>
+              <svg class="coin-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+            </span>
+            <span class="coin-unit" style="color: #CD7F32;">
+              <span id="coin-bronze">48</span>
+              <svg class="coin-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+            </span>
+          </div>
+          <div class="fame-bar-container" title="声望进度">
+            <div class="fame-fill" id="fame-progress-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 核心 LLM 故事线面板 -->
+      <div id="journal-container">
+        <div id="story-viewport">
+          <!-- 默认剧情开始 -->
+          <div class="story-bubble">
+            <p class="narrator-text">夕阳斜洒在尘封的吧台上，古木的纹理里似有魔力暗光流转。今天是你继承这间破败家族旅店的第三天。四周静谧，只有几缕微光。突然，沉重的包铁橡木大门被轻轻推开了，风铃带起一阵清脆的颤响...</p>
+          </div>
+
+          <div class="story-bubble">
+            <div class="dialogue-wrapper">
+              <div class="speaker-name">半精灵流浪学者 · 艾瑞丝</div>
+              <div class="speaker-content">“呼...外面的夜风比想象中还要刺骨，请问尊贵的掌柜，这里可有一杯驱寒的‘日光莓果酿’？我在白骨沼泽边缘走失了方向，随身携带的笔记也沾湿了...”</div>
+            </div>
+          </div>
+
+          <div class="story-bubble">
+            <div class="story-choices" id="choices-container">
+              <button class="choice-btn" onclick="selectStoryChoice(1)">
+                <span>1. 【经营】呈上温热的草药茶，并在炉火中多加一块妖精木（需要 12 铜，精力 -5）</span>
+                <span style="color:var(--color-ink-green)">→ 提升艾瑞丝的舒适感</span>
+              </button>
+              <button class="choice-btn" onclick="selectStoryChoice(2)">
+                <span>2. 【学者交流】与她探讨羊皮纸文献，打探关于“迷雾古墓”的传言（精力 -8）</span>
+                <span style="color:var(--color-mint-blue)">→ 获得探索秘境线索</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部状态栏 -->
+      <div class="hud-footer">
+        <div class="status-group">
+          <!-- 精力 -->
+          <div class="status-item">
+            <span class="status-label">
+              <svg width="14" height="14" fill="var(--color-amber-gold)" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              掌柜精力: <span id="energy-val">80</span>/100
+            </span>
+            <div class="status-bar" id="energy-bar-wrap">
+              <div class="bar-fill energy-fill" id="energy-fill-elem" style="width: 80%;"></div>
+            </div>
+          </div>
+          <!-- 压力 -->
+          <div class="status-item">
+            <span class="status-label">
+              <svg width="14" height="14" fill="var(--color-mint-blue)" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+              灵魂理智: <span id="stress-val">35</span>/100
+            </span>
+            <div class="status-bar">
+              <div class="bar-fill stress-fill" id="stress-fill-elem" style="width: 35%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <button class="button-wax button-wax-alert" onclick="triggerEndDay()">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            归寝入眠
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 全屏夜间结算覆层 -->
+  <div id="night-overlay">
+    <div class="overlay-paper">
+      <h2 style="font-family:'Noto Serif SC', serif; text-align: center; border-bottom: 2px solid var(--color-ink-dark); padding-bottom: 15px; margin-bottom: 20px;">
+        ※ 暮色旅店今日结账清单 ※
+      </h2>
+      <div id="settlement-details">
+        <!-- JS 动态结算内容 -->
+      </div>
+      <div style="text-align: center; margin-top: 30px;">
+        <button class="button-wax" onclick="wakeUpNextDay()">吹熄烛火 · 迎接黎明</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       9. 核心交互 JavaScript 控制内核
+       ========================================================================== -->
+  <script>
+    // ==========================================
+    // 物理音频合成器 (Web Audio API)
+    // 赋予纯前端极致触觉质感
+    // ==========================================
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      
+      const now = audioCtx.currentTime;
+      
+      if (type === 'paper') {
+        // 模拟纸张沙沙声 (白噪音带通滤波衰减)
+        const bufferSize = audioCtx.sampleRate * 0.12;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(800, now);
+        filter.Q.setValueAtTime(3, now);
+
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start(now);
+      } 
+      else if (type === 'coin') {
+        // 模拟金币撞击 (高频双音正弦衰减)
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(2400, now);
+        osc1.frequency.exponentialRampToValueAtTime(1800, now + 0.15);
+
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(3200, now);
+
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.2);
+        osc2.stop(now + 0.2);
+      }
+      else if (type === 'wax') {
+        // 模拟印章盖下 (低沉敲击与微弱气流声)
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      }
+      else if (type === 'magic') {
+        // 模拟符文闪烁声
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(1600, now + 0.4);
+
+        gain.gain.setValueAtTime(0.03, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      }
+    }
+
+    // ==========================================
+    // 全局玩家状态机 (具有数据双向绑定模拟)
+    // ==========================================
+    const gameState = {
+      day: 3,
+      season: '春',
+      bronze: 248,
+      energy: 80,
+      stress: 35,
+      fame: 130,
+      exploreMap: [
+        { x: -1, y: 1, type: '荒山', explored: true, icon: '🏔️' },
+        { x: 0, y: 1, type: '枯木林', explored: true, icon: '🌲' },
+        { x: 1, y: 1, type: '迷雾区', explored: false, icon: '🌫️' },
+        { x: -1, y: 0, type: '沼泽荒野', explored: false, icon: '🌫️' },
+        { x: 0, y: 0, type: '古老旅店', explored: true, icon: '🛖' },
+        { x: 1, y: 0, type: '日光平原', explored: true, icon: '🌾' },
+        { x: -1, y: -1, type: '迷雾区', explored: false, icon: '🌫️' },
+        { x: 0, y: -1, type: '妖精河溪', explored: true, icon: '💧' },
+        { x: 1, y: -1, type: '幽邃深谷', explored: false, icon: '🌫️' },
+      ],
+      inventory: [
+        { id: 'sun_berry', name: '晨曦莓果', type: 'ingredient', qty: 12, quality: 'magic', desc: '富含光合魔能的饱满莓果。' },
+        { id: 'fairy_wood', name: '妖精古木', type: 'magic', qty: 3, quality: 'epic', desc: '燃烧时会散发薄荷香气并安抚心智。' },
+        { id: 'slime_jelly', name: '史莱姆凝胶', type: 'ingredient', qty: 15, quality: 'common', desc: '富有弹性的食材，带有薄荷凉意。' },
+        { id: 'warm_stew', name: '暖心乱炖', type: 'crafted', qty: 2, quality: 'common', desc: '在大火中熬煮出的浓郁杂烩，能迅速恢复精力。' }
+      ],
+      staff: [
+        { name: '妖精歌姬 · 露丝', role: '前台跑堂', morale: 90, wage: 15, skill: '林间韵律' },
+        { name: '熔岩石人 · 巴鲁', role: '后厨主厨', morale: 75, wage: 25, skill: '控火熟稔' }
+      ],
+      guests: [
+        { name: '艾瑞丝', type: '学者', sat: 70, budget: '充裕', trait: '知性、嗜甜' },
+        { name: '流浪骑士', type: '战士', sat: 45, budget: '拮据', trait: '贪杯、警惕' }
+      ]
+    };
+
+    // ==========================================
+    // 渲染方法 (UI 数据刷新)
+    // ==========================================
+    function updateHUD() {
+      // 转换金银铜
+      let totalBronze = gameState.bronze;
+      let gold = Math.floor(totalBronze / 10000);
+      let silver = Math.floor((totalBronze % 10000) / 100);
+      let copper = totalBronze % 100;
+
+      document.getElementById('coin-gold').innerText = gold;
+      document.getElementById('coin-silver').innerText = silver;
+      document.getElementById('coin-bronze').innerText = copper;
+
+      // 日期
+      document.getElementById('hud-date-text').innerText = `第1年 · ${gameState.season}季第${gameState.day}天`;
+
+      // 属性条
+      document.getElementById('energy-val').innerText = gameState.energy;
+      const energyBar = document.getElementById('energy-fill-elem');
+      energyBar.style.width = gameState.energy + '%';
+      if (gameState.energy < 20) {
+        document.getElementById('energy-bar-wrap').classList.add('low-energy');
+      } else {
+        document.getElementById('energy-bar-wrap').classList.remove('low-energy');
+      }
+
+      document.getElementById('stress-val').innerText = gameState.stress;
+      document.getElementById('stress-fill-elem').style.width = gameState.stress + '%';
+
+      // 声望
+      document.getElementById('fame-progress-fill').style.width = Math.min((gameState.fame / 300) * 100, 100) + '%';
+    }
+
+    // 账簿切页逻辑
+    function switchLedgerTab(tabId) {
+      playSound('paper');
+      
+      // 取消激活所有
+      document.querySelectorAll('.ledger-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.ledger-panel').forEach(p => p.classList.remove('active'));
+
+      // 激活当前
+      event.currentTarget.classList.add('active');
+      document.getElementById(`panel-${tabId}`).classList.add('active');
+
+      // 触发各子面板的专项重绘
+      if (tabId === 'inventory') renderInventory();
+      if (tabId === 'map') renderMap();
+      if (tabId === 'staff') renderStaff();
+      if (tabId === 'guests') renderGuests();
+    }
+
+    // ==========================================
+    // 仓库功能模块
+    // ==========================================
+    let currentFilter = 'all';
+    function filterItems(category) {
+      playSound('paper');
+      currentFilter = category;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      renderInventory();
+    }
+
+    function renderInventory() {
+      const grid = document.getElementById('inventory-grid-elem');
+      grid.innerHTML = '';
+      
+      const filtered = gameState.inventory.filter(item => currentFilter === 'all' || item.type === currentFilter);
+      
+      filtered.forEach(item => {
+        const itemNode = document.createElement('div');
+        itemNode.className = 'inventory-item';
+        itemNode.title = item.desc;
+        
+        // 墨水印记品质圆点
+        let qualityClass = 'quality-common';
+        if (item.quality === 'epic') qualityClass = 'quality-epic';
+        if (item.quality === 'magic') qualityClass = 'quality-magic';
+
+        itemNode.innerHTML = `
+          <div class="item-quality ${qualityClass}"></div>
+          <span style="font-size: 1.5rem; margin-bottom: 5px;">${getItemIcon(item.id)}</span>
+          <span style="font-size: 0.75rem; text-align: center; padding: 0 4px;">${item.name}</span>
+          <span class="item-qty">x${item.qty}</span>
+        `;
+        
+        // 点击行囊物品，可将其放入故事终端进行烹饪/使用
+        itemNode.onclick = () => useInventoryItem(item);
+        grid.appendChild(itemNode);
+      });
+    }
+
+    function getItemIcon(id) {
+      const map = {
+        'sun_berry': '🍒',
+        'fairy_wood': '🪵',
+        'slime_jelly': '🧪',
+        'warm_stew': '🍲'
+      };
+      return map[id] || '📦';
+    }
+
+    function useInventoryItem(item) {
+      if (item.qty <= 0) return;
+      playSound('magic');
+      item.qty--;
+      
+      let healAmt = 15;
+      if (item.id === 'warm_stew') {
+        gameState.energy = Math.min(100, gameState.energy + healAmt);
+        appendStoryText(`\n【掌柜行囊】你吃下了温热的 [${item.name}]，热流流过四肢，精力恢复了 ${healAmt} 点！`);
+      } else {
+        appendStoryText(`\n【掌柜行囊】你把 [${item.name}] 握在手中端详，其微弱的魔力在空气中稍稍溃散开来。`);
+      }
+      updateHUD();
+      renderInventory();
+    }
+
+    // ==========================================
+    // 探索与地图模块
+    // ==========================================
+    function renderMap() {
+      const mapGrid = document.getElementById('exploration-map');
+      mapGrid.innerHTML = '';
+
+      gameState.exploreMap.forEach((tile, index) => {
+        const tileNode = document.createElement('div');
+        tileNode.className = `map-tile ${tile.explored ? '' : 'fog'}`;
+        
+        if (tile.explored) {
+          tileNode.innerHTML = `
+            <span style="font-size: 1.2rem;">${tile.icon}</span>
+            <span style="font-weight:700; transform: scale(0.9);">${tile.type}</span>
+          `;
+          tileNode.onclick = () => showMapDetail(tile);
+        } else {
+          tileNode.innerHTML = `
+            <span style="font-size: 1rem; opacity:0.6;">?</span>
+            <span style="font-size:0.6rem; opacity:0.4;">迷雾</span>
+          `;
+          tileNode.onclick = () => attemptExplore(index);
+        }
+        mapGrid.appendChild(tileNode);
+      });
+    }
+
+    function showMapDetail(tile) {
+      playSound('paper');
+      document.getElementById('map-detail-title').innerText = `${tile.type} (${tile.x}, ${tile.y})`;
+      
+      let desc = '这片区域已在掌握之中，你可以派遣探险者或者在此收集资源。';
+      if (tile.type === '妖精河溪') desc = '潺潺溪流中夹杂着幽蓝色泽，经常有妖精在这洗涤魔能织物。非常适合汲水。';
+      if (tile.type === '古老旅店') desc = '你的家族旅宿。经历了风霜，但其核心符文依然散发微光。安全温暖。';
+      document.getElementById('map-detail-desc').innerText = desc;
+    }
+
+    function attemptExplore(index) {
+      const tile = gameState.exploreMap[index];
+      const cost = 15;
+      if (gameState.energy < cost) {
+        playSound('wax'); // 警示声
+        alert('精力不足！无法在迷雾丛林中继续开路。');
+        return;
+      }
+
+      // 扣除精力，解雾
+      playSound('magic');
+      gameState.energy -= cost;
+      tile.explored = true;
+      
+      // 随机分配地块类型
+      const randomTypes = [
+        { type: '魔能废墟', icon: '🏛️' },
+        { type: '遗迹祭坛', icon: '🔮' },
+        { type: '低鸣灌木', icon: '🌿' }
+      ];
+      const pick = randomTypes[Math.floor(Math.random() * randomTypes.length)];
+      tile.type = pick.type;
+      tile.icon = pick.icon;
+
+      // 掉落随机物品放入背包
+      const lootChance = Math.random();
+      if (lootChance > 0.4) {
+        const berry = gameState.inventory.find(i => i.id === 'sun_berry');
+        if (berry) berry.qty += 3;
+        appendStoryText(`\n【秘境探索】你在开拓新地块 [${tile.type}] 时，顺手采集了 3 枚晨曦莓果！`);
+      }
+
+      updateHUD();
+      renderMap();
+      showMapDetail(tile);
+      
+      // 生成魔法粒子
+      createMagicSparkles(event.clientX, event.clientY);
+    }
+
+    // ==========================================
+    // 雇员管理模块
+    // ==========================================
+    function renderStaff() {
+      const elem = document.getElementById('staff-grid-elem');
+      elem.innerHTML = '';
+      gameState.staff.forEach(member => {
+        const card = document.createElement('div');
+        card.className = 'parchment-card staff-card';
+        card.innerHTML = `
+          <div class="staff-portrait">🧑‍🍳</div>
+          <div class="card-title-mini" style="justify-content:space-between; margin:0;">
+            <span>${member.name}</span>
+            <span style="font-size:0.75rem; background:rgba(60,42,26,0.1); padding:2px 6px; border-radius:4px;">${member.role}</span>
+          </div>
+          <div style="font-size:0.75rem;">
+            <div class="stat-mini-row"><span>每日薪酬</span><span>${member.wage}铜币</span></div>
+            <div class="stat-mini-row"><span>士气精力</span><span>${member.morale}/100</span></div>
+            <div class="stat-mini-row" style="color:var(--color-amber-gold);"><span>秘法专长</span><span>${member.skill}</span></div>
+          </div>
+        `;
+        elem.appendChild(card);
+      });
+    }
+
+    // ==========================================
+    // 宾客座上宾模块
+    // ==========================================
+    function renderGuests() {
+      const elem = document.getElementById('guests-list-elem');
+      elem.innerHTML = '';
+      gameState.guests.forEach(guest => {
+        const card = document.createElement('div');
+        card.className = 'parchment-card';
+        card.style.marginBottom = '10px';
+        card.innerHTML = `
+          <div class="card-title-mini" style="justify-content:space-between;">
+            <span>${guest.name} (${guest.type})</span>
+            <span style="font-size:0.8rem; color:var(--color-ink-green);">偏好: ${guest.trait}</span>
+          </div>
+          <p style="font-size:0.85rem;">消费意愿: ${guest.budget} | 当前满意度: ${guest.sat}%</p>
+        `;
+        elem.appendChild(card);
+      });
+    }
+
+    // ==========================================
+    // 建筑筑造功能 (联动扣款)
+    // ==========================================
+    function buildFacility(id, cost) {
+      if (gameState.bronze < cost) {
+        playSound('wax'); // 警示音
+        alert('店里账上的铜币周转不足，还差些许工钱。');
+        return;
+      }
+      
+      playSound('wax');
+      gameState.bronze -= cost;
+      
+      // 雷达图变形动画
+      const radarPoly = document.getElementById('radar-shape');
+      // 变形数值，展现设施建造对引力参数的深远拉伸
+      radarPoly.setAttribute('points', '100,25 160,55 155,115 100,165 75,110 50,60');
+      
+      // 更新剧情
+      appendStoryText(`\n【工程破土】你批准了 [精巧妖精暖炉] 的施工。锤凿声声中，一股温馨的暖气开始充盈整个大厅，空气里似乎有什么东西正在悄然苏醒。`);
+      
+      updateHUD();
+      
+      // 成功建造后禁掉按钮
+      event.currentTarget.disabled = true;
+      event.currentTarget.innerText = "已建成";
+      event.currentTarget.style.background = "gray";
+    }
+
+    // ==========================================
+    // 冒险剧情决策机制 (LLM 双层映射)
+    // ==========================================
+    function selectStoryChoice(choiceId) {
+      playSound('paper');
+      const container = document.getElementById('choices-container');
+      container.innerHTML = ''; // 清空选择，防止重选
+      
+      let feedback = '';
+      
+      if (choiceId === 1) {
+        // 精心呈上热饮
+        gameState.energy = Math.max(0, gameState.energy - 5);
+        gameState.bronze = Math.max(0, gameState.bronze - 12);
+        
+        // 背包材料消耗
+        const berry = gameState.inventory.find(i => i.id === 'sun_berry');
+        if (berry && berry.qty > 0) berry.qty--;
+        
+        // 增加NPC满意度并记录剧情
+        gameState.guests[0].sat = Math.min(100, gameState.guests[0].sat + 25);
+        
+        feedback = `
+          <div class="story-bubble">
+            <p class="narrator-text">【抉择：悉心招待】你将珍贵的妖精古木添进火炉，并把在阳光下采撷的晨曦莓果融入草药茶。随着水汽袅袅升起，大厅温度开始如春天般和煦。</p>
+          </div>
+          <div class="story-bubble">
+            <div class="dialogue-wrapper">
+              <div class="speaker-name">半精灵流浪学者 · 艾瑞丝</div>
+              <div class="speaker-content">“啊...多么不可思议的醇香。暖流流经我的魔力回路，连风雪刻下的严寒都在冰释。年轻的掌柜，这是我最慷慨的谢礼。”</div>
+            </div>
+          </div>
+          <p class="narrator-text" style="color:var(--color-ink-green); font-size:0.9rem; margin-top:10px;">※ 艾瑞丝对你的旅店产生了深深的依恋。她留下了 35枚铜钱 并在留言簿上写下了赞赏。</p>
+        `;
+        gameState.bronze += 35;
+        gameState.fame += 25; // 获得声望
+      } 
+      else if (choiceId === 2) {
+        // 密教探讨
+        gameState.energy = Math.max(0, gameState.energy - 8);
+        feedback = `
+          <div class="story-bubble">
+            <p class="narrator-text">【抉择：学术深谈】你抽身在吧台旁坐下，用鹅毛笔在羊皮纸上勾勒出那些残缺的符文。你同她分享关于这片森林古老宿命的猜测。</p>
+          </div>
+          <div class="story-bubble">
+            <div class="dialogue-wrapper">
+              <div class="speaker-name">半精灵流浪学者 · 艾瑞丝</div>
+              <div class="speaker-content">“原来如此...你画的这个变体符文，完美解释了白骨沼泽的水流逆行现象。其实，如果你往东南方向寻找，穿过那片迷雾区(1, 1)，能找到通往沼泽古老方尖碑的古径...”</div>
+            </div>
+          </div>
+          <p class="narrator-text" style="color:var(--color-mint-blue); font-size:0.9rem; margin-top:10px;">※ 秘境探索(1, 1) 的坐标情报已加载。艾瑞丝对你卓越的学识感到惊异！</p>
+        `;
+        // 解锁特定地块的视野
+        gameState.exploreMap[2].explored = true;
+        gameState.exploreMap[2].type = "古碑遗迹";
+        gameState.exploreMap[2].icon = "🏛️";
+        gameState.fame += 15;
+      }
+
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = feedback;
+      document.getElementById('story-viewport').appendChild(wrapper);
+      
+      // 滚动置底
+      setTimeout(() => {
+        const view = document.getElementById('story-viewport');
+        view.scrollTop = view.scrollHeight;
+      }, 100);
+
+      updateHUD();
+    }
+
+    function appendStoryText(rawText) {
+      const node = document.createElement('div');
+      node.className = 'story-bubble';
+      node.innerHTML = `<p class="narrator-text" style="font-style: italic; color: var(--color-ink-green);">${rawText}</p>`;
+      document.getElementById('story-viewport').appendChild(node);
+      
+      setTimeout(() => {
+        const view = document.getElementById('story-viewport');
+        view.scrollTop = view.scrollHeight;
+      }, 50);
+    }
+
+    // ==========================================
+    // 魔法星尘粒子动效
+    // ==========================================
+    function createMagicSparkles(x, y) {
+      for (let i = 0; i < 8; i++) {
+        const sp = document.createElement('div');
+        sp.className = 'magic-sparkle';
+        sp.style.left = x + 'px';
+        sp.style.top = y + 'px';
+        // 随机发散角度与位移
+        const mx = (Math.random() - 0.5) * 80;
+        const my = (Math.random() - 0.5) * 80;
+        sp.style.setProperty('--mx', `${mx}px`);
+        sp.style.setProperty('--my', `${my}px`);
+        
+        document.body.appendChild(sp);
+        setTimeout(() => sp.remove(), 800);
+      }
+    }
+
+    // ==========================================
+    // 每日结算夜幕转换 (无倒计时零焦虑)
+    // ==========================================
+    function triggerEndDay() {
+      playSound('wax');
+      const overlay = document.getElementById('night-overlay');
+      const details = document.getElementById('settlement-details');
+      
+      // 计算今日收支
+      let wageExpense = 0;
+      gameState.staff.forEach(s => wageExpense += s.wage);
+      let income = 35; // 今日固定收益
+      let net = income - wageExpense;
+      
+      details.innerHTML = `
+        <div class="settlement-row"><span>今日堂食营业所得:</span><span style="color:var(--color-ink-green)">+${income} 铜币</span></div>
+        <div class="settlement-row"><span>雇员基本酬金支出:</span><span style="color:var(--color-danger-ochre)">-${wageExpense} 铜币</span></div>
+        <div class="settlement-row" style="font-weight:700; border-top: 1px solid var(--color-ink-dark); margin-top:20px;">
+          <span>今日净收益:</span><span>${net >= 0 ? '+' : ''}${net} 铜币</span>
+        </div>
+      `;
+
+      // 削减铜钱并应用结算
+      gameState.bronze += net;
+      
+      overlay.style.display = 'flex';
+    }
+
+    function wakeUpNextDay() {
+      playSound('paper');
+      const overlay = document.getElementById('night-overlay');
+      overlay.style.display = 'none';
+
+      // 时间演进
+      gameState.day += 1;
+      gameState.energy = 100; // 满精力
+      gameState.stress = Math.max(0, gameState.stress - 20); // 熟睡降低压力
+
+      // 切换主界面到晨曦色调
+      document.body.className = "theme-morning";
+
+      updateHUD();
+      
+      // 写入每日日志新开端
+      const view = document.getElementById('story-viewport');
+      view.innerHTML = `
+        <div class="story-bubble">
+          <p class="narrator-text" style="font-weight:700; text-align:center; color: var(--color-amber-gold); border-bottom: 1px solid rgba(60,42,26,0.1); padding-bottom: 10px;">
+            ✦【第四天 · 清晨】烛火已明 ✦
+          </p>
+          <p class="narrator-text">阳光穿透了林间厚重的浓雾，洒在吧台的浮尘上。又是新的一天，昨夜的艾瑞丝学者已在清晨悄然启程，但她在壁炉旁留下了一封感谢信。店外又传来了林地妖精雀跃的鸣声...</p>
+        </div>
+      `;
+    }
+
+    // 初始化运行
+    window.onload = () => {
+      updateHUD();
+      renderInventory();
+    };
+  </script>
+</body>
+</html>

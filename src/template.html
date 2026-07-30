@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="day">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>暮归旅店 · 经营志</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!--STYLE-->
+</head>
+<body>
+  <!-- 环境氛围层（昼/夜渐变，不占位） -->
+  <div class="ambient" aria-hidden="true"></div>
+
+  <!-- 双页书 -->
+  <main class="book" id="book">
+
+    <!-- 书脊 -->
+    <div class="book__spine" aria-hidden="true"></div>
+
+    <!-- ============ 左页：功能面板 ============ -->
+    <section class="page page--left" id="pageLeft">
+      <!-- 竖排标签栏 -->
+      <nav class="tabs" id="ledgerTabs" aria-label="功能切换">
+        <button class="tab is-active" data-tab="overview" data-tip="旅店总览"><span class="ic tab__icon" data-i="house"></span><span class="tab__label">总览</span></button>
+        <button class="tab" data-tab="inventory" data-tip="库存与食谱"><span class="ic tab__icon" data-i="bag"></span><span class="tab__label">库存</span></button>
+        <button class="tab" data-tab="building" data-tip="建筑与蓝图"><span class="ic tab__icon" data-i="hammer"></span><span class="tab__label">建筑</span></button>
+        <button class="tab" data-tab="map" data-tip="地图与探索"><span class="ic tab__icon" data-i="compass"></span><span class="tab__label">地图</span></button>
+        <button class="tab" data-tab="staff" data-tip="员工名册"><span class="ic tab__icon" data-i="person"></span><span class="tab__label">员工</span></button>
+        <button class="tab" data-tab="visitor" data-tip="宾客盈门"><span class="ic tab__icon" data-i="key"></span><span class="tab__label">访客</span></button>
+        <button class="tab" data-tab="quest" data-tip="任务日志"><span class="ic tab__icon" data-i="scroll"></span><span class="tab__label">任务</span></button>
+        <button class="tab" data-tab="farm" data-tip="农牧总览"><span class="ic tab__icon" data-i="wheat"></span><span class="tab__label">农牧</span></button>
+      </nav>
+
+      <!-- 面板区（由 render.js 填充） -->
+      <div class="panels" id="ledgerPanels">
+        <section class="panel is-active" data-panel="overview"></section>
+        <section class="panel" data-panel="inventory"></section>
+        <section class="panel" data-panel="building"></section>
+        <section class="panel" data-panel="map"></section>
+        <section class="panel" data-panel="staff"></section>
+        <section class="panel" data-panel="visitor"></section>
+        <section class="panel" data-panel="quest"></section>
+        <section class="panel" data-panel="farm"></section>
+      </div>
+
+      <!-- 左页页脚：主题切换 -->
+      <div class="page__foot">
+        <button class="mini-btn" id="themeToggle" data-tip="切换昼夜" aria-label="切换昼夜"><span class="ic" data-i="moon"></span></button>
+        <button class="mini-btn" id="settingsBtn" data-tip="设置" aria-label="设置"><span class="ic" data-i="settings"></span></button>
+      </div>
+    </section>
+
+    <!-- ============ 右页：正文叙事 ============ -->
+    <section class="page page--right" id="pageRight">
+
+      <!-- 顶栏 HUD -->
+      <header class="hud" id="hud">
+        <div class="hud__left">
+          <span class="ic hud__wx" id="hudWeather" data-i="sun"></span>
+          <div class="hud__date">
+            <strong id="hudDate">第1年 · 春季第3天</strong>
+            <span id="hudWeekday">周三 · 晴</span>
+          </div>
+        </div>
+        <div class="hud__center">
+          <span class="ic" data-i="house" style="--ic:18px"></span>
+          <span class="hud__inn" id="hudInn">暮归旅店</span>
+          <span class="hud__lv" id="hudLevel">声望 萤火</span>
+        </div>
+        <div class="hud__right">
+          <div class="hud__funds">
+            <span class="ic" data-i="coin" style="--ic:18px"></span>
+            <span class="num hud__funds-val" id="hudFunds">50000</span>
+          </div>
+          <div class="hud__prestige">
+            <span class="hud__prestige-label">声望</span>
+            <span class="hud__prestige-track"><span class="hud__prestige-fill" id="hudPrestigeFill" style="--p:42%"></span></span>
+          </div>
+        </div>
+      </header>
+
+      <!-- 正文 + 选项 -->
+      <div class="journal" id="journal">
+        <article class="journal__narrative" id="narrative" aria-live="polite">
+          <p class="muted">正在展卷……</p>
+        </article>
+        <div class="journal__choices" id="choices"></div>
+      </div>
+
+      <!-- 底栏：精力 / 压力 / 行动 -->
+      <footer class="dock" id="dock">
+        <div class="dock__stat">
+          <span class="ic" data-i="energy" style="--ic:18px"></span>
+          <div class="dock__stat-body">
+            <div class="dock__stat-head"><span>精力</span><span class="num" id="energyVal">78/100</span></div>
+            <span class="bar"><span class="bar__fill bar__fill--energy" id="energyFill" style="--p:78%"></span></span>
+          </div>
+        </div>
+        <div class="dock__stat">
+          <span class="ic" data-i="stress" style="--ic:18px"></span>
+          <div class="dock__stat-body">
+            <div class="dock__stat-head"><span>压力</span><span class="num" id="stressVal">34/100</span></div>
+            <span class="bar"><span class="bar__fill bar__fill--stress" id="stressFill" style="--p:34%"></span><span class="bar__cracks"></span></span>
+          </div>
+        </div>
+        <div class="dock__actions">
+          <button class="dock__btn" data-act="cook" data-tip="快捷烹饪"><span class="ic" data-i="pot"></span></button>
+          <button class="dock__btn" data-act="water" data-tip="一键浇灌"><span class="ic" data-i="water"></span></button>
+          <button class="dock__btn" data-act="rest" data-tip="小憩片刻"><span class="ic" data-i="bed"></span></button>
+          <button class="dock__btn dock__btn--primary" data-act="endday" data-tip="归寝入眠"><span class="ic" data-i="moon"></span></button>
+        </div>
+      </footer>
+
+    </section>
+  </main>
+
+  <!-- 内联吐司（不脱离文档流过远，固定于书容器右上） -->
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <!-- 满足感粒子层（固定，不占文档流） -->
+  <div class="burst-layer" id="burstLayer" aria-hidden="true"></div>
+
+  <!--SCRIPT-->
+</body>
+</html>

@@ -1,0 +1,702 @@
+已选定MVU文件
+
+
+## 文件一：`角色卡/schema.ts`
+
+```ts
+export const Schema = z.object({
+
+  大掌柜: z.object({
+    精力: z.coerce.number().transform(v => _.clamp(v, 0, 100)).prefault(100),
+    压力: z.coerce.number().transform(v => _.clamp(v, 0, 100)).prefault(0),
+    属性: z.record(
+      z.enum(['经营', '交涉', '魄力', '洞察', '天启']),
+      z.object({
+        等级: z.coerce.number().prefault(1),
+        经验: z.coerce.number().prefault(0),
+        升级经验: z.coerce.number().prefault(100),
+      }).prefault({})
+    ).prefault({ 经营: {}, 交涉: {}, 魄力: {}, 洞察: {}, 天启: {} }),
+  }).prefault({}),
+
+  旅店: z.object({
+    资金: z.coerce.number().prefault(50000),
+    声望: z.coerce.number().prefault(0),
+
+    库存: z.record(
+      z.string().describe('物品名'),
+      z.object({
+        数量: z.coerce.number().prefault(0),
+        品质: z.string().prefault('普通'),
+        分类: z.string().prefault(''),
+        描述: z.string().prefault(''),
+      }).prefault({})
+    ).prefault({}),
+
+    配方: z.record(
+      z.string().describe('配方名'),
+      z.object({
+        材料: z.string().prefault(''),
+        售价: z.coerce.number().prefault(0),
+        难度: z.coerce.number().prefault(20),
+        需要设施: z.string().prefault('厨房'),
+        描述: z.string().prefault(''),
+      }).prefault({})
+    ).prefault({}),
+
+    当前访客: z.record(
+      z.string().describe('访客名'),
+      z.object({
+        类型: z.string().prefault(''),
+        状态: z.string().prefault('在店'),
+        满意度: z.coerce.number().transform(v => _.clamp(v, 0, 100)).prefault(80),
+        消费能力: z.string().prefault('中'),
+        需求偏好: z.array(z.string()).prefault([]),
+        隐藏性格: z.array(z.string()).prefault([]),
+        抗性标签: z.array(z.string()).prefault([]),
+        携带种子: z.array(z.string()).prefault([]),
+      }).prefault({})
+    ).prefault({}),
+
+    员工: z.record(
+      z.string().describe('员工名'),
+      z.object({
+        属性: z.record(
+          z.enum(['技艺', '悟性', '体力', '亲和', '专注']),
+          z.coerce.number().prefault(1)
+        ).prefault({ 技艺: 1, 悟性: 1, 体力: 1, 亲和: 1, 专注: 1 }),
+        状态: z.object({
+          精力: z.coerce.number().transform(v => _.clamp(v, 0, 100)).prefault(100),
+          士气: z.coerce.number().transform(v => _.clamp(v, 0, 100)).prefault(70),
+          忠诚度: z.coerce.number().transform(v => _.clamp(v, 0, 100)).prefault(50),
+        }).prefault({}),
+        职业信息: z.object({
+          职业: z.string().prefault(''),
+          阶级: z.enum(['T1', 'T2', 'T3', 'T4', 'T5']).prefault('T1'),
+          日薪: z.coerce.number().prefault(80),
+          等级: z.coerce.number().prefault(1),
+          经验: z.coerce.number().prefault(0),
+          升级经验: z.coerce.number().prefault(100),
+        }).prefault({}),
+        心之宝石: z.object({
+          闪光圣岩: z.array(z.string()).prefault([]),
+          暗影原石: z.array(z.string()).prefault([]),
+        }).prefault({}),
+        技能: z.array(z.string()).prefault([]),
+        描述: z.string().prefault(''),
+      }).prefault({})
+    ).prefault({}),
+
+    特殊效果: z.record(
+      z.string().describe('效果名'),
+      z.object({
+        剩余天数: z.coerce.number().prefault(0),
+        描述: z.string().prefault(''),
+        来源: z.string().prefault(''),
+      }).prefault({})
+    ).prefault({}),
+
+    计数器: z.record(
+      z.string().describe('计数项'),
+      z.coerce.number().prefault(0)
+    ).prefault({}),
+  }).prefault({}),
+
+  建筑: z.object({
+    已建成: z.record(
+      z.string().describe('建筑名'),
+      z.object({
+        等级: z.coerce.number().prefault(1),
+        描述: z.string().prefault(''),
+        工作状态: z.string().prefault('正常'),
+        影响力: z.record(
+          z.enum(['美食', '知识', '舒适', '冒险', '文化', '自然']),
+          z.coerce.number().prefault(0)
+        ).prefault({ 美食: 0, 知识: 0, 舒适: 0, 冒险: 0, 文化: 0, 自然: 0 }),
+        产出: z.string().prefault(''),
+        产出倒计时: z.coerce.number().prefault(0),
+        维护费用: z.coerce.number().prefault(0),
+        符文升级: z.string().prefault('无'),
+      }).prefault({})
+    ).prefault({}),
+
+    蓝图: z.record(
+      z.string().describe('蓝图名'),
+      z.object({
+        影响力: z.record(
+          z.enum(['美食', '知识', '舒适', '冒险', '文化', '自然']),
+          z.coerce.number().prefault(0)
+        ).prefault({ 美食: 0, 知识: 0, 舒适: 0, 冒险: 0, 文化: 0, 自然: 0 }),
+        解锁条件: z.string().prefault(''),
+        建造成本: z.object({
+          现金: z.coerce.number().prefault(0),
+          物资: z.string().prefault(''),
+        }).prefault({}),
+        功能描述: z.string().prefault(''),
+        负面描述: z.string().prefault(''),
+      }).prefault({})
+    ).prefault({}),
+  }).prefault({}),
+
+  世界: z.object({
+    时间: z.object({
+      年: z.coerce.number().prefault(1),
+      季节: z.enum(['春', '夏', '秋', '冬']).prefault('春'),
+      天数: z.coerce.number().prefault(1),
+      星期: z.coerce.number().prefault(1),
+      天气: z.string().prefault('晴'),
+      当前时间: z.string().prefault('06:00'),
+      经过总天数: z.coerce.number().prefault(1),
+    }).prefault({}),
+
+    地块: z.record(
+      z.string().describe('宏观地块坐标'),
+      z.object({
+        x: z.coerce.number().prefault(0),
+        y: z.coerce.number().prefault(0),
+        类型: z.string().prefault(''),
+        描述: z.string().prefault(''),
+        资源: z.record(
+          z.string().describe('资源名'),
+          z.coerce.number().prefault(0)
+        ).prefault({}),
+        本季采集次数: z.record(
+          z.string().describe('资源名'),
+          z.coerce.number().prefault(0)
+        ).prefault({}),
+      }).prefault({})
+    ).prefault({}),
+  }).prefault({}),
+
+  访客生态: z.object({
+    总引力值: z.coerce.number().prefault(0),
+    声望引力: z.coerce.number().prefault(0),
+    设施引力: z.record(
+      z.enum(['美食', '知识', '舒适', '冒险', '文化', '自然']),
+      z.coerce.number().prefault(0)
+    ).prefault({ 美食: 0, 知识: 0, 舒适: 0, 冒险: 0, 文化: 0, 自然: 0 }),
+    服务引力: z.coerce.number().prefault(2),
+    环境引力: z.coerce.number().prefault(0),
+    潜在访客池: z.record(
+      z.string().describe('访客类型'),
+      z.coerce.number().prefault(0)
+    ).prefault({}),
+  }).prefault({}),
+
+  叙事引擎: z.object({
+    任务种子: z.record(
+      z.string().describe('种子ID'),
+      z.object({
+        来源: z.string().prefault(''),
+        激活条件: z.array(z.string()).prefault([]),
+        优先级: z.coerce.number().prefault(50),
+        状态: z.string().prefault('潜伏中'),
+        潜在任务: z.string().prefault(''),
+        报酬: z.string().prefault(''),
+      }).prefault({})
+    ).prefault({}),
+
+    委托任务: z.record(
+      z.string().describe('任务名'),
+      z.object({
+        描述: z.string().prefault(''),
+        时限: z.string().prefault(''),
+        报酬: z.string().prefault(''),
+        状态: z.string().prefault('进行中'),
+      }).prefault({})
+    ).prefault({}),
+
+    羁绊故事: z.record(
+      z.string().describe('角色名'),
+      z.object({
+        当前阶段: z.string().prefault('未开启'),
+        触发条件: z.string().prefault(''),
+        描述: z.string().prefault(''),
+      }).prefault({})
+    ).prefault({}),
+  }).prefault({}),
+
+  农牧: z.object({
+    农田网格: z.record(
+      z.string().describe('农田格子坐标'),
+      z.object({
+        x: z.coerce.number().prefault(0),
+        y: z.coerce.number().prefault(0),
+        状态: z.enum(['荒地', '已开垦', '种植中']).prefault('荒地'),
+        作物: z.string().prefault(''),
+        剩余天数: z.coerce.number().prefault(0),
+        今日已浇水: z.boolean().prefault(false),
+        已施肥: z.boolean().prefault(false),
+        品质修正: z.coerce.number().prefault(0),
+        过熟天数: z.coerce.number().prefault(0),
+      }).prefault({})
+    ).prefault({}),
+
+    堆肥箱: z.object({
+      状态: z.string().prefault('空'),
+      倒计时: z.coerce.number().prefault(0),
+    }).prefault({}),
+
+    畜牧: z.record(
+      z.string().describe('设施名'),
+      z.object({
+        饲料倒计时: z.coerce.number().prefault(7),
+        产出倒计时: z.coerce.number().prefault(7),
+        健康度: z.coerce.number().transform(v => _.clamp(v, 0, 100)).prefault(100),
+      }).prefault({})
+    ).prefault({}),
+  }).prefault({}),
+
+  当日预报: z.object({
+    天气: z.string().prefault(''),
+    引力值: z.coerce.number().prefault(0),
+    访客池: z.string().prefault(''),
+    注意事项: z.array(z.string()).prefault([]),
+  }).prefault({}),
+
+}).prefault({});
+```
+
+---
+
+## 文件二：`世界书/变量/initvar.yaml`
+
+```yaml
+# yaml-language-server: $schema=../../schema.json
+
+大掌柜:
+  精力: 100
+  压力: 0
+  属性:
+    经营: { 等级: 1, 经验: 0, 升级经验: 100 }
+    交涉: { 等级: 1, 经验: 0, 升级经验: 100 }
+    魄力: { 等级: 1, 经验: 0, 升级经验: 100 }
+    洞察: { 等级: 1, 经验: 0, 升级经验: 100 }
+    天启: { 等级: 1, 经验: 0, 升级经验: 1000 }
+
+旅店:
+  资金: 50000
+  声望: 0
+  库存:
+    木材: { 数量: 20, 品质: 普通, 分类: 自然材料, 描述: 基础建筑材料 }
+    石料: { 数量: 20, 品质: 普通, 分类: 自然材料, 描述: 基础建筑材料 }
+    谷物: { 数量: 30, 品质: 普通, 分类: 食材原料, 描述: 基础粮食 }
+    春小麦种子: { 数量: 5, 品质: 普通, 分类: 种子, 描述: 春季作物，生长期5天 }
+  配方: {}
+  当前访客: {}
+  员工: {}
+  特殊效果: {}
+  计数器: {}
+
+建筑:
+  已建成:
+    接待前台:
+      等级: 1
+      描述: 简陋但结实的木制柜台
+      工作状态: 正常
+      影响力: { 美食: 0, 知识: 0, 舒适: 0, 冒险: 0, 文化: 0, 自然: 0 }
+      产出: ""
+      产出倒计时: 0
+      维护费用: 0
+      符文升级: 无
+  蓝图:
+    客房翼楼:
+      影响力: { 美食: 0, 知识: 0, 舒适: 5, 冒险: 0, 文化: 0, 自然: 0 }
+      解锁条件: 声望≥20
+      建造成本: { 现金: 100000, 物资: 木材50 石料30 }
+      功能描述: 增加多间客房，大幅提升住宿容量
+      负面描述: ""
+    工匠坊:
+      影响力: { 美食: 0, 知识: 0, 舒适: -2, 冒险: 3, 文化: 5, 自然: 0 }
+      解锁条件: 声望≥90
+      建造成本: { 现金: 450000, 物资: 木材80 金属锭10 }
+      功能描述: 制作工具和装饰品
+      负面描述: 噪音会降低舒适引力
+
+世界:
+  时间:
+    年: 1
+    季节: 春
+    天数: 1
+    星期: 1
+    天气: 晴
+    当前时间: "06:00"
+    经过总天数: 1
+  地块:
+    "0,0":
+      x: 0
+      y: 0
+      类型: 旅店
+      描述: 翠玉摇篮山谷中你的旅店所在之处
+      资源: {}
+      本季采集次数: {}
+
+访客生态:
+  总引力值: 5
+  声望引力: 0
+  设施引力: { 美食: 0, 知识: 0, 舒适: 0, 冒险: 0, 文化: 0, 自然: 0 }
+  服务引力: 2
+  环境引力: 3
+  潜在访客池: {}
+
+叙事引擎:
+  任务种子: {}
+  委托任务: {}
+  羁绊故事: {}
+
+农牧:
+  农田网格:
+    "0,0": { x: 0, y: 0, 状态: 荒地, 作物: "", 剩余天数: 0, 今日已浇水: false, 已施肥: false, 品质修正: 0, 过熟天数: 0 }
+    "1,0": { x: 1, y: 0, 状态: 已开垦, 作物: "", 剩余天数: 0, 今日已浇水: false, 已施肥: false, 品质修正: 0, 过熟天数: 0 }
+    "0,1": { x: 0, y: 1, 状态: 种植中, 作物: 春小麦, 剩余天数: 5, 今日已浇水: true, 已施肥: false, 品质修正: 0, 过熟天数: 0 }
+    "1,1": { x: 1, y: 1, 状态: 荒地, 作物: "", 剩余天数: 0, 今日已浇水: false, 已施肥: false, 品质修正: 0, 过熟天数: 0 }
+  堆肥箱: { 状态: 空, 倒计时: 0 }
+  畜牧: {}
+
+当日预报:
+  天气: 晴
+  引力值: 5
+  访客池: 迷路旅人1~2
+  注意事项:
+    - 旅店刚刚开张，百废待兴
+    - 农田(0,1)已播种春小麦，记得每日浇水
+```
+
+---
+
+## 文件三：`[mvu_update]变量更新规则`（世界书条目）
+
+```yaml
+---
+变量更新规则:
+  大掌柜:
+    精力:
+      type: number
+      check:
+        - 每次行动消耗精力，具体值由行动类型决定（锄地-8、浇水-3/格、探索-15、建造-20等）
+        - 睡觉或进入新一天时恢复至100，压力>70时恢复上限降为80
+        - 精力<20时行动失败率上升，=0时强制结束当天
+    压力:
+      type: number
+      check:
+        - 资金连续3天为负+15、员工士气<30时+10、访客投诉+5
+        - 完成委托任务-10、休闲活动-8、员工忠诚度全>70时每日-3
+        - 压力>80时随机触发负面事件（失眠、决策失误等）
+    属性.${五维}.经验:
+      type: number
+      check:
+        - 对应行为产生经验（经营：买卖/定价；交涉：对话/议价；魄力：冒险/决策；洞察：观察/推理；天启：特殊剧情触发）
+        - 经验≥升级经验时等级+1、经验归零、升级经验×1.5
+
+  旅店:
+    资金:
+      type: number
+      check:
+        - 收入来源：访客消费、任务报酬、作物出售
+        - 支出项目：员工日薪（每日结算）、建筑维护费、采购物资
+        - 连续3天为负触发债务事件
+    声望:
+      type: number
+      check:
+        - 访客满意度>90离店时+2、满意度<40时-3
+        - 完成委托任务按难度+5~20、建造新建筑+3~10
+        - 声望影响蓝图解锁和高级访客出现概率
+    库存:
+      type: |-
+        {
+          [物品名: string]: {
+            数量: number;
+            品质: string;
+            分类: string;
+            描述: string;
+          }
+        }
+      check:
+        - 采集、收获、购买时添加或数量增加
+        - 消耗、出售、建造时数量减少，数量=0时移除该条目
+        - 品质分为：粗糙/普通/优良/精品/传说
+    配方:
+      type: |-
+        {
+          [配方名: string]: {
+            材料: string;
+            售价: number;
+            难度: number;
+            需要设施: string;
+            描述: string;
+          }
+        }
+      check:
+        - 通过访客赠送、任务奖励、探索发现等方式获得
+        - 一旦获得不会丢失
+    当前访客:
+      type: |-
+        {
+          [访客名: string]: {
+            类型: string;
+            状态: string;
+            满意度: number;
+            消费能力: string;
+            需求偏好: string[];
+            隐藏性格: string[];
+            抗性标签: string[];
+            携带种子: string[];
+          }
+        }
+      check:
+        - 每日结算时根据当日预报和访客生态.潜在访客池决定新访客到达
+        - 满意度受服务质量、设施匹配度、天气影响，每次交互后更新
+        - 隐藏性格和抗性标签首次不可见，需洞察判定或多次交互后揭示
+        - 访客离店时从此处移除，按满意度结算收入和声望
+        - 携带种子在满意度>85时有概率赠送给玩家
+    员工:
+      type: |-
+        {
+          [员工名: string]: {
+            属性: { 技艺: number; 悟性: number; 体力: number; 亲和: number; 专注: number };
+            状态: { 精力: number; 士气: number; 忠诚度: number };
+            职业信息: {
+              职业: string;
+              阶级: 'T1' | 'T2' | 'T3' | 'T4' | 'T5';
+              日薪: number;
+              等级: number;
+              经验: number;
+              升级经验: number;
+            };
+            心之宝石: { 闪光圣岩: string[]; 暗影原石: string[] };
+            技能: string[];
+            描述: string;
+          }
+        }
+      check:
+        - 精力每日结算时恢复，受士气影响（士气>70恢复至100，<30恢复至60）
+        - 士气受日薪合理性、工作强度、大掌柜交互影响
+        - 忠诚度通过持续雇佣、赠礼、完成羁绊事件提升
+        - 经验通过执行对应职业工作获得，升级后阶级提升、日薪上调
+        - 闪光圣岩记录正面事件关键词，暗影原石记录负面事件关键词
+        - 忠诚度<10时员工可能离职
+    特殊效果:
+      type: |-
+        {
+          [效果名: string]: {
+            剩余天数: number;
+            描述: string;
+            来源: string;
+          }
+        }
+      check:
+        - 每日结算时剩余天数-1，=0时移除该效果
+        - 来源记录触发原因便于追溯
+    计数器:
+      type: |-
+        { [计数项: string]: number }
+      check:
+        - 用于记录累计事件次数（如：总服务访客数、总收获次数等）
+        - 仅在对应事件发生时+1，不主动减少
+
+  建筑:
+    已建成:
+      type: |-
+        {
+          [建筑名: string]: {
+            等级: number;
+            描述: string;
+            工作状态: string;
+            影响力: { 美食: number; 知识: number; 舒适: number; 冒险: number; 文化: number; 自然: number };
+            产出: string;
+            产出倒计时: number;
+            维护费用: number;
+            符文升级: string;
+          }
+        }
+      check:
+        - 玩家建造蓝图时，从蓝图实例化到此处并扣除建造成本
+        - 影响力变动后须同步重算 访客生态.设施引力（=所有已建成建筑影响力之和）
+        - 产出倒计时每日-1，=0时产出物品加入库存并重置倒计时
+        - 维护费用在每日结算时从资金扣除
+    蓝图:
+      type: |-
+        {
+          [蓝图名: string]: {
+            影响力: { 美食: number; 知识: number; 舒适: number; 冒险: number; 文化: number; 自然: number };
+            解锁条件: string;
+            建造成本: { 现金: number; 物资: string };
+            功能描述: string;
+            负面描述: string;
+          }
+        }
+      check:
+        - 随声望、季节、剧情推进逐步添加新蓝图，一旦添加不删除
+        - 玩家选择建造时校验解锁条件和资金物资是否充足
+        - 建造完成后蓝图保留（允许建造多个同类建筑或升级）
+
+  世界:
+    时间.当前时间:
+      format: "HH:MM"
+      check:
+        - 每次行动推进时间，幅度由行动类型决定（浇水全部农田约30分钟、探索2~4小时、建造半天）
+        - 22:00后仅允许休息行动，次日06:00自动开始新的一天
+    时间.天气:
+      check:
+        - 每日结算时随机生成次日天气（晴/多云/雨/暴风/雪，受季节影响）
+        - 雨天自动浇水所有种植中格子，暴风有概率损坏建筑
+        - 冬季有概率降雪，降雪时户外作物冻伤
+    时间.季节:
+      check:
+        - 每季30天，天数>30时季节轮转、天数重置为1
+        - 冬→春时年+1
+        - 季节更替时清零所有地块的本季采集次数
+        - 季节更替时非当季作物自动枯萎
+    地块:
+      type: |-
+        {
+          [宏观地块坐标: string]: {
+            x: number;
+            y: number;
+            类型: string;
+            描述: string;
+            资源: { [资源名: string]: number };
+            本季采集次数: { [资源名: string]: number };
+          }
+        }
+      check:
+        - 玩家探索新方向时生成新地块，key格式为"x,y"且须与内部x、y一致
+        - x、y范围-7~7
+        - 采集后对应资源数量减少、本季采集次数+1
+        - 同地块同资源本季采集≥3次时产出-50%
+        - 季节更替时本季采集次数全部清零
+
+  访客生态:
+    总引力值:
+      type: number
+      check:
+        - 每日结算时重算：= 声望引力 + 设施引力六维之和 + 服务引力 + 环境引力
+        - 总引力值决定每日访客数量上限和类型丰富度
+    声望引力:
+      type: number
+      check:
+        - = floor(旅店.声望 / 20)，每日结算时同步
+    设施引力.${六维}:
+      type: number
+      check:
+        - = 所有已建成建筑对应维度影响力之和，建筑变动时同步重算
+    服务引力:
+      type: number
+      check:
+        - 基础值2，员工服务技能每级+1，连续差评-1
+    环境引力:
+      type: number
+      check:
+        - 受农牧产出、建筑美观度、季节加成影响
+    潜在访客池:
+      type: |-
+        { [访客类型: string]: number }
+      check:
+        - 每日结算时根据六维引力分布和总引力值重新生成
+        - 值为权重，实际到访按权重随机抽取
+
+  叙事引擎:
+    任务种子:
+      type: |-
+        {
+          [种子ID: string]: {
+            来源: string;
+            激活条件: string[];
+            优先级: number;
+            状态: string;
+            潜在任务: string;
+            报酬: string;
+          }
+        }
+      check:
+        - 访客交互、探索、特定天数等事件埋入种子
+        - 每日结算检查激活条件，满足时状态变为"已激活"并生成委托任务
+        - 已激活或已过期的种子可移除
+    委托任务:
+      type: |-
+        {
+          [任务名: string]: {
+            描述: string;
+            时限: string;
+            报酬: string;
+            状态: string;
+          }
+        }
+      check:
+        - 状态包括：进行中/已完成/已失败/已过期
+        - 超过时限未完成自动标记为已过期，可能产生惩罚
+        - 完成时发放报酬并更新声望
+    羁绊故事:
+      type: |-
+        {
+          [角色名: string]: {
+            当前阶段: string;
+            触发条件: string;
+            描述: string;
+          }
+        }
+      check:
+        - 与特定员工或访客反复交互后推进阶段
+        - 阶段推进可能解锁新技能、新配方或特殊剧情
+
+  农牧:
+    农田网格:
+      type: |-
+        {
+          [农田格子坐标: string]: {
+            x: number;
+            y: number;
+            状态: '荒地' | '已开垦' | '种植中';
+            作物: string;
+            剩余天数: number;
+            今日已浇水: boolean;
+            已施肥: boolean;
+            品质修正: number;
+            过熟天数: number;
+          }
+        }
+      check:
+        - key格式为"x,y"且须与内部x、y保持一致
+        - 锄地：荒地→已开垦，消耗大掌柜精力-8
+        - 播种：已开垦→种植中，写入作物名和生长期天数，消耗对应种子1个
+        - 浇水：今日已浇水→true，消耗大掌柜精力-3/格（员工代劳时消耗员工精力）
+        - 收获：剩余天数=0的种植中格子→获得作物加入库存，格子重置为已开垦、作物清空
+        - 施肥：已施肥→true，品质修正+15，需消耗堆肥1份
+        - 每日结算遍历所有格子：种植中且今日已浇水→剩余天数-1；今日已浇水全部重置为false
+        - 种植中且当日未浇水→不减少剩余天数，连续2天未浇水品质修正-10
+        - 剩余天数=0标记成熟；成熟后每日未收获则过熟天数+1
+        - 过熟天数>3→品质修正-20；过熟天数>6→作物枯萎，状态重置为已开垦、作物清空
+        - 季节更替时非当季作物自动枯萎
+        - 雨天自动将所有种植中格子的今日已浇水设为true
+        - 玩家开垦新格子时动态添加新坐标条目，网格可向外扩展
+    堆肥箱:
+      check:
+        - 投入杂草/烂果等废料后状态→发酵中，倒计时设为3
+        - 每日结算倒计时-1，=0时状态→完成，可取出堆肥加入库存
+        - 取出后状态→空
+    畜牧:
+      type: |-
+        {
+          [设施名: string]: {
+            饲料倒计时: number;
+            产出倒计时: number;
+            健康度: number;
+          }
+        }
+      check:
+        - 饲料倒计时每日-1，=0时需补充饲料否则健康度每日-15
+        - 产出倒计时每日-1，=0时产出物品加入库存并重置
+        - 健康度<50产出品质下降，<20时生病需治疗
+
+  当日预报:
+    check:
+      - 前一天结算结束时整体覆写，展示的是新一天的实际数据
+      - 天气 = 世界.时间.天气
+      - 引力值 = 访客生态.总引力值
+      - 访客池为文本描述当日预估来客类型和数量范围
+      - 注意事项汇总当日需关注事项（如：有作物已成熟待收获、饲料即将耗尽、委托任务即将到期、建筑产出就绪等）
+```
+
+---
+
+

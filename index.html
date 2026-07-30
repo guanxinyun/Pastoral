@@ -3,634 +3,2520 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>暮归旅店 · 奇幻旅店经营志</title>
-  <meta name="description" content="在一个魔法日常化的奇幻世界里，把一家破败的旅店重新开好。" />
-  <link rel="stylesheet" href="css/tokens.css" />
-  <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/layout.css" />
-  <link rel="stylesheet" href="css/components.css" />
-  <link rel="stylesheet" href="css/animations.css" />
+  <title>暮归旅店 · 经营志</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+/* === tokens.css === */
+/* ============================================================
+   暮归旅店 · 设计令牌系统
+   美学：羊皮纸上的魔法墨水 —— 暖手账质感 + 微妙魔法光效
+   双主题：昼（羊皮纸）/ 夜（深靛蓝烛光）
+   ============================================================ */
+
+:root {
+  /* ---------- 色彩 · 昼（羊皮纸）默认主题 ---------- */
+  --parchment:        hsl(43 53% 91%);   /* #F5ECD7 羊皮纸米白 */
+  --parchment-deep:   hsl(40 48% 84%);   /* 略深的羊皮纸，用于面板分层 */
+  --parchment-edge:   hsl(36 40% 74%);   /* 翘边纸张的暗边 */
+  --ink-brown:        hsl(28 39% 17%);   /* #3C2A1A 暖棕墨色 */
+  --ink-brown-soft:   hsl(28 30% 30%);
+  --ink-green:        hsl(151 26% 24%);  /* #2D4A3E 墨绿 */
+  --amber:            hsl(39 56% 51%);   /* #C9943B 琥珀金 */
+  --amber-bright:     hsl(40 70% 60%);
+  --amber-glow:       hsl(40 80% 55% / 0.45);
+  --mint:             hsl(180 38% 64%);  /* #7EC8C8 薄荷蓝 */
+  --mint-soft:        hsl(180 30% 72%);
+  --ochre-red:        hsl(0 42% 38%);    /* #8B3A3A 暗红赭石 */
+  --ochre-red-soft:   hsl(0 38% 48%);
+
+  /* 语义映射 —— 组件只引用这些 */
+  --color-bg:          var(--parchment);
+  --color-bg-deep:     var(--parchment-deep);
+  --color-surface:     hsl(43 56% 94%);
+  --color-surface-raised: hsl(43 60% 96%);
+  --color-edge:        var(--parchment-edge);
+  --color-border:      hsl(34 35% 68% / 0.55);
+  --color-border-strong: hsl(28 30% 45% / 0.5);
+  --color-text:        var(--ink-brown);
+  --color-text-soft:   var(--ink-brown-soft);
+  --color-text-muted:  hsl(28 18% 42%);
+  --color-text-faint:  hsl(28 14% 55%);
+  --color-primary:     var(--amber);
+  --color-primary-hover: var(--amber-bright);
+  --color-accent:      var(--mint);
+  --color-success:     hsl(151 34% 38%);
+  --color-warning:     hsl(36 65% 48%);
+  --color-danger:      var(--ochre-red);
+  --color-magic:       var(--mint);
+
+  /* 雷达图六维配色 */
+  --dim-food:    hsl(20 70% 52%);    /* 美食 · 琥珀橙 */
+  --dim-lore:    hsl(280 45% 58%);   /* 知识 · 紫 */
+  --dim-comfort: hsl(190 45% 55%);   /* 舒适 · 青 */
+  --dim-adventure: hsl(110 40% 45%); /* 冒险 · 草绿 */
+  --dim-culture: hsl(340 50% 56%);   /* 文化 · 玫红 */
+  --dim-nature:  hsl(85 38% 48%);    /* 自然 · 叶绿 */
+
+  /* ---------- 字体 ---------- */
+  --font-serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong",
+                "霞鹜文楷", "LXGW WenKai", "STKaiti", "KaiTi", serif;
+  --font-kai:   "霞鹜文楷", "LXGW WenKai", "STKaiti", "KaiTi", "Source Han Serif SC", serif;
+  --font-sans:  "Source Han Sans SC", "Noto Sans SC", "HarmonyOS Sans SC",
+                "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono:  "Cascadia Code", "JetBrains Mono", "Fira Code", Consolas, monospace;
+
+  --font-size-2xs: 0.6875rem;
+  --font-size-xs:  0.75rem;
+  --font-size-sm:  0.8125rem;
+  --font-size-base: 0.9375rem;
+  --font-size-md:  1.0625rem;
+  --font-size-lg:  1.25rem;
+  --font-size-xl:  1.5rem;
+  --font-size-2xl: 1.875rem;
+  --font-size-3xl: 2.5rem;
+
+  /* ---------- 间距 ---------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ---------- 圆角 ---------- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+  --radius-full: 9999px;
+
+  /* ---------- 动效 ---------- */
+  --ease-ink:     cubic-bezier(0.4, 0, 0.2, 1);   /* 墨水渗透 */
+  --ease-page:    cubic-bezier(0.16, 1, 0.3, 1);   /* 翻书 */
+  --ease-soft:    cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t-fast: 150ms;
+  --t-base: 240ms;
+  --t-slow: 360ms;
+  --t-slower: 520ms;
+
+  /* ---------- 阴影 · 翘边纸张 ---------- */
+  --shadow-paper: 0 1px 1px hsl(28 30% 20% / 0.06),
+                  0 2px 4px hsl(28 30% 20% / 0.08),
+                  0 6px 14px hsl(28 30% 20% / 0.07);
+  --shadow-raised: 0 1px 2px hsl(28 30% 20% / 0.08),
+                   0 6px 12px hsl(28 30% 20% / 0.1),
+                   0 14px 30px hsl(28 30% 20% / 0.1);
+  --shadow-float:  0 4px 10px hsl(28 30% 20% / 0.12),
+                   0 18px 40px hsl(28 30% 20% / 0.18),
+                   0 30px 70px hsl(28 30% 20% / 0.16);
+  --shadow-inset: inset 0 1px 3px hsl(28 30% 20% / 0.12);
+  --shadow-glow-amber: 0 0 0 1px hsl(40 80% 55% / 0.25),
+                       0 0 16px 2px hsl(40 80% 55% / 0.22);
+  --shadow-glow-mint:  0 0 0 1px hsl(180 50% 60% / 0.3),
+                       0 0 16px 2px hsl(180 50% 60% / 0.22);
+
+  /* ---------- 纹理（内联 SVG，无外部依赖） ---------- */
+  /* 亚麻纤维细纹 */
+  --texture-linen:
+    repeating-linear-gradient(117deg,
+      hsl(28 20% 30% / 0.018) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(27deg,
+      hsl(28 20% 30% / 0.014) 0 1px, transparent 1px 4px);
+  /* 羊皮纸颗粒噪点 */
+  --texture-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  /* 暖光晕 + 旧纸渐褪 */
+  --vignette:
+    radial-gradient(120% 90% at 50% 0%, transparent 55%, hsl(28 30% 20% / 0.08) 100%),
+    radial-gradient(90% 70% at 50% 110%, transparent 60%, hsl(28 30% 20% / 0.06) 100%);
+
+  /* HUD 尺寸 */
+  --hud-top-h: 62px;
+  --hud-bottom-h: 74px;
+  --rail-w: 64px;
+  --rail-right-w: 72px;
+  --drawer-w: 440px;
+}
+
+/* ---------- 夜（深靛蓝烛光）主题 ---------- */
+[data-theme="night"] {
+  --parchment:        hsl(229 38% 16%);   /* #1A1F3A 深靛蓝 */
+  --parchment-deep:   hsl(229 36% 12%);
+  --parchment-edge:   hsl(229 30% 22%);
+  --ink-brown:        hsl(40 40% 88%);    /* 夜间正文转暖白 */
+  --ink-brown-soft:   hsl(40 24% 74%);
+  --ink-green:        hsl(151 30% 55%);
+
+  --color-bg:          var(--parchment);
+  --color-bg-deep:     var(--parchment-deep);
+  --color-surface:     hsl(229 34% 19%);
+  --color-surface-raised: hsl(229 32% 22%);
+  --color-edge:        var(--parchment-edge);
+  --color-border:      hsl(229 24% 45% / 0.4);
+  --color-border-strong: hsl(229 30% 55% / 0.45);
+  --color-text:        var(--ink-brown);
+  --color-text-soft:   var(--ink-brown-soft);
+  --color-text-muted:  hsl(40 16% 64%);
+  --color-text-faint:  hsl(40 12% 52%);
+  --color-primary:     hsl(40 70% 60%);
+  --color-primary-hover: hsl(40 80% 68%);
+  --color-accent:      hsl(180 42% 66%);
+  --color-success:     hsl(151 36% 56%);
+  --color-warning:     hsl(36 70% 60%);
+  --color-danger:      hsl(0 48% 58%);
+  --color-magic:       hsl(180 48% 68%);
+
+  --texture-linen:
+    repeating-linear-gradient(117deg,
+      hsl(220 40% 80% / 0.025) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(27deg,
+      hsl(220 40% 80% / 0.02) 0 1px, transparent 1px 4px);
+  --vignette:
+    radial-gradient(120% 90% at 50% 0%, transparent 50%, hsl(229 50% 4% / 0.5) 100%),
+    radial-gradient(80% 60% at 50% 110%, transparent 55%, hsl(229 50% 4% / 0.45) 100%);
+
+  --shadow-paper: 0 1px 2px hsl(229 60% 3% / 0.4),
+                  0 4px 10px hsl(229 60% 3% / 0.4);
+  --shadow-raised: 0 2px 6px hsl(229 60% 3% / 0.5),
+                   0 14px 32px hsl(229 60% 3% / 0.5);
+  --shadow-float:  0 8px 24px hsl(229 60% 3% / 0.6),
+                   0 28px 64px hsl(229 60% 3% / 0.6);
+  --shadow-glow-amber: 0 0 0 1px hsl(40 80% 55% / 0.35),
+                       0 0 22px 3px hsl(40 80% 55% / 0.28);
+  --shadow-glow-mint:  0 0 0 1px hsl(180 50% 60% / 0.4),
+                       0 0 22px 3px hsl(180 50% 60% / 0.3);
+}
+
+/* 减少动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  :root { --t-fast: 1ms; --t-base: 1ms; --t-slow: 1ms; --t-slower: 1ms; }
+}
+
+
+/* === base.css === */
+/* ============================================================
+   基础样式 · 排版 · 纹理 · 滚动条
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: auto; min-height: 0; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  /* 多层纹理叠加：颗粒 + 亚麻纤维 + 暖光晕 */
+  background-image:
+    var(--texture-noise),
+    var(--texture-linen),
+    var(--vignette);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color var(--t-slow) var(--ease-ink),
+              color var(--t-slow) var(--ease-ink);
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+}
+
+p { margin: 0; }
+
+a { color: var(--color-primary); text-decoration: none; }
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+ul, ol { margin: 0; padding: 0; list-style: none; }
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* 数值等宽对齐，避免跳动 */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* 标题书法感 */
+.calli { font-family: var(--font-kai); letter-spacing: 0.04em; }
+
+/* ---------- 定制滚动条 · 配主题 ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--color-border-strong), var(--color-border));
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-primary); background-clip: padding-box; }
+
+/* ---------- 通用工具类 ---------- */
+.row { display: flex; align-items: center; gap: var(--space-2); }
+.row--between { justify-content: space-between; }
+.col { display: flex; flex-direction: column; }
+.grow { flex: 1; }
+.muted { color: var(--color-text-muted); }
+.faint { color: var(--color-text-faint); }
+.mono { font-family: var(--font-mono); }
+.serif { font-family: var(--font-serif); }
+.kai { font-family: var(--font-kai); }
+.center { text-align: center; }
+.nowrap { white-space: nowrap; }
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-border-strong), transparent);
+  margin: var(--space-4) 0;
+}
+
+/* 藤蔓手绘分割线（SVG 内联） */
+.vine-divider {
+  display: block;
+  width: 100%;
+  height: 18px;
+  margin: var(--space-3) 0;
+  color: var(--color-border-strong);
+  opacity: 0.7;
+}
+
+/* 可访问性：仅屏幕阅读器 */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* 选中文字 */
+::selection { background: var(--amber-glow); color: var(--ink-brown); }
+[data-theme="night"] ::selection { background: hsl(40 80% 55% / 0.35); color: hsl(40 40% 92%); }
+
+/* ---------- 图标容器（基类，最早加载以让各组件尺寸可覆盖） ---------- */
+.ic {
+  display: inline-grid;
+  place-items: center;
+  width: var(--ic, 22px);
+  height: var(--ic, 22px);
+  flex: none;
+}
+.ic svg { width: 100%; height: 100%; display: block; }
+
+
+/* === layout.css === */
+/* ============================================================
+   双页书布局 · iframe 适配（无 vh / 无 absolute 主体 / 无 overflow:auto）
+   左页=功能面板  右页=正文叙事
+   ============================================================ */
+
+/* 环境氛围层（固定，不占文档流） */
+.ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(80% 60% at 50% 0%, hsl(40 70% 60% / 0.06), transparent 60%);
+  transition: background var(--t-slower) var(--ease-ink);
+}
+[data-theme="night"] .ambient {
+  background: radial-gradient(80% 60% at 50% 0%, hsl(180 38% 64% / 0.06), transparent 60%);
+}
+
+/* 书容器：居中、宽度自适应、可换行 */
+.book {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px;
+  box-sizing: border-box;
+  gap: 0;
+}
+
+/* 书脊：宽屏时居中分隔 */
+.book__spine {
+  display: none;
+}
+@media (min-width: 900px) {
+  .book { gap: 0; padding: 18px; }
+  .book__spine {
+    display: block;
+    flex: 0 0 14px;
+    align-self: stretch;
+    margin: 8px -7px;
+    background:
+      linear-gradient(90deg,
+        hsl(28 30% 20% / 0.18) 0%,
+        hsl(28 30% 20% / 0.05) 40%,
+        hsl(28 30% 20% / 0.05) 60%,
+        hsl(28 30% 20% / 0.18) 100%);
+    border-radius: 2px;
+    box-shadow: inset 1px 0 2px hsl(0 0% 0% / 0.1), inset -1px 0 2px hsl(0 0% 0% / 0.1);
+    position: relative;
+  }
+  .book__spine::before,
+  .book__spine::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    box-shadow: 0 0 6px var(--amber-glow);
+    transform: translateX(-50%);
+  }
+  .book__spine::before { top: 20px; }
+  .book__spine::after { bottom: 20px; }
+}
+
+/* 页：羊皮纸卡片 */
+.page {
+  flex: 1 1 420px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background:
+    linear-gradient(165deg, var(--color-surface-raised), var(--color-surface));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-paper);
+  position: relative;
+}
+/* 翘边暗角 */
+.page::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 46px; height: 46px;
+  border-top-left-radius: var(--radius-lg);
+  background: linear-gradient(135deg, hsl(28 30% 20% / 0.07), transparent 55%);
+  pointer-events: none;
+}
+
+/* ============ 左页：标签 + 面板 ============ */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-deep);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-inset);
+  margin-bottom: 14px;
+}
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-family: var(--font-kai);
+  font-size: var(--font-size-xs);
+  transition: all var(--t-base) var(--ease-soft);
+  position: relative;
+}
+.tab__icon { --ic: 17px; }
+.tab__label { white-space: nowrap; }
+.tab:hover { color: var(--color-text); background: var(--color-surface); }
+.tab.is-active {
+  color: var(--color-primary);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(40 80% 70% / 0.3);
+}
+.tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 50%; bottom: -5px;
+  width: 18px; height: 2px;
+  border-radius: 2px;
+  background: var(--color-primary);
+  box-shadow: 0 0 6px var(--amber-glow);
+  transform: translateX(-50%);
+}
+
+/* 面板区 */
+.panels { flex: 1; }
+.panel { display: none; }
+.panel.is-active {
+  display: block;
+  animation: inkBleed var(--t-slow) var(--ease-ink) both;
+}
+
+/* 左页页脚 */
+.page__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+.mini-btn {
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  transition: all var(--t-base) var(--ease-soft);
+}
+.mini-btn:hover { color: var(--color-primary); border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); transform: translateY(-1px); }
+
+/* ============ 右页：HUD + 正文 + 行动栏 ============ */
+.page--right { gap: 0; }
+
+/* 顶栏 HUD */
+.hud {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+.hud__left { display: flex; align-items: center; gap: 8px; }
+.hud__wx { --ic: 26px; color: var(--color-primary); filter: drop-shadow(0 0 6px var(--amber-glow)); }
+.hud__date { display: flex; flex-direction: column; line-height: 1.3; }
+.hud__date strong { font-family: var(--font-serif); font-size: var(--font-size-sm); color: var(--color-text); }
+.hud__date span { font-family: var(--font-kai); font-size: var(--font-size-2xs); color: var(--color-text-muted); }
+.hud__center {
+  display: flex; align-items: center; gap: 6px;
+  margin-left: auto; margin-right: auto;
+  padding: 3px 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-deep);
+  border: 1px solid var(--color-border-strong);
+}
+.hud__inn { font-family: var(--font-serif); font-weight: 700; font-size: var(--font-size-md); letter-spacing: 0.06em; }
+.hud__lv { font-family: var(--font-mono); font-size: var(--font-size-2xs); color: var(--color-primary); padding: 1px 7px; border-radius: var(--radius-full); background: var(--amber-glow); }
+.hud__right { display: flex; align-items: center; gap: 12px; }
+.hud__funds { display: flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: var(--radius-md); background: var(--color-bg-deep); border: 1px solid var(--color-border); }
+.hud__funds-val { color: var(--color-primary); font-weight: 600; text-shadow: 0 0 10px var(--amber-glow); min-width: 40px; text-align: right; }
+.hud__prestige { display: flex; align-items: center; gap: 6px; }
+.hud__prestige-label { font-size: var(--font-size-2xs); color: var(--color-text-muted); font-family: var(--font-kai); }
+.hud__prestige-track { position: relative; display: block; width: 90px; height: 8px; border-radius: var(--radius-full); background: var(--color-surface); border: 1px solid var(--color-border); overflow: hidden; }
+.hud__prestige-fill { position: absolute; inset: 0 auto 0 0; width: var(--p, 0%); border-radius: var(--radius-full); background: linear-gradient(90deg, var(--color-primary), var(--amber-bright)); box-shadow: 0 0 8px var(--amber-glow); transition: width var(--t-slower) var(--ease-ink); }
+
+/* 正文区 */
+.journal {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.journal__narrative {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-base);
+  line-height: 1.95;
+  color: var(--color-text);
+  padding: 4px 6px;
+  /* 保留 AI 内联美化，不覆盖 */
+}
+.journal__narrative p { margin: 0 0 0.9em; }
+.journal__narrative :last-child { margin-bottom: 0; }
+.journal__narrative blockquote { border-left: 3px solid var(--color-border-strong); padding-left: 12px; margin: 0.6em 0; font-style: italic; color: var(--color-text-soft); }
+.journal__narrative .hl, .journal__narrative [style*="color"] { /* keep inline */ }
+
+/* 选项 */
+.journal__choices { display: flex; flex-direction: column; gap: 8px; }
+.choice {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 11px 14px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface));
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-paper);
+  font-family: var(--font-kai);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  text-align: left;
+  transition: all var(--t-base) var(--ease-soft);
+  cursor: pointer;
+}
+.choice:hover { border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); transform: translateX(3px); }
+.choice__mark { color: var(--color-primary); flex: none; font-family: var(--font-serif); }
+.choice__text { flex: 1; line-height: 1.6; }
+
+/* 底部行动栏 */
+.dock {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+.dock__stat { display: flex; align-items: center; gap: 8px; flex: 1 1 160px; }
+.dock__stat-body { flex: 1; }
+.dock__stat-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; font-size: var(--font-size-2xs); color: var(--color-text-muted); font-family: var(--font-kai); }
+.dock__stat-head .num { color: var(--color-text-soft); }
+
+/* 通用条 */
+.bar {
+  position: relative;
+  display: block;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-deep);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-inset);
+  overflow: hidden;
+}
+.bar__fill {
+  position: absolute; inset: 0 auto 0 0;
+  width: var(--p, 0%);
+  border-radius: var(--radius-full);
+  transition: width var(--t-slower) var(--ease-ink);
+  background-size: 200% 100%;
+}
+.bar__fill::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, hsl(0 0% 100% / 0.35), transparent 50%); }
+.bar__fill--energy { background-image: linear-gradient(90deg, hsl(28 80% 55%), hsl(18 75% 50%), hsl(0 60% 45%)); }
+.bar__fill--stress { background-image: linear-gradient(90deg, hsl(200 50% 55%), hsl(230 45% 58%), hsl(275 45% 55%)); }
+.bar__fill--energy.low { animation: breathe 2.4s ease-in-out infinite; }
+.bar__cracks {
+  position: absolute; inset: 0; opacity: 0;
+  background-image:
+    linear-gradient(105deg, transparent 46%, hsl(0 0% 100% / 0.5) 47%, transparent 48%),
+    linear-gradient(75deg, transparent 60%, hsl(0 0% 100% / 0.4) 61%, transparent 62%);
+  background-size: 30px 100%, 40px 100%;
+  pointer-events: none; transition: opacity var(--t-slow);
+}
+.bar.warn .bar__cracks { opacity: 0.6; }
+.bar.critical .bar__cracks { opacity: 1; animation: tremor 0.25s linear infinite; }
+
+.dock__actions { display: flex; gap: 6px; }
+.dock__btn {
+  width: 38px; height: 38px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-md);
+  color: var(--color-text-soft);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-paper);
+  transition: all var(--t-base) var(--ease-soft);
+}
+.dock__btn:hover { color: var(--color-primary); border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); transform: translateY(-2px); }
+.dock__btn--primary {
+  color: hsl(40 60% 96%);
+  background: radial-gradient(circle at 35% 30%, hsl(229 38% 30%), hsl(229 45% 18%));
+  border-color: hsl(229 40% 40% / 0.6);
+}
+.dock__btn--primary:hover { box-shadow: var(--shadow-glow-amber); }
+
+/* tooltip 通用 */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 3px 9px;
+  font-family: var(--font-kai);
+  font-size: var(--font-size-2xs);
+  white-space: nowrap;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-raised);
+  opacity: 0; pointer-events: none;
+  transition: all var(--t-base) var(--ease-soft);
+  z-index: 50;
+}
+[data-tip]:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* 吐司：固定于书容器右上，不撑高文档 */
+.toast-stack {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 200;
+  width: min(300px, 80vw);
+  pointer-events: none;
+}
+
+
+/* === components.css === */
+/* ============================================================
+   组件库 · 双页书版（去模态/抽屉，面板内组件）
+   ============================================================ */
+
+/* ---------- 卡片 ---------- */
+.card {
+  position: relative;
+  padding: 12px;
+  background: linear-gradient(165deg, var(--color-surface-raised), var(--color-surface));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-paper);
+  transition: transform var(--t-base) var(--ease-soft), box-shadow var(--t-base), border-color var(--t-base);
+}
+.card + .card { margin-top: 10px; }
+.card__title { display: flex; align-items: center; gap: 6px; font-family: var(--font-serif); font-weight: 700; font-size: var(--font-size-md); margin-bottom: 6px; }
+.card__icon { --ic: 18px; color: var(--color-primary); }
+.card__sub { font-size: var(--font-size-2xs); color: var(--color-text-muted); }
+
+/* ---------- 品质印记 ---------- */
+.q-tag { display: inline-flex; padding: 1px 7px; font-size: 10px; font-family: var(--font-kai); border-radius: var(--radius-sm); border: 1px solid currentColor; letter-spacing: 0.04em; }
+.q-tag--粗糙 { color: hsl(28 10% 55%); }
+.q-tag--普通 { color: hsl(28 12% 45%); }
+.q-tag--优良 { color: hsl(151 34% 42%); }
+.q-tag--精品 { color: hsl(39 70% 48%); }
+.q-tag--传说 { color: hsl(280 45% 55%); }
+
+/* ---------- 药丸标签 ---------- */
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; font-size: 11px; font-family: var(--font-kai); border-radius: var(--radius-full); background: var(--color-bg-deep); color: var(--color-text-soft); border: 1px solid var(--color-border); }
+.pill--amber { background: var(--amber-glow); color: hsl(28 39% 14%); border-color: var(--color-primary); }
+.pill--mint  { background: hsl(180 38% 64% / 0.18); color: var(--color-magic); border-color: var(--color-accent); }
+.pill--green { background: hsl(151 34% 42% / 0.16); color: var(--color-success); border-color: var(--color-success); }
+.pill--red   { background: hsl(0 42% 38% / 0.14); color: var(--color-danger); border-color: var(--color-danger); }
+.pill--purple{ background: hsl(280 45% 50% / 0.15); color: hsl(280 45% 62%); border-color: hsl(280 45% 50%); }
+
+/* ---------- 子标签（分段控制） ---------- */
+.seg { display: flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: var(--radius-md); background: var(--color-bg-deep); border: 1px solid var(--color-border); box-shadow: var(--shadow-inset); margin-bottom: 10px; }
+.seg__item { flex: 1; padding: 5px 8px; font-size: var(--font-size-2xs); font-family: var(--font-kai); color: var(--color-text-muted); border-radius: var(--radius-sm); text-align: center; transition: all var(--t-base) var(--ease-soft); white-space: nowrap; }
+.seg__item:hover { color: var(--color-text-soft); }
+.seg__item.is-active { color: var(--color-primary); background: var(--color-surface-raised); box-shadow: var(--shadow-paper); }
+
+/* ---------- 面板小标题 ---------- */
+.panel-h { display: flex; align-items: center; gap: 6px; margin: 14px 0 8px; font-family: var(--font-kai); font-size: var(--font-size-sm); color: var(--color-primary); letter-spacing: 0.06em; }
+.panel-h::before { content: ""; width: 3px; height: 13px; border-radius: 2px; background: linear-gradient(var(--color-primary), transparent); }
+.panel-h:first-child { margin-top: 0; }
+.list-h { display: flex; align-items: center; justify-content: space-between; margin: 12px 0 6px; font-family: var(--font-kai); font-size: var(--font-size-xs); color: var(--color-text-soft); }
+.list-h__count { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-muted); }
+
+/* ---------- 物品行 ---------- */
+.item-row { display: flex; align-items: center; gap: 10px; padding: 7px 9px; border-radius: var(--radius-sm); border: 1px solid transparent; transition: all var(--t-base) var(--ease-soft); }
+.item-row:hover { background: var(--color-bg-deep); border-color: var(--color-border); }
+.item-row__icon { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-soft); }
+.item-row__main { flex: 1; min-width: 0; }
+.item-row__name { font-size: var(--font-size-sm); font-weight: 600; }
+.item-row__meta { font-size: 11px; color: var(--color-text-muted); }
+.item-row__qty { font-family: var(--font-mono); font-size: var(--font-size-sm); font-weight: 600; color: var(--color-primary); }
+
+/* ---------- 食谱卡（只展示，不判材料） ---------- */
+.recipe { padding: 10px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); transition: all var(--t-base) var(--ease-soft); cursor: pointer; }
+.recipe + .recipe { margin-top: 8px; }
+.recipe:hover { border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); transform: translateY(-2px); }
+.recipe__head { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.recipe__name { font-family: var(--font-serif); font-weight: 600; font-size: var(--font-size-sm); flex: 1; }
+.recipe__stars { color: var(--color-primary); font-size: 11px; letter-spacing: 1px; }
+.recipe__mats { font-size: 11px; color: var(--color-text-muted); font-family: var(--font-kai); margin-bottom: 6px; }
+.recipe__foot { display: flex; align-items: center; justify-content: space-between; }
+
+/* ---------- 六维雷达 ---------- */
+.radar-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.radar { width: 220px; height: 220px; max-width: 100%; filter: drop-shadow(0 4px 10px hsl(28 30% 20% / 0.12)); }
+.radar__grid { stroke: var(--color-border-strong); fill: none; }
+.radar__axis { stroke: var(--color-border); }
+.radar__area { fill: var(--amber-glow); stroke: var(--color-primary); stroke-width: 1.5; filter: drop-shadow(0 0 6px var(--amber-glow)); }
+.radar__vertex { fill: var(--color-primary); stroke: var(--color-surface-raised); stroke-width: 1.5; cursor: pointer; }
+.radar__label { font-family: var(--font-kai); font-size: 12px; fill: var(--color-text-soft); text-anchor: middle; dominant-baseline: middle; }
+.radar__val { font-family: var(--font-mono); font-size: 10px; fill: var(--color-primary); text-anchor: middle; font-weight: 600; }
+.dim-bubble { width: 100%; padding: 10px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: var(--shadow-paper); animation: inkBleed var(--t-slow) var(--ease-ink) both; }
+.dim-bubble__title { font-family: var(--font-kai); color: var(--color-primary); font-size: var(--font-size-sm); margin-bottom: 6px; }
+.dim-source { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; border-bottom: 1px dashed var(--color-border); }
+.dim-source:last-child { border-bottom: none; }
+.dim-source span:last-child { font-family: var(--font-mono); color: var(--color-primary); }
+
+/* ---------- 引力公式 ---------- */
+.gravity-formula { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 10px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); }
+.g-term { display: flex; flex-direction: column; align-items: center; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--color-bg-deep); border: 1px solid var(--color-border); cursor: pointer; transition: all var(--t-base) var(--ease-soft); min-width: 56px; }
+.g-term:hover { border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); }
+.g-term__label { font-size: 10px; color: var(--color-text-muted); font-family: var(--font-kai); }
+.g-term__val { font-family: var(--font-mono); font-weight: 700; color: var(--color-primary); font-size: var(--font-size-md); }
+.g-plus, .g-eq { color: var(--color-text-faint); font-family: var(--font-mono); }
+.g-total { display: flex; flex-direction: column; align-items: center; padding: 6px 14px; border-radius: var(--radius-sm); background: linear-gradient(180deg, var(--amber-glow), transparent); border: 1px solid var(--color-primary); }
+.g-total__val { font-family: var(--font-mono); font-weight: 700; color: var(--color-primary); font-size: var(--font-size-xl); text-shadow: 0 0 10px var(--amber-glow); }
+
+/* ---------- 建筑 ---------- */
+.building { padding: 10px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); transition: all var(--t-base) var(--ease-soft); }
+.building + .building { margin-top: 8px; }
+.building:hover { border-color: var(--color-primary); box-shadow: var(--shadow-paper); }
+.building.is-ready { border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--amber-glow), var(--shadow-paper); cursor: pointer; }
+.building.is-locked { opacity: 0.65; }
+.building__head { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; flex-wrap: wrap; }
+.building__icon { width: 30px; height: 30px; flex: none; display: grid; place-items: center; color: var(--color-text-soft); border-radius: var(--radius-sm); background: var(--color-bg-deep); }
+.building__name { font-family: var(--font-serif); font-weight: 600; flex: 1; font-size: var(--font-size-sm); }
+.building__lv { font-family: var(--font-mono); font-size: 10px; color: var(--color-primary); }
+.building__status { font-size: 10px; font-family: var(--font-kai); padding: 1px 7px; border-radius: var(--radius-sm); }
+.building__status.正常 { color: var(--color-success); background: hsl(151 34% 42% / 0.12); }
+.building__status.损坏 { color: var(--color-danger); background: hsl(0 42% 38% / 0.12); }
+.building__status.维修中 { color: var(--color-warning); background: hsl(36 65% 48% / 0.12); }
+.dim-bars { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin: 6px 0; }
+.dim-bar { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.dim-bar__track { width: 100%; height: 5px; border-radius: var(--radius-full); background: var(--color-bg-deep); overflow: hidden; }
+.dim-bar__fill { height: 100%; border-radius: var(--radius-full); transition: width var(--t-slow) var(--ease-ink); }
+.dim-bar__label { font-size: 9px; color: var(--color-text-faint); font-family: var(--font-kai); }
+.cost-list { display: flex; flex-wrap: wrap; gap: 4px; margin: 5px 0; }
+.cost-item { font-size: 10px; padding: 1px 7px; border-radius: var(--radius-sm); background: var(--color-bg-deep); font-family: var(--font-mono); color: var(--color-text-soft); }
+.cond-list { font-size: 11px; color: var(--color-text-muted); margin: 4px 0; }
+.cond-list li { display: flex; align-items: center; gap: 4px; }
+.cond-list .ok { color: var(--color-success); }
+.cond-list .no { color: var(--color-danger); }
+
+/* ---------- 地图 ---------- */
+.map-grid { display: grid; gap: 3px; padding: 8px; border-radius: var(--radius-sm); background: var(--color-bg-deep); border: 1px solid var(--color-border); box-shadow: var(--shadow-inset); }
+.map-cell { position: relative; aspect-ratio: 1; border-radius: 3px; display: grid; place-items: center; font-size: 9px; transition: all var(--t-base) var(--ease-soft); }
+.map-cell .ic { --ic: 70%; width: 70%; height: 70%; }
+.map-cell.explored { background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-soft); cursor: pointer; }
+.map-cell.explored:hover { border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); transform: scale(1.12); z-index: 2; }
+.map-cell.center { background: radial-gradient(circle, var(--amber-glow), var(--color-surface)); border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); }
+.map-cell.fog { background: hsl(229 20% 50% / 0.12); border: 1px dashed var(--color-border); }
+.map-cell.fog.adjacent { border-style: solid; border-color: var(--color-accent); cursor: pointer; animation: fogPulse 2.6s ease-in-out infinite; }
+.map-cell.fog.adjacent:hover { box-shadow: var(--shadow-glow-mint); transform: scale(1.12); z-index: 2; }
+@keyframes fogPulse { 0%,100% { box-shadow: 0 0 0 0 hsl(180 38% 64% / 0); } 50% { box-shadow: 0 0 8px 1px hsl(180 38% 64% / 0.3); } }
+.fog-particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; border-radius: 3px; }
+.fog-particles span { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: hsl(0 0% 100% / 0.5); animation: fogParticle 3.5s linear infinite; }
+.tile-detail { margin-top: 10px; animation: inkBleed var(--t-slow) var(--ease-ink) both; }
+
+/* ---------- 种植/畜牧 ---------- */
+.crop-plot { padding: 10px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); }
+.crop-plot + .crop-plot { margin-top: 6px; }
+.crop-plot__head { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.crop-plot__name { font-family: var(--font-kai); font-size: var(--font-size-sm); flex: 1; }
+.grow-bar { height: 7px; border-radius: var(--radius-full); background: var(--color-bg-deep); overflow: hidden; box-shadow: var(--shadow-inset); }
+.grow-bar__fill { height: 100%; background: linear-gradient(90deg, var(--color-success), hsl(85 38% 48%)); border-radius: var(--radius-full); transition: width var(--t-slower) var(--ease-ink); }
+.status-icon { --ic: 15px; }
+.status-icon.watered, .status-icon.已浇水 { color: var(--color-accent); }
+.status-icon.fertilized, .status-icon.已施肥 { color: var(--color-success); }
+.status-icon.dry, .status-icon.未浇水 { color: var(--color-text-faint); }
+.livestock-card { padding: 10px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); }
+.livestock-card + .livestock-card { margin-top: 6px; }
+
+/* ---------- 员工 ---------- */
+.staff-card { position: relative; padding: 10px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); transition: all var(--t-base) var(--ease-soft); }
+.staff-card + .staff-card { margin-top: 8px; }
+.staff-card:hover { border-color: var(--color-primary); box-shadow: var(--shadow-paper); transform: translateY(-2px); }
+.staff-card.low-morale { filter: saturate(0.6); }
+.staff-card__head { display: flex; align-items: center; gap: 10px; }
+.staff-avatar { width: 40px; height: 40px; flex: none; border-radius: var(--radius-sm); display: grid; place-items: center; font-family: var(--font-serif); font-size: var(--font-size-md); font-weight: 700; color: hsl(40 60% 96%); background: linear-gradient(135deg, var(--ink-green), hsl(151 26% 32%)); border: 1px solid var(--color-border-strong); }
+.staff-card__name { font-family: var(--font-serif); font-weight: 600; font-size: var(--font-size-sm); }
+.staff-card__role { font-size: 11px; color: var(--color-text-muted); font-family: var(--font-kai); }
+.mini-radar { width: 50px; height: 50px; flex: none; }
+.class-badge { font-family: var(--font-mono); font-size: 10px; padding: 1px 6px; border-radius: var(--radius-sm); background: var(--amber-glow); color: hsl(28 39% 14%); border: 1px solid var(--color-primary); }
+.staff-card__stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 8px; }
+.stat-line { display: flex; flex-direction: column; gap: 2px; }
+.stat-line__label { color: var(--color-text-muted); font-family: var(--font-kai); font-size: 10px; }
+.stat-line__bar { height: 5px; border-radius: var(--radius-full); background: var(--color-bg-deep); overflow: hidden; }
+.stat-line__fill { height: 100%; border-radius: var(--radius-full); transition: width var(--t-slow); }
+.gem-tag { font-size: 10px; padding: 1px 7px; border-radius: var(--radius-sm); font-family: var(--font-kai); }
+.gem-tag--light { background: var(--amber-glow); color: hsl(28 39% 14%); border: 1px solid var(--color-primary); }
+.gem-tag--dark { background: hsl(280 45% 50% / 0.18); color: hsl(280 45% 65%); border: 1px solid hsl(280 45% 50%); }
+
+/* ---------- 访客 ---------- */
+.visitor-card { position: relative; padding: 10px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); transition: all var(--t-base) var(--ease-soft); overflow: hidden; }
+.visitor-card + .visitor-card { margin-top: 8px; }
+.visitor-card:hover { border-color: var(--color-primary); transform: translateY(-2px); box-shadow: var(--shadow-paper); }
+.visitor-card.special { border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--amber-glow), var(--shadow-paper); }
+.visitor-card__head { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+.visitor-card__name { font-family: var(--font-serif); font-weight: 600; font-size: var(--font-size-sm); flex: 1; }
+.satisfaction { position: relative; width: 40px; height: 40px; flex: none; }
+.satisfaction svg { transform: rotate(-90deg); }
+.satisfaction__track { fill: none; stroke: var(--color-bg-deep); stroke-width: 4; }
+.satisfaction__fill { fill: none; stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset var(--t-slower) var(--ease-ink); }
+.satisfaction__val { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-mono); font-size: 10px; font-weight: 700; }
+.visitor-card__tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.resist-tag { border-style: dashed; }
+
+/* ---------- 任务 ---------- */
+.quest-card { padding: 10px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary); }
+.quest-card + .quest-card { margin-top: 8px; }
+.quest-card__head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
+.quest-card__name { font-family: var(--font-serif); font-weight: 600; font-size: var(--font-size-sm); flex: 1; }
+.quest-card__desc { font-size: 11px; color: var(--color-text-muted); margin-bottom: 6px; line-height: 1.6; }
+.quest-progress { height: 5px; border-radius: var(--radius-full); background: var(--color-bg-deep); overflow: hidden; }
+.quest-progress__fill { height: 100%; background: linear-gradient(90deg, var(--color-primary), var(--amber-bright)); border-radius: var(--radius-full); transition: width var(--t-slow); }
+
+/* ---------- 搜索 ---------- */
+.search { display: flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: var(--radius-full); background: var(--color-bg-deep); border: 1px solid var(--color-border); box-shadow: var(--shadow-inset); transition: border-color var(--t-base), box-shadow var(--t-base); margin-bottom: 10px; }
+.search:focus-within { border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); }
+.search__icon { --ic: 15px; color: var(--color-text-faint); }
+.search input { flex: 1; min-width: 0; border: none; background: none; outline: none; font-family: var(--font-sans); font-size: var(--font-size-sm); color: var(--color-text); }
+.search input::placeholder { color: var(--color-text-faint); }
+
+/* ---------- 提示条 ---------- */
+.notice { display: flex; align-items: flex-start; gap: 7px; padding: 9px 11px; border-radius: var(--radius-sm); margin-bottom: 8px; font-size: var(--font-size-xs); line-height: 1.6; }
+.notice__icon { --ic: 16px; flex: none; margin-top: 1px; }
+.notice--info { background: hsl(180 38% 64% / 0.08); border: 1px solid hsl(180 38% 64% / 0.4); border-left: 3px solid var(--color-accent); color: var(--color-magic); }
+.notice--warn { background: hsl(0 42% 38% / 0.08); border: 1px solid hsl(0 42% 38% / 0.4); border-left: 3px solid var(--color-danger); color: var(--color-danger); }
+
+/* ---------- 吐司 ---------- */
+.toast { pointer-events: auto; display: flex; align-items: flex-start; gap: 8px; padding: 9px 12px; background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border-strong); border-left: 3px solid var(--color-primary); border-radius: var(--radius-md); box-shadow: var(--shadow-raised); animation: toastIn var(--t-slow) var(--ease-page) both; }
+.toast.is-out { animation: toastOut var(--t-base) var(--ease-soft) forwards; }
+.toast__icon { --ic: 18px; flex: none; margin-top: 1px; }
+.toast--success { border-left-color: var(--color-success); } .toast--success .toast__icon { color: var(--color-success); }
+.toast--warn { border-left-color: var(--color-warning); } .toast--warn .toast__icon { color: var(--color-warning); }
+.toast--error { border-left-color: var(--color-danger); } .toast--error .toast__icon { color: var(--color-danger); }
+.toast--magic { border-left-color: var(--color-magic); } .toast--magic .toast__icon { color: var(--color-magic); }
+.toast__body { flex: 1; min-width: 0; }
+.toast__title { font-family: var(--font-kai); font-size: var(--font-size-sm); font-weight: 600; margin-bottom: 2px; }
+.toast__msg { font-size: 11px; color: var(--color-text-muted); line-height: 1.5; }
+
+/* ---------- 粒子 ---------- */
+.burst-layer { position: fixed; inset: 0; pointer-events: none; z-index: 300; }
+.star-burst { position: absolute; width: 14px; height: 14px; color: var(--color-primary); animation: starBurst 0.9s var(--ease-bounce) forwards; }
+.star-burst svg { width: 100%; height: 100%; display: block; }
+
+/* ---------- 藤蔓分割线 ---------- */
+.vine-divider { display: block; width: 100%; height: 16px; margin: 8px 0; color: var(--color-border-strong); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 16'%3E%3Cpath d='M0 8 Q20 2 40 8 T80 8 T120 8 T160 8 T200 8 T240 8' fill='none' stroke='currentColor' stroke-width='1' opacity='0.5'/%3E%3Ccircle cx='40' cy='8' r='1.4' fill='currentColor' opacity='0.6'/%3E%3Ccircle cx='120' cy='8' r='1.4' fill='currentColor' opacity='0.6'/%3E%3Ccircle cx='200' cy='8' r='1.4' fill='currentColor' opacity='0.6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; background-size: contain; }
+
+/* ---------- 空状态 ---------- */
+.empty-state { text-align: center; padding: 24px 12px; color: var(--color-text-muted); }
+.empty-state__icon { --ic: 40px; margin: 0 auto 8px; color: var(--color-text-faint); opacity: 0.5; }
+.empty-state__title { font-family: var(--font-kai); font-size: var(--font-size-sm); margin-bottom: 3px; color: var(--color-text-soft); }
+.empty-state__desc { font-size: 11px; }
+
+/* ---------- 天气图标动画 ---------- */
+.wx-sun-rays { transform-origin: center; animation: sunRays 24s linear infinite; }
+.wx-sun-core { transform-origin: center; animation: sunPulse 3s ease-in-out infinite; }
+.wx-rain-drop { animation: rainFall 1.4s linear infinite; transform-origin: center; }
+.wx-rain-drop:nth-child(2) { animation-delay: 0.45s; }
+.wx-rain-drop:nth-child(3) { animation-delay: 0.9s; }
+.wx-snow { animation: snowDrift 3s linear infinite; transform-origin: center; }
+.wx-snow:nth-child(2) { animation-delay: 1s; }
+.wx-snow:nth-child(3) { animation-delay: 2s; }
+.wx-cloud { animation: cloudDrift 6s ease-in-out infinite; transform-origin: center; }
+.wx-moon { animation: moonGlow 4s ease-in-out infinite; transform-origin: center; }
+
+/* ---------- 图标墨水填充（悬停） ---------- */
+.icon-fill { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: fill var(--t-base) var(--ease-soft); }
+.tab:hover .icon-fill, .dock__btn:hover .icon-fill, .card:hover .icon-fill, .item-row:hover .icon-fill, .recipe:hover .icon-fill, .building:hover .icon-fill, .btn:hover .icon-fill { fill: currentColor; fill-opacity: 0.18; }
+
+/* ---------- 按钮 ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius-md); font-family: var(--font-kai); font-size: var(--font-size-sm); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-paper); transition: all var(--t-base) var(--ease-soft); cursor: pointer; }
+.btn:hover { border-color: var(--color-primary); color: var(--color-primary); box-shadow: var(--shadow-glow-amber); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn--primary { background: linear-gradient(180deg, var(--amber-bright), var(--color-primary)); color: hsl(28 39% 14%); border-color: var(--color-primary); font-weight: 600; }
+.btn--primary:hover { color: hsl(28 39% 12%); box-shadow: var(--shadow-glow-amber); }
+.btn--ghost { background: transparent; box-shadow: none; border-color: transparent; color: var(--color-text-muted); }
+.btn--ghost:hover { background: var(--color-surface); }
+.btn--sm { padding: 4px 10px; font-size: var(--font-size-xs); }
+.btn--block { width: 100%; }
+.btn__icon { --ic: 16px; }
+
+/* ---------- 设置浮卡 ---------- */
+.settings-pop { position: fixed; top: 12px; right: 12px; z-index: 250; width: min(320px, 86vw); padding: 14px; border-radius: var(--radius-lg); background: linear-gradient(165deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border-strong); box-shadow: var(--shadow-float); animation: toastIn var(--t-slow) var(--ease-page) both; }
+.settings-pop__head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border); }
+.settings-pop__title { font-family: var(--font-serif); font-weight: 700; font-size: var(--font-size-md); flex: 1; }
+.settings-pop__close { width: 30px; height: 30px; display: grid; place-items: center; border-radius: var(--radius-sm); color: var(--color-text-muted); transition: all var(--t-base); }
+.settings-pop__close:hover { color: var(--color-danger); background: var(--color-bg-deep); }
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.set-row__title { font-family: var(--font-kai); font-size: var(--font-size-sm); font-weight: 600; }
+
+
+
+/* === animations.css === */
+/* ============================================================
+   动画关键帧 · 魔法墨水隐喻（双页书版）
+   ============================================================ */
+
+/* 墨水渗透 · 面板/卡片入场（翻页感：右向渗入 + 轻模糊） */
+@keyframes inkBleed {
+  0%   { opacity: 0; filter: blur(4px); transform: translateX(10px) scale(0.99); }
+  55%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; filter: blur(0); transform: translateX(0) scale(1); }
+}
+
+/* 书本入场 */
+@keyframes bookIntro {
+  0%   { opacity: 0; transform: translateY(16px) scale(0.98); filter: blur(2px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+/* 选项入场 */
+@keyframes choiceIn {
+  0%   { opacity: 0; transform: translateX(-8px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+/* 数值变化高亮 */
+@keyframes valueFlash {
+  0%   { color: var(--color-primary); text-shadow: 0 0 14px var(--amber-glow); }
+  100% { }
+}
+
+/* 呼吸（低精力） */
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(0 42% 38% / 0); }
+  50%      { box-shadow: 0 0 10px 1px hsl(0 42% 38% / 0.45); }
+}
+/* 压力裂纹颤动 */
+@keyframes tremor {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(0.4px, -0.3px); }
+  50% { transform: translate(-0.3px, 0.4px); }
+  75% { transform: translate(0.3px, 0.3px); }
+}
+
+/* 天气 */
+@keyframes sunRays { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes sunPulse { 0%, 100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
+@keyframes rainFall { 0% { transform: translateY(-6px); opacity: 0; } 20% { opacity: 0.8; } 100% { transform: translateY(18px); opacity: 0; } }
+@keyframes snowDrift { 0% { transform: translate(0, -4px) rotate(0deg); opacity: 0; } 20% { opacity: 0.9; } 100% { transform: translate(3px, 16px) rotate(180deg); opacity: 0; } }
+@keyframes cloudDrift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
+@keyframes moonGlow { 0%, 100% { filter: drop-shadow(0 0 2px hsl(180 38% 64% / 0.4)); } 50% { filter: drop-shadow(0 0 6px hsl(180 38% 64% / 0.7)); } }
+
+/* 地图迷雾粒子 */
+@keyframes fogParticle { 0% { transform: translate(0, 0); opacity: 0; } 30% { opacity: 0.6; } 100% { transform: translate(8px, -14px); opacity: 0; } }
+
+/* 满足感粒子 */
+@keyframes starBurst {
+  0%   { opacity: 0; transform: translate(0, 0) scale(0) rotate(0deg); }
+  40%  { opacity: 1; transform: translate(calc(var(--dx, 0px) * 0.5), calc(var(--dy, 0px) * 0.5)) scale(1) rotate(90deg); }
+  100% { opacity: 0; transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(0.4) rotate(180deg); }
+}
+
+/* 吐司 */
+@keyframes toastIn { 0% { opacity: 0; transform: translateX(40px) scale(0.95); } 100% { opacity: 1; transform: translateX(0) scale(1); } }
+@keyframes toastOut { 0% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(40px); } }
+
+/* 雷达顶点脉冲 */
+@keyframes vertexPulse { 0%, 100% { r: 3.5; opacity: 0.9; } 50% { r: 5; opacity: 1; } }
+
+/* 金边流光（特殊访客） */
+@keyframes goldShimmer { 0% { background-position: -150% 0; } 100% { background-position: 250% 0; } }
+
+/* 受 reduced-motion 保护 */
+@media (prefers-reduced-motion: no-preference) {
+  .book { animation: bookIntro var(--t-slow) var(--ease-page) both; }
+  .choice { animation: choiceIn var(--t-slow) var(--ease-soft) both; }
+}
+
+</style>
 </head>
 <body>
-  <div class="app">
+  <!-- 环境氛围层（昼/夜渐变，不占位） -->
+  <div class="ambient" aria-hidden="true"></div>
 
-    <!-- ==================== 顶部信息条 ==================== -->
-    <header class="hud-top" role="banner">
-      <!-- 左：日期 + 天气 -->
-      <div class="hud-top__left">
-        <div class="weather-badge" id="weatherBadge" title="今日天气">
-          <span class="ic ic--lg" data-i="sun" id="weatherIcon"></span>
-        </div>
-        <div class="date-block">
-          <div class="date-block__text">
-            <strong id="dateText">第1年 · 春季第3天</strong>
-            <span id="weekdayText">周三 · 晴朗</span>
-          </div>
-        </div>
+  <!-- 双页书 -->
+  <main class="book" id="book">
+
+    <!-- 书脊 -->
+    <div class="book__spine" aria-hidden="true"></div>
+
+    <!-- ============ 左页：功能面板 ============ -->
+    <section class="page page--left" id="pageLeft">
+      <!-- 竖排标签栏 -->
+      <nav class="tabs" id="ledgerTabs" aria-label="功能切换">
+        <button class="tab is-active" data-tab="overview" data-tip="旅店总览"><span class="ic tab__icon" data-i="house"></span><span class="tab__label">总览</span></button>
+        <button class="tab" data-tab="inventory" data-tip="库存与食谱"><span class="ic tab__icon" data-i="bag"></span><span class="tab__label">库存</span></button>
+        <button class="tab" data-tab="building" data-tip="建筑与蓝图"><span class="ic tab__icon" data-i="hammer"></span><span class="tab__label">建筑</span></button>
+        <button class="tab" data-tab="map" data-tip="地图与探索"><span class="ic tab__icon" data-i="compass"></span><span class="tab__label">地图</span></button>
+        <button class="tab" data-tab="staff" data-tip="员工名册"><span class="ic tab__icon" data-i="person"></span><span class="tab__label">员工</span></button>
+        <button class="tab" data-tab="visitor" data-tip="宾客盈门"><span class="ic tab__icon" data-i="key"></span><span class="tab__label">访客</span></button>
+        <button class="tab" data-tab="quest" data-tip="任务日志"><span class="ic tab__icon" data-i="scroll"></span><span class="tab__label">任务</span></button>
+        <button class="tab" data-tab="farm" data-tip="农牧总览"><span class="ic tab__icon" data-i="wheat"></span><span class="tab__label">农牧</span></button>
+      </nav>
+
+      <!-- 面板区（由 render.js 填充） -->
+      <div class="panels" id="ledgerPanels">
+        <section class="panel is-active" data-panel="overview"></section>
+        <section class="panel" data-panel="inventory"></section>
+        <section class="panel" data-panel="building"></section>
+        <section class="panel" data-panel="map"></section>
+        <section class="panel" data-panel="staff"></section>
+        <section class="panel" data-panel="visitor"></section>
+        <section class="panel" data-panel="quest"></section>
+        <section class="panel" data-panel="farm"></section>
       </div>
 
-      <!-- 中：旅店名 -->
-      <div class="hud-top__center">
-        <div class="inn-name">
-          <span class="ic" data-i="house" style="--ic:20px"></span>
-          <span class="inn-name__title" id="innName">暮归旅店</span>
-          <span class="inn-name__level" id="innLevel">声望 · 萤火级</span>
-        </div>
+      <!-- 左页页脚：主题切换 -->
+      <div class="page__foot">
+        <button class="mini-btn" id="themeToggle" data-tip="切换昼夜" aria-label="切换昼夜"><span class="ic" data-i="moon"></span></button>
+        <button class="mini-btn" id="settingsBtn" data-tip="设置" aria-label="设置"><span class="ic" data-i="settings"></span></button>
       </div>
+    </section>
 
-      <!-- 右：资金 + 声望 -->
-      <div class="hud-top__right">
-        <div class="funds" title="现有资金">
-          <span class="ic funds__icon" data-i="coin"></span>
-          <div class="col">
-            <span class="funds__label">资金</span>
-            <span class="funds__value" id="fundsValue">3金42银</span>
+    <!-- ============ 右页：正文叙事 ============ -->
+    <section class="page page--right" id="pageRight">
+
+      <!-- 顶栏 HUD -->
+      <header class="hud" id="hud">
+        <div class="hud__left">
+          <span class="ic hud__wx" id="hudWeather" data-i="sun"></span>
+          <div class="hud__date">
+            <strong id="hudDate">第1年 · 春季第3天</strong>
+            <span id="hudWeekday">周三 · 晴</span>
           </div>
         </div>
-        <div class="prestige" title="声望进度">
-          <span class="prestige__label">声望</span>
-          <div class="prestige__track" id="prestigeTrack" role="progressbar" aria-label="声望进度">
-            <div class="prestige__fill" id="prestigeFill" style="--p: 42%"></div>
+        <div class="hud__center">
+          <span class="ic" data-i="house" style="--ic:18px"></span>
+          <span class="hud__inn" id="hudInn">暮归旅店</span>
+          <span class="hud__lv" id="hudLevel">声望 萤火</span>
+        </div>
+        <div class="hud__right">
+          <div class="hud__funds">
+            <span class="ic" data-i="coin" style="--ic:18px"></span>
+            <span class="num hud__funds-val" id="hudFunds">50000</span>
+          </div>
+          <div class="hud__prestige">
+            <span class="hud__prestige-label">声望</span>
+            <span class="hud__prestige-track"><span class="hud__prestige-fill" id="hudPrestigeFill" style="--p:42%"></span></span>
           </div>
         </div>
-      </div>
-    </header>
-
-    <!-- ==================== 左侧功能图标列 ==================== -->
-    <nav class="rail-left" aria-label="功能导航">
-      <button class="rail-btn" data-panel="overview" data-tip="旅店总览" aria-label="旅店总览">
-        <span class="ic rail-btn__icon" data-i="house"></span>
-      </button>
-      <button class="rail-btn" data-panel="inventory" data-tip="库存管理" aria-label="库存管理">
-        <span class="ic rail-btn__icon" data-i="bag"></span>
-      </button>
-      <button class="rail-btn" data-panel="building" data-tip="建筑管理" aria-label="建筑管理">
-        <span class="ic rail-btn__icon" data-i="hammer"></span>
-      </button>
-      <button class="rail-btn" data-panel="map" data-tip="地图与探索" aria-label="地图与探索">
-        <span class="ic rail-btn__icon" data-i="compass"></span>
-      </button>
-      <button class="rail-btn" data-panel="staff" data-tip="员工管理" aria-label="员工管理">
-        <span class="ic rail-btn__icon" data-i="person"></span>
-      </button>
-      <button class="rail-btn" data-panel="visitor" data-tip="访客管理" aria-label="访客管理">
-        <span class="ic rail-btn__icon" data-i="key"></span>
-      </button>
-      <button class="rail-btn" data-panel="quest" data-tip="任务日志" aria-label="任务日志">
-        <span class="ic rail-btn__icon" data-i="scroll"></span>
-      </button>
-      <button class="rail-btn" data-panel="farm" data-tip="农牧总览" aria-label="农牧总览">
-        <span class="ic rail-btn__icon" data-i="wheat"></span>
-      </button>
-      <div class="rail-spacer"></div>
-      <button class="rail-btn" id="themeToggle" data-tip="切换昼夜" aria-label="切换昼夜主题">
-        <span class="ic rail-btn__icon" data-i="moon"></span>
-      </button>
-      <button class="rail-btn" id="settingsBtn" data-tip="设置" aria-label="设置">
-        <span class="ic rail-btn__icon" data-i="settings"></span>
-      </button>
-    </nav>
-
-    <!-- ==================== 中央叙事区 ==================== -->
-    <main class="stage" id="stage">
-      <div class="stage__scene" aria-hidden="true"></div>
-
-      <section class="narrative" id="narrative" aria-label="叙事记录" aria-live="polite">
-        <div class="narrative__inner" id="narrativeInner">
-          <div class="narrative-day">第1年 · 春季第3天</div>
-
-          <article class="msg">
-            <div class="msg__head">
-              <span class="msg__tag msg__tag--system"><span class="ic" data-i="sparkle" style="--ic:13px"></span>晨记</span>
-              <span class="msg__time">清晨</span>
-            </div>
-            <div class="msg__body">
-              晨雾尚未散尽，旅店的木招牌在风里轻轻晃了一下。你推开吱呀作响的门，灰尘在斜射的日光里浮动——这间祖传的旅店，如今只剩你一个人了。所幸灶台还稳，地窖里还剩半袋<span class="hl">晨露麦粉</span>。先把今天的生意张罗起来吧。
-            </div>
-          </article>
-
-          <article class="msg">
-            <div class="msg__head">
-              <span class="msg__tag msg__tag--guest"><span class="ic" data-i="door" style="--ic:13px"></span>访客</span>
-              <span class="msg__time">上午</span>
-            </div>
-            <div class="msg__body">
-              一位披着<span class="magic">褪色法袍</span>的旅人推门而入，斗篷上还沾着露水。他环顾四周，目光在空荡的大堂停留了片刻，轻声道：<span class="quote">「听说这里的麦酒还算暖人……若不嫌弃，给我来一份热汤便好。」</span>他看起来疲惫，却并不拮据。
-            </div>
-          </article>
-
-          <article class="msg">
-            <div class="msg__head">
-              <span class="msg__tag msg__tag--event"><span class="ic" data-i="sparkle" style="--ic:13px"></span>事件</span>
-              <span class="msg__time">近午</span>
-            </div>
-            <div class="msg__body">
-              后院那口老井里泛起淡淡的<span class="magic">薄荷蓝微光</span>——是井底的<span class="magic">净水符文</span>被春水唤醒了。这或许意味着，今日烹煮的汤水会格外清甜。是否要趁机研发一道新菜？
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <!-- 底部行动轴 -->
-      <div class="action-dock">
-        <div class="action-dock__inner">
-          <span class="action-dock__label">今日可为 ·</span>
-          <button class="chip" data-action="cook"><span class="ic chip__icon" data-i="pot"></span>烹饪</button>
-          <button class="chip" data-action="build"><span class="ic chip__icon" data-i="hammer"></span>建造</button>
-          <button class="chip" data-action="plant"><span class="ic chip__icon" data-i="wheat"></span>种植</button>
-          <button class="chip" data-action="explore"><span class="ic chip__icon" data-i="compass"></span>探索</button>
-          <button class="chip" data-action="social"><span class="ic chip__icon" data-i="person"></span>社交</button>
-          <button class="chip" data-action="rest"><span class="ic chip__icon" data-i="bed"></span>小憩</button>
-        </div>
-      </div>
-    </main>
-
-    <!-- ==================== 右侧快捷操作栏 ==================== -->
-    <aside class="rail-right" aria-label="快捷操作">
-      <span class="rail-right__label">快 捷</span>
-      <button class="quick-btn" id="quickCook" data-tip="快捷烹饪" aria-label="快捷烹饪">
-        <span class="ic quick-btn__icon" data-i="pot"></span>
-      </button>
-      <button class="quick-btn" id="quickWater" data-tip="一键浇灌" aria-label="一键浇灌">
-        <span class="ic quick-btn__icon" data-i="water"></span>
-      </button>
-      <div class="rail-spacer"></div>
-      <button class="end-day-btn" id="endDayBtn" data-tip="结束今天" aria-label="结束今天">
-        <span class="ic end-day-btn__icon" data-i="moon"></span>
-      </button>
-    </aside>
-
-    <!-- ==================== 底部掌柜状态条 ==================== -->
-    <footer class="hud-bottom" role="contentinfo">
-      <!-- 精力 -->
-      <div class="statbar">
-        <span class="statbar__icon"><span class="ic ic--lg" data-i="energy"></span></span>
-        <div class="statbar__body">
-          <div class="statbar__head">
-            <span class="statbar__name">掌柜精力</span>
-            <span class="statbar__val" id="energyVal">78 / 100</span>
-          </div>
-          <div class="bar-track" id="energyTrack">
-            <div class="bar-fill bar-fill--energy" id="energyFill" style="--p: 78%"></div>
-          </div>
-        </div>
-        <button class="mini-rest-btn" id="restBtn" title="快捷休息" aria-label="快捷休息">
-          <span class="ic" data-i="bed" style="--ic:18px"></span>
-        </button>
-      </div>
-
-      <!-- 时段指示器 -->
-      <div class="time-strip" id="timeStrip" role="tablist" aria-label="时段">
-        <button class="time-node" data-time="dawn" data-label="清晨" role="tab" aria-label="清晨">
-          <span class="ic" data-i="sunrise"></span>
-        </button>
-        <button class="time-node is-active" data-time="forenoon" data-label="上午" role="tab" aria-label="上午">
-          <span class="ic" data-i="highnoon"></span>
-        </button>
-        <button class="time-node" data-time="afternoon" data-label="下午" role="tab" aria-label="下午">
-          <span class="ic" data-i="afternoon"></span>
-        </button>
-        <button class="time-node" data-time="dusk" data-label="傍晚" role="tab" aria-label="傍晚">
-          <span class="ic" data-i="sunset"></span>
-        </button>
-        <button class="time-node" data-time="night" data-label="夜晚" role="tab" aria-label="夜晚">
-          <span class="ic" data-i="moon"></span>
-        </button>
-      </div>
-
-      <!-- 压力 -->
-      <div class="statbar" style="justify-content:flex-end">
-        <div class="statbar__body">
-          <div class="statbar__head">
-            <span class="statbar__name">掌柜压力</span>
-            <span class="statbar__val" id="stressVal">34 / 100</span>
-          </div>
-          <div class="bar-track" id="stressTrack">
-            <div class="bar-fill bar-fill--stress" id="stressFill" style="--p: 34%"></div>
-            <div class="cracks"></div>
-          </div>
-        </div>
-        <span class="statbar__icon"><span class="ic ic--lg" data-i="stress"></span></span>
-      </div>
-    </footer>
-
-    <!-- ==================== 侧滑抽屉（8 面板） ==================== -->
-    <div class="drawer-backdrop" id="drawerBackdrop"></div>
-    <aside class="drawer" id="drawer" aria-hidden="true" role="dialog" aria-label="功能面板">
-      <header class="drawer__head">
-        <span class="ic ic--lg drawer__icon" id="drawerIcon" data-i="house"></span>
-        <h2 class="drawer__title" id="drawerTitle">旅店总览</h2>
-        <button class="drawer__close" id="drawerClose" aria-label="关闭面板">
-          <span class="ic" data-i="close" style="--ic:20px"></span>
-        </button>
       </header>
-      <div class="drawer__body" id="drawerBody">
 
-        <!-- ========== 面板1：旅店总览 ========== -->
-        <section class="panel is-active" data-panel="overview">
-          <div class="card is-hover">
-            <div class="card__title"><span class="ic card__icon" data-i="house"></span>暮归旅店</div>
-            <div class="row" style="gap:var(--space-4);flex-wrap:wrap">
-              <div class="col"><span class="faint" style="font-size:var(--font-size-2xs)">声望层级</span><span class="serif">萤火级</span></div>
-              <div class="col"><span class="faint" style="font-size:var(--font-size-2xs)">旅店等级</span><span class="serif">Lv.2</span></div>
-              <div class="col"><span class="faint" style="font-size:var(--font-size-2xs)">主营方向</span><span class="serif">乡野小酌</span></div>
-            </div>
-          </div>
-
-          <h3 class="panel-h">六维引力</h3>
-          <div class="radar-wrap">
-            <svg class="radar" id="radarOverview" viewBox="0 0 240 240" aria-label="六维引力雷达图"></svg>
-            <div class="dim-bubble" id="dimBubble">
-              <div class="dim-bubble__title" id="dimBubbleTitle">悬停维度查看来源</div>
-              <div id="dimBubbleBody"></div>
-            </div>
-          </div>
-
-          <h3 class="panel-h">总引力公式</h3>
-          <div class="gravity-formula" id="gravityFormula">
-            <div class="g-term" data-g="fame"><span class="g-term__label">声望</span><span class="g-term__val">12</span></div>
-            <span class="g-plus">+</span>
-            <div class="g-term" data-g="facility"><span class="g-term__label">设施</span><span class="g-term__val">18</span></div>
-            <span class="g-plus">+</span>
-            <div class="g-term" data-g="service"><span class="g-term__label">服务</span><span class="g-term__val">9</span></div>
-            <span class="g-plus">+</span>
-            <div class="g-term" data-g="env"><span class="g-term__label">环境</span><span class="g-term__val">7</span></div>
-            <span class="g-eq">=</span>
-            <div class="g-total"><span class="g-term__label">总引力</span><span class="g-total__val">46</span></div>
-          </div>
-
-          <h3 class="panel-h">当日预报</h3>
-          <div class="card">
-            <div class="row" style="margin-bottom:var(--space-3)">
-              <span class="ic ic--xl" data-i="sun" style="color:var(--color-primary)"></span>
-              <div class="col">
-                <span class="serif" style="font-weight:600">晴朗</span>
-                <span class="faint" style="font-size:var(--font-size-2xs)">日光充足 · 作物生长 +15%</span>
-              </div>
-            </div>
-            <div class="divider"></div>
-            <div class="row--between row" style="margin-bottom:var(--space-2)"><span class="muted" style="font-size:var(--font-size-xs)">今日引力值</span><span class="num" style="color:var(--color-primary);font-weight:600">46</span></div>
-            <div class="row--between row" style="margin-bottom:var(--space-3)"><span class="muted" style="font-size:var(--font-size-xs)">预估访客池</span><span class="faint" style="font-size:var(--font-size-xs)">4 ~ 6 人</span></div>
-            <div class="list-h" style="margin:0 0 var(--space-2)"><span>预估访客类型</span></div>
-            <div class="row" style="flex-wrap:wrap;gap:6px">
-              <span class="pill pill--amber">流浪旅人 ×2</span>
-              <span class="pill pill--mint">游方术士 ×1</span>
-              <span class="pill">行商 ×1</span>
-              <span class="pill pill--purple">？未知 ×1</span>
-            </div>
-          </div>
-
-          <h3 class="panel-h">注意事项</h3>
-          <ul class="col" style="gap:var(--space-2)">
-            <li class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>后院老井的<span class="magic">净水符文</span>已激活，今日汤水质效提升。</div></li>
-            <li class="notice notice--warn"><span class="ic notice__icon" data-i="warning"></span><div>厨房柴火仅余 3 捆，傍晚前需补充，否则夜间无法供餐。</div></li>
-            <li class="notice notice--info"><span class="ic notice__icon" data-i="sparkle"></span><div>春日第三天，<span class="hl">山莓</span>进入成熟期，可前往林缘采集。</div></li>
-          </ul>
-        </section>
-
-        <!-- ========== 面板2：库存管理 ========== -->
-        <section class="panel" data-panel="inventory">
-          <div class="search">
-            <span class="ic search__icon" data-i="search"></span>
-            <input type="text" id="invSearch" placeholder="搜寻物什……" aria-label="搜索库存" />
-          </div>
-
-          <div class="tabs" id="invTabs" style="margin-top:var(--space-3)">
-            <button class="tab is-active" data-tab="all">全部</button>
-            <button class="tab" data-tab="food">食材</button>
-            <button class="tab" data-tab="nature">自然</button>
-            <button class="tab" data-tab="special">特产</button>
-            <button class="tab" data-tab="magic">魔法</button>
-            <button class="tab" data-tab="product">成品</button>
-          </div>
-
-          <div class="tab-pane is-active" data-pane="all" id="invList">
-            <div class="list-h"><span>食材原料</span><span class="list-h__count">6 种</span></div>
-            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="grain"></span></span><div class="item-row__main"><div class="item-row__name">晨露麦粉</div><div class="item-row__meta">主食 · 春日新磨</div></div><span class="q-tag q-tag--fine">优秀</span><span class="item-row__qty">×12</span></div>
-            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="egg"></span></span><div class="item-row__main"><div class="item-row__name">林间鸡蛋</div><div class="item-row__meta">副食 · 散养</div></div><span class="q-tag q-tag--common">普通</span><span class="item-row__qty">×8</span></div>
-            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="mushroom"></span></span><div class="item-row__main"><div class="item-row__name">苔松茸</div><div class="item-row__meta">山珍 · 林缘采集</div></div><span class="q-tag q-tag--superb">卓越</span><span class="item-row__qty">×3</span></div>
-            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="herb"></span></span><div class="item-row__main"><div class="item-row__name">清露香草</div><div class="item-row__meta">调味 · 井水浸润</div></div><span class="q-tag q-tag--fine">优秀</span><span class="item-row__qty">×5</span></div>
-            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="fish"></span></span><div class="item-row__main"><div class="item-row__name">银鳞溪鱼</div><div class="item-row__meta">荤食 · 清晨捕得</div></div><span class="q-tag q-tag--common">普通</span><span class="item-row__qty">×4</span></div>
-            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="honey"></span></span><div class="item-row__main"><div class="item-row__name">野山蜜</div><div class="item-row__meta">甜味 · 春巢取蜜</div></div><span class="q-tag q-tag--superb">卓越</span><span class="item-row__qty">×2</span></div>
-
-            <div class="list-h"><span>自然材料</span><span class="list-h__count">3 种</span></div>
-            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="wood"></span></span><div class="item-row__main"><div class="item-row__name">干柴火</div><div class="item-row__meta">燃料 · 剩余 3 捆</div></div><span class="q-tag q-tag--common">普通</span><span class="item-row__qty">×3</span></div>
-            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="stone"></span></span><div class="item-row__main"><div class="item-row__name">青石板</div><div class="item-row__meta">建材 · 河床拾得</div></div><span class="q-tag q-tag--common">普通</span><span class="item-row__qty">×14</span></div>
-            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="flower"></span></span><div class="item-row__main"><div class="item-row__name">铃兰</div><div class="item-row__meta">装饰 · 晨采</div></div><span class="q-tag q-tag--fine">优秀</span><span class="item-row__qty">×6</span></div>
-
-            <div class="list-h"><span>魔法材料</span><span class="list-h__count">2 种</span></div>
-            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="gem"></span></span><div class="item-row__main"><div class="item-row__name">净水符石</div><div class="item-row__meta">井底析出 · 薄荷蓝</div></div><span class="q-tag q-tag--legend">传说</span><span class="item-row__qty">×1</span></div>
-            <div class="item-row"><span class="item-row__icon"><span class="ic" data-i="sparkle"></span></span><div class="item-row__main"><div class="item-row__name">晨星露</div><div class="item-row__meta">稀料 · 草叶凝结</div></div><span class="q-tag q-tag--fine">优秀</span><span class="item-row__qty">×3</span></div>
-          </div>
-
-          <div class="vine-divider" aria-hidden="true"></div>
-          <h3 class="panel-h">已掌握配方</h3>
-          <div class="recipe">
-            <div class="recipe__head"><span class="ic" data-i="pot" style="color:var(--color-primary);--ic:18px"></span><span class="recipe__name">清露松茸汤</span><span class="recipe__stars">★★☆</span></div>
-            <div class="recipe__mats"><span class="mat-chip ok">苔松茸 ×1</span><span class="mat-chip ok">清露香草 ×1</span><span class="mat-chip ok">净水符石 ×1</span></div>
-            <div class="recipe__foot"><span class="faint" style="font-size:var(--font-size-2xs)">售价 <span class="num" style="color:var(--color-primary)">18 银</span></span><button class="btn btn--primary btn--sm" data-cook="清露松茸汤">烹制</button></div>
-          </div>
-          <div class="recipe">
-            <div class="recipe__head"><span class="ic" data-i="pot" style="color:var(--color-primary);--ic:18px"></span><span class="recipe__name">蜜烤溪鱼</span><span class="recipe__stars">★☆☆</span></div>
-            <div class="recipe__mats"><span class="mat-chip ok">银鳞溪鱼 ×1</span><span class="mat-chip ok">野山蜜 ×1</span><span class="mat-chip no">干柴火 ×0</span></div>
-            <div class="recipe__foot"><span class="faint" style="font-size:var(--font-size-2xs)">售价 <span class="num" style="color:var(--color-primary)">12 银</span></span><button class="btn btn--ghost btn--sm" disabled>柴火不足</button></div>
-          </div>
-          <div class="recipe">
-            <div class="recipe__head"><span class="ic" data-i="pot" style="color:var(--color-primary);--ic:18px"></span><span class="recipe__name">晨露麦饼</span><span class="recipe__stars">★☆☆</span></div>
-            <div class="recipe__mats"><span class="mat-chip ok">晨露麦粉 ×2</span><span class="mat-chip ok">林间鸡蛋 ×1</span></div>
-            <div class="recipe__foot"><span class="faint" style="font-size:var(--font-size-2xs)">售价 <span class="num" style="color:var(--color-primary)">8 银</span></span><button class="btn btn--primary btn--sm" data-cook="晨露麦饼">烹制</button></div>
-          </div>
-        </section>
-
-        <!-- ========== 面板3：建筑管理 ========== -->
-        <section class="panel" data-panel="building">
-          <div class="tabs" id="buildTabs">
-            <button class="tab is-active" data-tab="built">已建成</button>
-            <button class="tab" data-tab="blueprint">蓝图</button>
-          </div>
-
-          <div class="tab-pane is-active" data-pane="built">
-            <div class="building">
-              <div class="building__head"><span class="building__icon"><span class="ic" data-i="kitchen"></span></span><span class="building__name">主灶房</span><span class="building__lv">Lv.2</span><span class="building__status ok">正常</span></div>
-              <div class="dim-bars">
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:80%;background:var(--dim-food)"></div></div><span class="dim-bar__label">美食</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:10%;background:var(--dim-lore)"></div></div><span class="dim-bar__label">知识</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:25%;background:var(--dim-comfort)"></div></div><span class="dim-bar__label">舒适</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:15%;background:var(--dim-adventure)"></div></div><span class="dim-bar__label">冒险</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:20%;background:var(--dim-culture)"></div></div><span class="dim-bar__label">文化</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:10%;background:var(--dim-nature)"></div></div><span class="dim-bar__label">自然</span></div>
-              </div>
-              <div class="row--between row"><span class="faint" style="font-size:var(--font-size-2xs)">维护 2银/天</span><span class="pill pill--amber">符文可升</span></div>
-            </div>
-
-            <div class="building">
-              <div class="building__head"><span class="building__icon"><span class="ic" data-i="garden"></span></span><span class="building__name">后院菜畦</span><span class="building__lv">Lv.1</span><span class="building__status ok">正常</span></div>
-              <div class="dim-bars">
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:15%;background:var(--dim-food)"></div></div><span class="dim-bar__label">美食</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:10%;background:var(--dim-lore)"></div></div><span class="dim-bar__label">知识</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:30%;background:var(--dim-comfort)"></div></div><span class="dim-bar__label">舒适</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:20%;background:var(--dim-adventure)"></div></div><span class="dim-bar__label">冒险</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:15%;background:var(--dim-culture)"></div></div><span class="dim-bar__label">文化</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:70%;background:var(--dim-nature)"></div></div><span class="dim-bar__label">自然</span></div>
-              </div>
-              <div class="row--between row"><span class="faint" style="font-size:var(--font-size-2xs)">维护 1银/天</span><span class="faint" style="font-size:var(--font-size-2xs)">已种 2 垅</span></div>
-            </div>
-
-            <div class="building">
-              <div class="building__head"><span class="building__icon"><span class="ic" data-i="well"></span></span><span class="building__name">老井</span><span class="building__lv">Lv.1</span><span class="building__status fixing">符文活跃</span></div>
-              <div class="dim-bars">
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:25%;background:var(--dim-food)"></div></div><span class="dim-bar__label">美食</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:60%;background:var(--dim-lore)"></div></div><span class="dim-bar__label">知识</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:40%;background:var(--dim-comfort)"></div></div><span class="dim-bar__label">舒适</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:10%;background:var(--dim-adventure)"></div></div><span class="dim-bar__label">冒险</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:55%;background:var(--dim-culture)"></div></div><span class="dim-bar__label">文化</span></div>
-                <div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:30%;background:var(--dim-nature)"></div></div><span class="dim-bar__label">自然</span></div>
-              </div>
-              <div class="row--between row"><span class="faint" style="font-size:var(--font-size-2xs)">维护 0银/天</span><span class="pill pill--mint">净水符文</span></div>
-            </div>
-          </div>
-
-          <div class="tab-pane" data-pane="blueprint">
-            <div class="building is-ready">
-              <div class="building__head"><span class="building__icon"><span class="ic" data-i="oven"></span></span><span class="building__name">柴烤炉</span><span class="pill pill--amber">可建造</span></div>
-              <p class="faint" style="font-size:var(--font-size-xs);margin-bottom:var(--space-2)">解锁烘焙配方，提升美食与舒适引力。需紧邻主灶房。</p>
-              <ul class="cond-list"><li><span class="ok">✓</span> 主灶房 Lv.2</li><li><span class="ok">✓</span> 掌柜声望达萤火级</li></ul>
-              <div class="cost-list"><span class="cost-item">40 银</span><span class="cost-item">青石板 ×8</span><span class="cost-item">干柴火 ×5</span></div>
-              <button class="btn btn--primary btn--block btn--sm" data-build="柴烤炉">建造</button>
-            </div>
-
-            <div class="building is-locked">
-              <div class="building__head"><span class="building__icon"><span class="ic" data-i="library"></span></span><span class="building__name">阅览书阁</span><span class="pill pill--red">条件未达</span></div>
-              <p class="faint" style="font-size:var(--font-size-xs);margin-bottom:var(--space-2)">吸引游方术士与学者，提升知识与文化引力。</p>
-              <ul class="cond-list"><li><span class="ok">✓</span> 旅店 Lv.2</li><li><span class="no">✗</span> 需掌柜声望达星辉级</li><li><span class="no">✗</span> 需收藏典籍 ×3</li></ul>
-              <div class="cost-list"><span class="cost-item lack">1 金</span><span class="cost-item">青石板 ×20</span><span class="cost-item lack">典籍 ×3</span></div>
-              <button class="btn btn--ghost btn--block btn--sm" disabled title="声望不足、典籍不足">条件未达</button>
-            </div>
-
-            <div class="building is-locked">
-              <div class="building__head"><span class="building__icon"><span class="ic" data-i="brewery"></span></span><span class="building__name">露酿坊</span><span class="pill pill--red">条件未达</span></div>
-              <p class="faint" style="font-size:var(--font-size-xs);margin-bottom:var(--space-2)">酿造麦酒与花蜜酒，夜间营业收益显著提升。</p>
-              <ul class="cond-list"><li><span class="no">✗</span> 需柴烤炉已建成</li><li><span class="ok">✓</span> 拥有野山蜜 ×2</li></ul>
-              <div class="cost-list"><span class="cost-item">80 银</span><span class="cost-item">干柴火 ×8</span><span class="cost-item">野山蜜 ×2</span></div>
-              <button class="btn btn--ghost btn--block btn--sm" disabled title="需先建造柴烤炉">条件未达</button>
-            </div>
-          </div>
-        </section>
-
-        <!-- ========== 面板4：地图与探索 ========== -->
-        <section class="panel" data-panel="map">
-          <div class="search">
-            <span class="ic search__icon" data-i="compass"></span>
-            <input type="text" placeholder="输入坐标如 3,-2 跳转……" aria-label="坐标搜索" />
-          </div>
-          <h3 class="panel-h">旅店周域 · 15×15</h3>
-          <div class="map-grid" id="mapGrid" aria-label="探索地图"></div>
-          <p class="faint center" style="font-size:var(--font-size-2xs);margin-top:var(--space-2)">旅店居中 (0,0) · 点亮处为已知地块 · 闪烁处可探索</p>
-
-          <div id="tileDetail"></div>
-        </section>
-
-        <!-- ========== 面板5：员工管理 ========== -->
-        <section class="panel" data-panel="staff">
-          <div class="row--between row" style="margin-bottom:var(--space-3)">
-            <span class="muted" style="font-size:var(--font-size-xs)">在册员工 2 人</span>
-            <button class="btn btn--primary btn--sm" id="recruitBtn"><span class="ic btn__icon" data-i="plus"></span>招募</button>
-          </div>
-
-          <div class="staff-card">
-            <div class="staff-card__head">
-              <div class="staff-avatar">苏</div>
-              <div class="col" style="flex:1">
-                <div class="row"><span class="staff-card__name">苏半夏</span><span class="class-badge">T2 厨娘</span></div>
-                <span class="staff-card__role">主灶房 · 擅汤羹</span>
-              </div>
-              <svg class="mini-radar" id="radarStaff1" viewBox="0 0 60 60" aria-label="苏半夏五维"></svg>
-            </div>
-            <div class="staff-card__stats">
-              <div class="stat-line"><span class="stat-line__label">精力</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:82%;background:var(--dim-food)"></div></div></div>
-              <div class="stat-line"><span class="stat-line__label">士气</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:68%;background:var(--dim-comfort)"></div></div></div>
-              <div class="stat-line"><span class="stat-line__label">忠诚</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:90%;background:var(--dim-culture)"></div></div></div>
-            </div>
-            <div class="row" style="margin-top:var(--space-2);gap:6px">
-              <span class="pill">技艺 14</span><span class="pill">悟性 9</span><span class="gem-tag gem-tag--light">闪光圣岩</span>
-              <span class="faint" style="font-size:var(--font-size-2xs);margin-left:auto">日薪 6银</span>
-            </div>
-          </div>
-
-          <div class="staff-card low-morale">
-            <div class="staff-card__head">
-              <div class="staff-avatar" style="background:linear-gradient(135deg,var(--ink-brown-soft),var(--ink-brown))">阿</div>
-              <div class="col" style="flex:1">
-                <div class="row"><span class="staff-card__name">阿苔</span><span class="class-badge">T1 杂役</span></div>
-                <span class="staff-card__role">后院 · 擅种植</span>
-              </div>
-              <svg class="mini-radar" id="radarStaff2" viewBox="0 0 60 60" aria-label="阿苔五维"></svg>
-            </div>
-            <div class="staff-card__stats">
-              <div class="stat-line"><span class="stat-line__label">精力</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:55%;background:var(--dim-food)"></div></div></div>
-              <div class="stat-line"><span class="stat-line__label">士气</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:32%;background:var(--dim-comfort)"></div></div></div>
-              <div class="stat-line"><span class="stat-line__label">忠诚</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:48%;background:var(--dim-culture)"></div></div></div>
-            </div>
-            <div class="row" style="margin-top:var(--space-2);gap:6px">
-              <span class="pill">技艺 6</span><span class="pill">悟性 4</span><span class="gem-tag gem-tag--dark">暗影原石</span>
-              <span class="faint" style="font-size:var(--font-size-2xs);margin-left:auto">日薪 2银</span>
-            </div>
-            <div class="notice notice--warn" style="margin-top:var(--space-2);margin-bottom:0"><span class="ic notice__icon" data-i="warning"></span><div style="font-size:var(--font-size-xs)">士气低迷，建议尽快安抚或调整岗位。</div></div>
-          </div>
-        </section>
-
-        <!-- ========== 面板6：访客管理 ========== -->
-        <section class="panel" data-panel="visitor">
-          <div class="row--between row" style="margin-bottom:var(--space-3)">
-            <span class="muted" style="font-size:var(--font-size-xs)">在店访客 3 位</span>
-            <span class="pill pill--amber">客流 适中</span>
-          </div>
-
-          <div class="visitor-card">
-            <div class="visitor-card__head">
-              <span class="ic" data-i="mage" style="--ic:24px;color:var(--color-magic)"></span>
-              <span class="visitor-card__name">褪袍旅人</span>
-              <span class="pill pill--mint">游方术士</span>
-              <div class="satisfaction"><svg viewBox="0 0 44 44"><circle class="satisfaction__track" cx="22" cy="22" r="18"></circle><circle class="satisfaction__fill" id="sat1" cx="22" cy="22" r="18" stroke="var(--color-success)"></circle></svg><span class="satisfaction__val">62</span></div>
-            </div>
-            <div class="visitor-card__tags">
-              <span class="pill pill--green">消费 中</span>
-              <span class="pill">偏好 热汤</span>
-              <span class="pill">偏好 静处</span>
-              <span class="pill pill--purple">好奇 魔法</span>
-            </div>
-          </div>
-
-          <div class="visitor-card special">
-            <div class="visitor-card__head">
-              <span class="ic" data-i="noble" style="--ic:24px;color:var(--color-primary)"></span>
-              <span class="visitor-card__name">绣衣女使</span>
-              <span class="pill pill--amber">特殊访客</span>
-              <div class="satisfaction"><svg viewBox="0 0 44 44"><circle class="satisfaction__track" cx="22" cy="22" r="18"></circle><circle class="satisfaction__fill" id="sat2" cx="22" cy="22" r="18" stroke="var(--color-primary)"></circle></svg><span class="satisfaction__val">45</span></div>
-            </div>
-            <div class="visitor-card__tags">
-              <span class="pill pill--amber">消费 极高</span>
-              <span class="pill">偏好 名菜</span>
-              <span class="pill resist-tag pill--red">抗性 拥挤</span>
-              <span class="pill resist-tag pill--red">抗性 粗陋</span>
-            </div>
-          </div>
-
-          <div class="visitor-card">
-            <div class="visitor-card__head">
-              <span class="ic" data-i="merchant" style="--ic:24px;color:var(--color-text-soft)"></span>
-              <span class="visitor-card__name">驼铃行商</span>
-              <span class="pill">行商</span>
-              <div class="satisfaction"><svg viewBox="0 0 44 44"><circle class="satisfaction__track" cx="22" cy="22" r="18"></circle><circle class="satisfaction__fill" id="sat3" cx="22" cy="22" r="18" stroke="var(--color-warning)"></circle></svg><span class="satisfaction__val">78</span></div>
-            </div>
-            <div class="visitor-card__tags">
-              <span class="pill pill--green">消费 中</span>
-              <span class="pill">偏好 麦酒</span>
-              <span class="pill">偏好 储货</span>
-              <span class="pill">可交易</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- ========== 面板7：任务日志 ========== -->
-        <section class="panel" data-panel="quest">
-          <div class="tabs" id="questTabs">
-            <button class="tab is-active" data-tab="commission">委托</button>
-            <button class="tab" data-tab="bond">羁绊</button>
-            <button class="tab" data-tab="seed">种子追踪</button>
-          </div>
-          <div class="row--between row" style="margin:var(--space-3) 0"><span class="faint" style="font-size:var(--font-size-2xs)">活跃委托上限 3</span><span class="pill pill--amber">2 / 3 活跃</span></div>
-
-          <div class="tab-pane is-active" data-pane="commission">
-            <div class="quest-card">
-              <div class="quest-card__head"><span class="ic" data-i="scroll" style="color:var(--color-primary);--ic:16px"></span><span class="quest-card__name">褪袍旅人的热汤</span><span class="pill pill--mint">限时 傍晚前</span></div>
-              <p class="quest-card__desc">那位疲惫的术士想要一碗暖人的汤。若以井水符文烹煮，或可赢得他的好感。</p>
-              <div class="row--between row"><span class="faint" style="font-size:var(--font-size-2xs)">进度 0 / 1</span><span class="faint" style="font-size:var(--font-size-2xs)">报酬 25银 + 好感</span></div>
-              <div class="quest-progress" style="margin-top:6px"><div class="quest-progress__fill" style="width:0%"></div></div>
-            </div>
-            <div class="quest-card">
-              <div class="quest-card__head"><span class="ic" data-i="scroll" style="color:var(--color-primary);--ic:16px"></span><span class="quest-card__name">山莓成熟时</span><span class="pill">采集</span></div>
-              <p class="quest-card__desc">春日第三天，林缘的山莓该熟了。采些回来，既能入菜也能酿酒。</p>
-              <div class="row--between row"><span class="faint" style="font-size:var(--font-size-2xs)">进度 1 / 5</span><span class="faint" style="font-size:var(--font-size-2xs)">报酬 山莓 ×5</span></div>
-              <div class="quest-progress" style="margin-top:6px"><div class="quest-progress__fill" style="width:20%"></div></div>
-            </div>
-          </div>
-
-          <div class="tab-pane" data-pane="bond">
-            <div class="quest-card" style="border-left-color:var(--color-magic)">
-              <div class="quest-card__head"><span class="ic" data-i="person" style="color:var(--color-magic);--ic:16px"></span><span class="quest-card__name">褪袍旅人</span><span class="bond-stage">阶段一 · 初遇</span></div>
-              <p class="quest-card__desc">他似乎在回避什么，又不肯明说。一碗热汤或许能让他开口。</p>
-              <div class="faint" style="font-size:var(--font-size-2xs)">下一阶段：完成「褪袍旅人的热汤」并满足其魔法偏好。</div>
-            </div>
-            <div class="quest-card" style="border-left-color:var(--color-magic)">
-              <div class="quest-card__head"><span class="ic" data-i="person" style="color:var(--color-magic);--ic:16px"></span><span class="quest-card__name">苏半夏</span><span class="bond-stage">阶段二 · 相熟</span></div>
-              <p class="quest-card__desc">老灶房里她最拿手的是汤羹。近来她总望着后山的方向出神。</p>
-              <div class="faint" style="font-size:var(--font-size-2xs)">下一阶段：声望达星辉级，与其共度一次春祭。</div>
-            </div>
-          </div>
-
-          <div class="tab-pane" data-pane="seed">
-            <div class="notice notice--info"><span class="ic notice__icon" data-i="sparkle"></span><div style="font-size:var(--font-size-xs)">仅显示已激活的任务种子。世界将依据你的选择萌生新的可能。</div></div>
-            <div class="quest-card" style="border-left-color:var(--dim-culture)">
-              <div class="quest-card__head"><span class="ic" data-i="sparkle" style="color:var(--dim-culture);--ic:16px"></span><span class="quest-card__name">老井的低语</span><span class="bond-stage">已激活</span></div>
-              <p class="quest-card__desc">净水符文被春水唤醒，井底似有更深的秘密。持续的探索或许会引来……不速之客。</p>
-            </div>
-            <div class="quest-card" style="border-left-color:var(--dim-nature)">
-              <div class="quest-card__head"><span class="ic" data-i="sparkle" style="color:var(--dim-nature);--ic:16px"></span><span class="quest-card__name">春祭的邀约</span><span class="bond-stage">已激活</span></div>
-              <p class="quest-card__desc">邻村传来春祭的消息。若旅店声望足够，或可获邀设摊。</p>
-            </div>
-          </div>
-        </section>
-
-        <!-- ========== 面板8：农牧总览 ========== -->
-        <section class="panel" data-panel="farm">
-          <h3 class="panel-h">种植区汇总</h3>
-          <div class="crop-plot">
-            <div class="crop-plot__head"><span class="ic" data-i="wheat" style="color:var(--color-success);--ic:18px"></span><span class="crop-plot__name">后院菜畦 · (0,1) · 2×1</span><span class="ic status-icon watered" data-i="water"></span><span class="ic status-icon dry" data-i="fertilize"></span></div>
-            <div class="row--between row" style="margin-bottom:4px"><span class="faint" style="font-size:var(--font-size-2xs)">晨露麦 · 已浇水</span><span class="faint" style="font-size:var(--font-size-2xs)">2 / 4 天</span></div>
-            <div class="grow-bar"><div class="grow-bar__fill" style="width:50%"></div></div>
-          </div>
-          <div class="crop-plot">
-            <div class="crop-plot__head"><span class="ic" data-i="carrot" style="color:var(--color-success);--ic:18px"></span><span class="crop-plot__name">后院菜畦 · (0,2) · 2×1</span><span class="ic status-icon dry" data-i="water"></span><span class="ic status-icon fertilized" data-i="fertilize"></span></div>
-            <div class="row--between row" style="margin-bottom:4px"><span class="faint" style="font-size:var(--font-size-2xs)">紫胡萝卜 · 待浇水</span><span class="faint" style="font-size:var(--font-size-2xs)">1 / 3 天</span></div>
-            <div class="grow-bar"><div class="grow-bar__fill" style="width:33%"></div></div>
-          </div>
-          <div class="crop-plot">
-            <div class="crop-plot__head"><span class="ic" data-i="cabbage" style="color:var(--color-success);--ic:18px"></span><span class="crop-plot__name">林缘隙地 · (3,-1) · 1×1</span><span class="ic status-icon watered" data-i="water"></span><span class="ic status-icon fertilized" data-i="fertilize"></span></div>
-            <div class="row--between row" style="margin-bottom:4px"><span class="faint" style="font-size:var(--font-size-2xs)">霜叶菜 · 已浇水已施肥</span><span class="faint" style="font-size:var(--font-size-2xs)">3 / 3 天 · 可收</span></div>
-            <div class="grow-bar"><div class="grow-bar__fill" style="width:100%"></div></div>
-          </div>
-
-          <h3 class="panel-h">畜牧设施</h3>
-          <div class="livestock-card" style="margin-bottom:var(--space-2)">
-            <div class="row--between row" style="margin-bottom:var(--space-2)"><span class="serif" style="font-weight:600">林间鸡舍</span><span class="pill pill--green">健康 良好</span></div>
-            <div class="row--between row" style="margin-bottom:4px"><span class="faint" style="font-size:var(--font-size-2xs)">饲料倒计时</span><span class="faint" style="font-size:var(--font-size-2xs)">5 / 7 天</span></div>
-            <div class="grow-bar" style="margin-bottom:var(--space-2)"><div class="grow-bar__fill" style="width:71%;background:linear-gradient(90deg,var(--color-warning),var(--amber-bright))"></div></div>
-            <div class="row--between row" style="margin-bottom:4px"><span class="faint" style="font-size:var(--font-size-2xs)">产蛋倒计时</span><span class="faint" style="font-size:var(--font-size-2xs)">1 / 2 天</span></div>
-            <div class="grow-bar"><div class="grow-bar__fill" style="width:50%"></div></div>
-          </div>
-
-          <h3 class="panel-h">堆肥箱</h3>
-          <div class="compost-card">
-            <div class="row--between row" style="margin-bottom:var(--space-2)"><span class="serif" style="font-weight:600;display:flex;align-items:center;gap:6px"><span class="ic" data-i="fertilize" style="color:var(--color-success);--ic:18px"></span>堆肥箱</span><span class="pill pill--green">发酵中</span></div>
-            <div class="row--between row" style="margin-bottom:4px"><span class="faint" style="font-size:var(--font-size-2xs)">距下次产出</span><span class="faint" style="font-size:var(--font-size-2xs)">3 / 5 天</span></div>
-            <div class="grow-bar"><div class="grow-bar__fill" style="width:60%"></div></div>
-          </div>
-        </section>
-
+      <!-- 正文 + 选项 -->
+      <div class="journal" id="journal">
+        <article class="journal__narrative" id="narrative" aria-live="polite">
+          <p class="muted">正在展卷……</p>
+        </article>
+        <div class="journal__choices" id="choices"></div>
       </div>
-    </aside>
-  </div>
 
-  <!-- 吐司与粒子层 -->
-  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
+      <!-- 底栏：精力 / 压力 / 行动 -->
+      <footer class="dock" id="dock">
+        <div class="dock__stat">
+          <span class="ic" data-i="energy" style="--ic:18px"></span>
+          <div class="dock__stat-body">
+            <div class="dock__stat-head"><span>精力</span><span class="num" id="energyVal">78/100</span></div>
+            <span class="bar"><span class="bar__fill bar__fill--energy" id="energyFill" style="--p:78%"></span></span>
+          </div>
+        </div>
+        <div class="dock__stat">
+          <span class="ic" data-i="stress" style="--ic:18px"></span>
+          <div class="dock__stat-body">
+            <div class="dock__stat-head"><span>压力</span><span class="num" id="stressVal">34/100</span></div>
+            <span class="bar"><span class="bar__fill bar__fill--stress" id="stressFill" style="--p:34%"></span><span class="bar__cracks"></span></span>
+          </div>
+        </div>
+        <div class="dock__actions">
+          <button class="dock__btn" data-act="cook" data-tip="快捷烹饪"><span class="ic" data-i="pot"></span></button>
+          <button class="dock__btn" data-act="water" data-tip="一键浇灌"><span class="ic" data-i="water"></span></button>
+          <button class="dock__btn" data-act="rest" data-tip="小憩片刻"><span class="ic" data-i="bed"></span></button>
+          <button class="dock__btn dock__btn--primary" data-act="endday" data-tip="归寝入眠"><span class="ic" data-i="moon"></span></button>
+        </div>
+      </footer>
+
+    </section>
+  </main>
+
+  <!-- 内联吐司（不脱离文档流过远，固定于书容器右上） -->
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <!-- 满足感粒子层（固定，不占文档流） -->
   <div class="burst-layer" id="burstLayer" aria-hidden="true"></div>
 
-  <!-- 模态根（动态注入） -->
-  <div class="overlay" id="modalRoot" aria-hidden="true"></div>
+  <script>
+/* === icons.js === */
+/* ============================================================
+   暮归旅店 · 手绘线稿图标库
+   约束：viewBox 24×24；stroke=currentColor（经 .icon-fill 继承）；
+   线宽略有出入以模拟手绘感；天气图标内置动画类。
+   悬停时父级 :hover .icon-fill 触发墨水填充。
+   ============================================================ */
 
-  <script src="js/icons.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+const ICONS = {
+  /* ---------- 导航 ---------- */
+  house:    '<path d="M3.5 11.5 12 4.2l8.5 7.3"/><path d="M5.5 10.3V19h13v-8.7"/><path d="M9.5 19v-5h5v5"/><path d="M9.5 14.2h5"/>',
+  bag:      '<path d="M6.2 8h11.6l-1 12.2H7.2L6.2 8z"/><path d="M9 8a3 3 0 0 1 6 0"/><path d="M9.2 12h5.6"/>',
+  hammer:   '<path d="M14.5 3.6 20.4 9.5l-2.6 2.6-5.9-5.9z"/><path d="M12.7 5.4 4.4 13.7l3.2 3.2 8.3-8.3z"/><path d="M5.6 12.5 8.8 15.7"/>',
+  compass:  '<circle cx="12" cy="12" r="8.6"/><path d="M12 5.5l1.9 6.5L12 18.5 10.1 12z"/><path d="M5.5 12l6.5 1.9L18.5 12 12 10.1z"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/>',
+  person:   '<circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/><path d="M5.5 20h13"/>',
+  key:      '<circle cx="8" cy="8" r="4.2"/><path d="M11 11l8.5 8.5"/><path d="M15.5 15.5l2.2-2.2M18.5 18.5l2.2-2.2"/>',
+  scroll:   '<path d="M7 4.5h9.5A1.5 1.5 0 0 1 18 6v11.5A1.5 1.5 0 0 0 19.5 19H8A1.5 1.5 0 0 1 6.5 17.5V4.5z"/><path d="M6.5 4.5A1.5 1.5 0 0 0 5 6v2h1.5"/><path d="M9.5 9h5M9.5 12.5h5"/>',
+  wheat:    '<path d="M12 21V7"/><path d="M12 9.2 9 7.4 12 6.3l3 1.1z"/><path d="M12 13 9 11.2l3-1.1 3 1.1z"/><path d="M12 16.8 9 15l3-1.1 3 1.1z"/>',
+  settings: '<circle cx="12" cy="12" r="3.1"/><path d="M12 2.6l1.1 2.2 2.4-.5-.5 2.4 2.2 1.1-2.2 1.1.5 2.4-2.4-.5L12 21.4l-1.1-2.2-2.4.5.5-2.4L6.8 16l2.2-1.1-.5-2.4 2.4.5z"/>',
+  close:    '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+  search:   '<circle cx="11" cy="11" r="6"/><path d="M15.6 15.6 20 20"/>',
+  plus:     '<path d="M12 5v14M5 12h14"/>',
+  check:    '<path d="M5 12.5l4.5 4.5L19 6.5"/>',
+  lock:     '<rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
+  chevronR: '<path d="M9.5 5l7 7-7 7"/>',
+  chevronD: '<path d="M5 9.5l7 7 7-7"/>',
+
+  /* ---------- 状态 / 资源 ---------- */
+  coin:     '<circle cx="12" cy="12" r="8"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2.1.5 3L12 18.4 9.4 19.9l.5-3-2.2-2.1 3-.4z"/>',
+  star:     '<path d="M12 3.2l2.5 5.4 5.9.7-4.3 4 1.2 5.8L12 16.6 6.7 19.1l1.2-5.8-4.3-4 5.9-.7z"/>',
+  bed:      '<path d="M3 18v-6.5h13.5a3 3 0 0 1 3 3V18"/><path d="M3 12.5V8M3 18v2.2M19.5 18v2.2"/><path d="M6 12.5V10h5.5v2.5"/>',
+  energy:   '<path d="M12.5 3c2.2 3 5 5.2 5 9a5.5 5.5 0 0 1-11 0c0-2.2 1.1-3.6 2.2-4.6.6 1.2 1.7 1.7 2.5 1.1.9-.7.3-3.4 1.3-5.5z"/>',
+  stress:   '<path d="M7.5 6.5c4-2.4 8.5.4 7.6 4.6-.7 3.2-4.2 3.4-5.3 1.2-1-2 .9-4.2 3.1-3.3 2.1.9 2.1 3.4-.1 4"/>',
+  door:     '<path d="M6 21V4.2A1.2 1.2 0 0 1 7.2 3h8.6A1.2 1.2 0 0 1 17 4.2V21"/><path d="M3.5 21h17"/><circle cx="13.5" cy="12" r="1" fill="currentColor"/>',
+  pot:      '<path d="M3.5 10h17l-1 1.2v1.8a5 5 0 0 1-5 5H9.5a5 5 0 0 1-5-5v-1.8z"/><path d="M2 10h20"/><path d="M9 5.6c-.6-1 .4-2 0-3.3M13.5 5.6c-.6-1 .4-2 0-3.3"/>',
+  water:    '<path d="M12 3c3 4.2 5 6.6 5 9.2a5 5 0 0 1-10 0C7 9.6 9 7.2 12 3z"/>',
+  fertilize:'<path d="M4 20c1.8-4 5.6-4 8 0 2.4-4 6.2-4 8 0"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="7.2" r="1"/><circle cx="12" cy="5" r="1"/>',
+  warning:  '<path d="M12 3.2 21.5 20H2.5z"/><path d="M12 9.2v4.6M12 17.2h.01"/>',
+  info:     '<circle cx="12" cy="12" r="9"/><path d="M12 11v5.2M12 7.6h.01"/>',
+  sparkle:  '<path d="M12 2.8c.6 4.4 1.7 5.6 6 6.2-4.3.6-5.4 1.8-6 6.2-.6-4.4-1.7-5.6-6-6.2 4.3-.6 5.4-1.8 6-6.2z"/><path d="M18.5 14.2c.2 1.6.7 2 2.2 2.2-1.5.2-2 .6-2.2 2.2-.2-1.6-.7-2-2.2-2.2 1.5-.2 2-.6 2.2-2.2z"/>',
+
+  /* ---------- 天气（内置动画类） ---------- */
+  sun:      '<g class="wx-sun-rays"><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.7 4.7l1.8 1.8M17.5 17.5l1.8 1.8M19.3 4.7l-1.8 1.8M6.5 17.5l-1.8 1.8"/></g><circle class="wx-sun-core" cx="12" cy="12" r="4.1" fill="currentColor" fill-opacity="0.14"/>',
+  moon:     '<path class="wx-moon" d="M20.5 13.6A8.5 8.5 0 1 1 10.4 3.5a6.6 6.6 0 0 0 10.1 10.1z" fill="currentColor" fill-opacity="0.12"/>',
+  cloud:    '<path class="wx-cloud" d="M7 15.5a4 4 0 0 1 .6-8A5 5 0 0 1 17 8.2a3.6 3.6 0 0 1 .5 7.3H7z" fill="currentColor" fill-opacity="0.1"/>',
+  rain:     '<path class="wx-cloud" d="M7 14a4 4 0 0 1 .6-7.9A5 5 0 0 1 17 6.7a3.6 3.6 0 0 1 .5 7.3H7z" fill="currentColor" fill-opacity="0.1"/><path class="wx-rain-drop" d="M8.5 17l-1 3"/><path class="wx-rain-drop" d="M12.5 17l-1 3"/><path class="wx-rain-drop" d="M16.5 17l-1 3"/>',
+  snow:     '<path class="wx-cloud" d="M7 14a4 4 0 0 1 .6-7.9A5 5 0 0 1 17 6.7a3.6 3.6 0 0 1 .5 7.3H7z" fill="currentColor" fill-opacity="0.1"/><path class="wx-snow" d="M9 17.5v3M8 19h2"/><path class="wx-snow" d="M12.5 17.5v3M11.5 19h2"/><path class="wx-snow" d="M16 17.5v3M15 19h2"/>',
+
+  /* ---------- 时段 ---------- */
+  sunrise:  '<path d="M3 17.5h18"/><path d="M6 14.5a6 6 0 0 1 12 0"/><path d="M12 4v4"/><path d="M9.5 6.5 12 4l2.5 2.5"/>',
+  highnoon: '<circle cx="12" cy="9" r="3.1"/><path d="M12 2.5v2M12 13.5v2M5 9H2.8M21.2 9H19M6.4 3.4 5 4.8M17.6 3.4 19 4.8"/><path d="M3 19h18"/>',
+  afternoon:'<path d="M3 18h18"/><circle cx="15" cy="12" r="2.8"/><path d="M15 6v1.6M20 12h1.6M18.3 8.7l1.1-1.1"/>',
+  sunset:   '<path d="M3 17.5h18"/><path d="M8 17.5a4 4 0 0 1 8 0"/><path d="M12 11.5v4M12 11.5 9.6 9.1M12 11.5l2.4-2.4"/>',
+
+  /* ---------- 食材 / 自然 / 魔法 ---------- */
+  grain:    '<path d="M12 21V4.5"/><path d="M9 7.5l3 1 3-1M9 11.5l3 1 3-1M9 15.5l3 1 3-1"/>',
+  egg:      '<path d="M12 3.2c4 0 6 6 6 9.8a6 6 0 0 1-12 0C6 9.2 8 3.2 12 3.2z"/>',
+  mushroom: '<path d="M4 11a8 8 0 0 1 16 0H4z"/><path d="M9 11v6.5a3 3 0 0 0 6 0V11"/><circle cx="10" cy="8" r="1" fill="currentColor"/><circle cx="14" cy="9" r="1" fill="currentColor"/>',
+  herb:     '<path d="M12 21V8.5"/><path d="M12 8.5c0-3-3-4-5.2-3 0 3 2.2 4 5.2 3zM12 8.5c0-3 3-4 5.2-3 0 3-2.2 4-5.2 3z"/>',
+  fish:     '<path d="M3 12c3-5 9-5 13 0-4 5-10 5-13 0z"/><path d="M16 12l4.2-3v6z"/><circle cx="7.5" cy="11" r="1" fill="currentColor"/>',
+  honey:    '<path d="M12 3 4.2 7.5v9L12 21l7.8-4.5v-9z"/><path d="M12 3v6M4.2 7.5 12 12l7.8-4.5M4.2 16.5 12 12l7.8 4.5"/>',
+  wood:     '<rect x="3" y="9" width="18" height="6" rx="3"/><circle cx="6.2" cy="12" r="1.3"/><path d="M6.2 10.8v2.4M5 12h2.4M17.8 10.8c.6.6.6 3 0 3.6"/>',
+  stone:    '<path d="M5 18.5 7 8l5-2.8L17 8l2 10.5z"/><path d="M9 14.5h6M8.5 11l3 .5 4-.5"/>',
+  flower:   '<circle cx="12" cy="8.5" r="2"/><path d="M12 8.5c0-3-1-5 0-6.2 1 1.2 0 3.2 0 6.2M12 8.5c3 0 5-1 6.2 0-1.2 1-3.2 0-6.2 0M12 8.5c0 3 1 5 0 6.2-1-1.2 0-3.2 0-6.2M12 8.5c-3 0-5 1-6.2 0 1.2-1 3.2 0 6.2 0"/><path d="M12 10.5V21"/>',
+  gem:      '<path d="M7 4h10l3 5-8 11.5L4 9z"/><path d="M4 9h16M9.5 4 12 9l2.5-5M12 9v11.5"/>',
+
+  /* ---------- 建筑 ---------- */
+  kitchen:  '<rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="1.4"/><circle cx="15" cy="10" r="1.4"/><path d="M7 16.5h10"/>',
+  oven:     '<path d="M4 20V9l8-5 8 5v11z"/><path d="M8 20v-6h8v6"/><path d="M10.5 14h3"/>',
+  brewery:  '<path d="M6 6h12v12H6z"/><path d="M6 9.5h12M6 14.5h12"/><path d="M7.8 6c-1 2.2-1 9.8 0 12M16.2 6c1 2.2 1 9.8 0 12"/>',
+  garden:   '<path d="M3 18.5h18"/><path d="M3 18.5c0-3.2 3.2-5.5 9-5.5s9 2.3 9 5.5"/><path d="M12 13V7.5"/><path d="M12 9.5c-2 0-3-1.2-3-3.2 2 0 3 1.2 3 3.2zM12 9.5c2 0 3-1.2 3-3.2-2 0-3 1.2-3 3.2z"/>',
+  library:  '<path d="M4 4h4v16H4z"/><path d="M9.5 4h4v16h-4z"/><path d="M14.5 5 18.5 6l-3 14-4-1z"/>',
+  well:     '<path d="M5 10.5h14V20H5z"/><path d="M5 10.5 8 5.5h8l3 5"/><path d="M12 5.5V2.5M9 2.5h6"/><path d="M9 14.5h6"/>',
+
+  /* ---------- 访客 ---------- */
+  mage:     '<circle cx="12" cy="8.5" r="3"/><path d="M12 11.5 7.5 20h9z"/><path d="M9 5.5 12 2.5l3 3"/>',
+  noble:    '<circle cx="12" cy="9" r="3"/><path d="M7 20c1-5 3-7 5-7s4 2 5 7"/><path d="M8 6 9 3l3 2 3-2 1 3"/>',
+  merchant: '<circle cx="12" cy="8" r="3"/><path d="M6 20l2-7h8l2 7"/><path d="M8 13l1-3h6l1 3"/><path d="M9 5.5c1.5-1 4.5-1 6 0"/>',
+
+  /* ---------- 地块 ---------- */
+  tree:     '<path d="M12 3 5.5 13h4l-3 7h11l-3-7h4z"/>',
+  lake:     '<path d="M3 11.5c2 0 2 2 4 2s2-2 4-2 2 2 4 2 2-2 4-2"/><path d="M3 15.5c2 0 2 2 4 2s2-2 4-2 2 2 4 2 2-2 4-2"/>',
+  mountain: '<path d="M3 19 9 7l3.5 6 2.5-3.5L21 19z"/><circle cx="9" cy="7" r="1" fill="currentColor"/>',
+  cave:     '<path d="M4 20V12a8 8 0 0 1 16 0v8"/><path d="M9 20v-3.5a3 3 0 0 1 6 0V20"/>',
+  berry:    '<path d="M5 20c0-5 3-9 7-9s7 4 7 9"/><circle cx="9" cy="13" r="1.2" fill="currentColor"/><circle cx="14" cy="11" r="1.2" fill="currentColor"/><circle cx="12" cy="15" r="1.2" fill="currentColor"/>',
+  ruin:     '<path d="M5 20V8l3-3 3 2 3-2 3 3v12"/><path d="M9 20v-5h2v5M13 20v-5h2v5"/>',
+
+  /* ---------- 作物 ---------- */
+  carrot:   '<path d="M12 21 9 8h6z"/><path d="M12 8c-1-2 0-4 2-5-1 2 0 3 1 4M12 8c1-2 3-2 4-1-2 0-2 2-2 3"/>',
+  cabbage:  '<circle cx="12" cy="13" r="5.5"/><path d="M12 7.5c-2 0-3 2-3 4M12 7.5c2 0 3 2 3 4M8 11.5c-2 1-2 3-1 4M16 11.5c2 1 2 3 1 4"/>'
+};
+
+const Icon = {
+  get(name) {
+    const m = ICONS[name] || ICONS.sparkle;
+    return `<svg viewBox="0 0 24 24" class="icon-fill" aria-hidden="true" focusable="false">${m}</svg>`;
+  },
+  /** 渲染 root 内所有 [data-i] 占位为 SVG */
+  render(root = document) {
+    root.querySelectorAll('[data-i]').forEach((el) => {
+      el.innerHTML = Icon.get(el.dataset.i);
+    });
+  },
+  /** 设置某个元素的图标 */
+  set(el, name) {
+    if (!el) return;
+    el.dataset.i = name;
+    el.innerHTML = Icon.get(name);
+  }
+};
+
+window.Icon = Icon;
+
+
+/* === data.js === */
+/* ============================================================
+   样例 stat_data · 按本项目 MVU 8 大域结构
+   仅在酒馆 API 不可用（独立预览）时作为回退数据
+   ============================================================ */
+
+const SAMPLE_STATE = {
+  大掌柜: {
+    精力: 78,
+    压力: 34,
+    属性: {
+      经营: { 等级: 2, 经验: 40, 升级经验: 100 },
+      交涉: { 等级: 1, 经验: 15, 升级经验: 100 },
+      魄力: { 等级: 1, 经验: 0, 升级经验: 100 },
+      洞察: { 等级: 1, 经验: 20, 升级经验: 100 },
+      天启: { 等级: 0, 经验: 0, 升级经验: 100 },
+    }
+  },
+  旅店: {
+    资金: 50000,
+    声望: 42,
+    库存: {
+      "晨露麦粉": { 数量: 12, 品质: "优良", 分类: "食材原料", 描述: "春日新磨，带露气。" },
+      "林间鸡蛋": { 数量: 8, 品质: "普通", 分类: "食材原料", 描述: "散养鸡舍所产。" },
+      "苔松茸": { 数量: 3, 品质: "精品", 分类: "食材原料", 描述: "林缘采集的珍菌。" },
+      "清露香草": { 数量: 5, 品质: "优良", 分类: "食材原料", 描述: "井水浸润，气味清冽。" },
+      "银鳞溪鱼": { 数量: 4, 品质: "普通", 分类: "食材原料", 描述: "清晨溪中捕得。" },
+      "野山蜜": { 数量: 2, 品质: "精品", 分类: "食材原料", 描述: "春巢取蜜，色如琥珀。" },
+      "干柴火": { 数量: 3, 品质: "普通", 分类: "自然材料", 描述: "燃料，仅余 3 捆。" },
+      "青石板": { 数量: 14, 品质: "普通", 分类: "自然材料", 描述: "河床拾得的建材。" },
+      "铃兰": { 数量: 6, 品质: "优良", 分类: "自然材料", 描述: "晨采，可作装饰。" },
+      "净水符石": { 数量: 1, 品质: "传说", 分类: "魔法材料", 描述: "井底析出，泛薄荷蓝光。" },
+      "晨星露": { 数量: 3, 品质: "优良", 分类: "魔法材料", 描述: "草叶凝结的稀料。" },
+    },
+    配方: {
+      "清露松茸汤": { 材料: "苔松茸、清露香草、净水符石", 售价: 180, 难度: 40, 需要设施: "主灶房", 描述: "以净井水煨煮，鲜而清甜。" },
+      "蜜烤溪鱼": { 材料: "银鳞溪鱼、野山蜜、干柴火", 售价: 120, 难度: 25, 需要设施: "主灶房", 描述: "蜜色焦香，外脆内嫩。" },
+      "晨露麦饼": { 材料: "晨露麦粉、林间鸡蛋", 售价: 80, 难度: 15, 需要设施: "主灶房", 描述: "朴实的乡野主食。" },
+      "香草煎蛋": { 材料: "林间鸡蛋、清露香草", 售价: 60, 难度: 10, 需要设施: "主灶房", 描述: "香气扑鼻的简餐。" },
+    },
+    当前访客: {
+      "褪袍旅人": { 类型: "游方术士", 状态: "在店", 满意度: 62, 消费能力: "中", 需求偏好: ["热汤", "静处"], 隐藏性格: ["好奇魔法"], 抗性标签: [], 携带种子: [] },
+      "绣衣女使": { 类型: "特殊访客", 状态: "在店", 满意度: 45, 消费能力: "极高", 需求偏好: ["名菜", "雅座"], 隐藏性格: [], 抗性标签: ["拥挤", "粗陋"], 携带种子: [] },
+      "驼铃行商": { 类型: "行商", 状态: "在店", 满意度: 78, 消费能力: "中", 需求偏好: ["麦酒", "储货"], 隐藏性格: [], 抗性标签: [], 携带种子: [] },
+    },
+    员工: {
+      "苏半夏": {
+        属性: { 技艺: 14, 悟性: 9, 体力: 12, 亲和: 11, 专注: 13 },
+        状态: { 精力: 82, 士气: 68, 忠诚度: 90 },
+        职业信息: { 职业: "厨娘", 阶级: "T2", 日薪: 60, 等级: 2, 经验: 40, 升级经验: 100 },
+        心之宝石: { 闪光圣岩: ["赠以新刀"], 暗影原石: [] },
+        技能: ["汤羹精通", "火候拿捏"],
+        描述: "主灶房好手，擅汤羹。"
+      },
+      "阿苔": {
+        属性: { 技艺: 6, 悟性: 4, 体力: 10, 亲和: 7, 专注: 5 },
+        状态: { 精力: 55, 士气: 32, 忠诚度: 48 },
+        职业信息: { 职业: "杂役", 阶级: "T1", 日薪: 20, 等级: 1, 经验: 10, 升级经验: 100 },
+        心之宝石: { 闪光圣岩: [], 暗影原石: ["训斥"] },
+        技能: ["初学种植"],
+        描述: "后院杂役，士气低迷。"
+      },
+    },
+    特殊效果: { "净井水润": { 剩余天数: 1, 描述: "今日汤水质效提升。", 来源: "老井符文" } },
+    计数器: { 总服务访客数: 27 }
+  },
+  建筑: {
+    已建成: {
+      "主灶房": { 等级: 2, 描述: "灶台尚温，烟火气足。", 工作状态: "正常", 影响力: { 美食: 8, 知识: 1, 舒适: 3, 冒险: 0, 文化: 2, 自然: 0 }, 产出: "餐食", 产出倒计时: 0, 维护费用: 20, 符文升级: "可升" },
+      "后院菜畦": { 等级: 1, 描述: "泥土湿润的菜地。", 工作状态: "正常", 影响力: { 美食: 1, 知识: 0, 舒适: 3, 冒险: 1, 文化: 1, 自然: 7 }, 产出: "作物", 产出倒计时: 2, 维护费用: 10, 符文升级: "无" },
+      "老井": { 等级: 1, 描述: "井底符文被春水唤醒。", 工作状态: "正常", 影响力: { 美食: 2, 知识: 6, 舒适: 4, 冒险: 0, 文化: 5, 自然: 3 }, 产出: "净水符石", 产出倒计时: 5, 维护费用: 0, 符文升级: "活跃" },
+    },
+    蓝图: {
+      "柴烤炉": { 影响力: { 美食: 4, 知识: 0, 舒适: 3, 冒险: 0, 文化: 1, 自然: 0 }, 解锁条件: "主灶房≥2 且 声望≥20", 建造成本: { 现金: 4000, 物资: "木材8 石料5" }, 功能描述: "解锁烘焙配方，提升美食与舒适。", 负面描述: "" },
+      "阅览书阁": { 影响力: { 美食: 0, 知识: 6, 舒适: 2, 冒险: 0, 文化: 6, 自然: 0 }, 解锁条件: "声望≥60 且 典籍≥3", 建造成本: { 现金: 10000, 物资: "石料20 典籍3" }, 功能描述: "吸引术士与学者，提升知识与文化。", 负面描述: "维护成本较高。" },
+      "露酿坊": { 影响力: { 美食: 3, 知识: 1, 舒适: 2, 冒险: 0, 文化: 2, 自然: 1 }, 解锁条件: "柴烤炉已建成", 建造成本: { 现金: 8000, 物资: "木材8 野山蜜2" }, 功能描述: "酿造麦酒与花蜜酒，夜间收益提升。", 负面描述: "" },
+    }
+  },
+  世界: {
+    时间: { 年: 1, 季节: "春", 天数: 3, 星期: 3, 天气: "晴", 当前时间: "09:00", 经过总天数: 3 },
+    地块: {
+      "0,0": { x: 0, y: 0, 类型: "旅店", 描述: "你的旅店，灶台尚温。", 资源: [], 本季采集次数: 0 },
+      "0,1": { x: 0, y: 1, 类型: "田地", 描述: "后院菜畦，泥土湿润。", 资源: [["晨露麦", "∞"], ["紫胡萝卜", "∞"]], 本季采集次数: 0 },
+      "0,2": { x: 0, y: 2, 类型: "田地", 描述: "一片野生麦丛。", 资源: [["晨露麦", "12"], ["干柴火", "4"]], 本季采集次数: 2 },
+      "1,0": { x: 1, y: 0, 类型: "森林", 描述: "松针覆地，菌香扑鼻。", 资源: [["苔松茸", "6"], ["干柴火", "8"]], 本季采集次数: 1 },
+      "2,1": { x: 2, y: 1, 类型: "森林", 描述: "林冠渐密，偶有鸟鸣。", 资源: [["苔松茸", "4"], ["清露香草", "5"]], 本季采集次数: 0 },
+      "3,-1": { x: 3, y: -1, 类型: "田地", 描述: "林缘隙地，山莓恰熟。", 资源: [["山莓", "9"], ["铃兰", "6"]], 本季采集次数: 0 },
+      "1,-1": { x: 1, y: -1, 类型: "洞穴", 描述: "洞口沁凉，深处有微光。", 资源: [["青石板", "14"], ["净水符石", "1"]], 本季采集次数: 1 },
+      "-1,0": { x: -1, y: 0, 类型: "溪流", 描述: "溪水清浅，可见鱼影。", 资源: [["银鳞溪鱼", "8"], ["青石板", "6"]], 本季采集次数: 2 },
+      "-2,1": { x: -2, y: 1, 类型: "森林", 描述: "蜂巢悬于老树，蜜香阵阵。", 资源: [["野山蜜", "3"], ["蜂蜡", "4"]], 本季采集次数: 0 },
+      "0,-1": { x: 0, y: -1, 类型: "山岩", 描述: "山石嶙峋，可采石料。", 资源: [["青石板", "20"], ["矿石", "5"]], 本季采集次数: 0 },
+    }
+  },
+  访客生态: {
+    总引力值: 46,
+    声望引力: 2,
+    设施引力: { 美食: 11, 知识: 7, 舒适: 10, 冒险: 1, 文化: 8, 自然: 10 },
+    服务引力: 9,
+    环境引力: 7,
+    潜在访客池: { "流浪旅人": 2, "游方术士": 1, "行商": 1, "未知": 1 }
+  },
+  叙事引擎: {
+    任务种子: {
+      "老井的低语": { 来源: "老井符文", 激活条件: ["净水符文觉醒"], 优先级: 1, 状态: "已激活", 潜在任务: "井底秘密", 报酬: "未知" },
+      "春祭的邀约": { 来源: "邻村", 激活条件: ["声望≥50"], 优先级: 2, 状态: "已激活", 潜在任务: "春祭设摊", 报酬: "声望+10" },
+    },
+    委托任务: {
+      "褪袍旅人的热汤": { 描述: "疲惫的术士想要一碗暖汤。以井水符文烹煮或可赢得好感。", 时限: "傍晚前", 报酬: "250银 + 好感", 状态: "进行中" },
+      "山莓成熟时": { 描述: "春日第三天，林缘山莓该熟了。", 时限: "", 报酬: "山莓×5", 状态: "进行中" },
+    },
+    羁绊故事: {
+      "褪袍旅人": { 当前阶段: "初遇", 触发条件: "完成「褪袍旅人的热汤」", 描述: "他在回避什么，又不肯明说。" },
+      "苏半夏": { 当前阶段: "相熟", 触发条件: "声望达星辉级", 描述: "她总望着后山出神。" },
+    }
+  },
+  农牧: {
+    农田网格: {
+      "0,1": { x: 0, y: 1, 状态: "种植中", 作物: "春小麦", 剩余天数: 2, 今日已浇水: true, 已施肥: false, 品质修正: 0, 过熟天数: 0 },
+      "0,2": { x: 0, y: 2, 状态: "种植中", 作物: "紫胡萝卜", 剩余天数: 1, 今日已浇水: false, 已施肥: true, 品质修正: 0, 过熟天数: 0 },
+      "3,-1": { x: 3, y: -1, 状态: "种植中", 作物: "霜叶菜", 剩余天数: 0, 今日已浇水: true, 已施肥: true, 品质修正: 1, 过熟天数: 0 },
+    },
+    堆肥箱: { 状态: "发酵中", 倒计时: 3 },
+    畜牧: {
+      "林间鸡舍": { 饲料倒计时: 5, 产出倒计时: 1, 健康度: 85 },
+    }
+  },
+  当日预报: {
+    天气: "晴",
+    引力值: 46,
+    访客池: "流浪旅人×2、游方术士×1、行商×1、未知×1",
+    注意事项: ["后院老井净水符文已激活，今日汤水质效提升。", "厨房柴火仅余 3 捆，傍晚前需补充。", "山莓进入成熟期，可前往林缘采集。"]
+  }
+};
+
+/* 独立预览用的样例楼层正文（模拟 AI 回复的 rawText，含 <option> 选项） */
+const SAMPLE_RAWTEXT = `晨雾尚未散尽，旅店的木招牌在风里轻轻晃了一下。你推开吱呀作响的门，灰尘在斜射的日光里浮动——这间祖传的旅店，如今只剩你一个人了。所幸灶台还稳，地窖里还剩半袋<span style="color:#C9943B">晨露麦粉</span>。
+
+一位披着<em>褪色法袍</em>的旅人推门而入，斗篷上还沾着露水。他环顾四周，目光在空荡的大堂停留了片刻，轻声道：「听说这里的麦酒还算暖人……若不嫌弃，给我来一份热汤便好。」
+
+<blockquote>后院那口老井泛起淡淡的薄荷蓝微光——井底的净水符文被春水唤醒了。</blockquote>
+
+<option>为褪袍旅人烹制一碗清露松茸汤</option>
+<option>先去后院查看老井的微光</option>
+<option>与旅人攀谈，询问他的来路</option>
+<option>暂不理会，先整理今日账目</option>`;
+
+window.SAMPLE_STATE = SAMPLE_STATE;
+window.SAMPLE_RAWTEXT = SAMPLE_RAWTEXT;
+
+
+/* === extract.js === */
+/* ============================================================
+   正文 / 选项提取（按"酒馆正文提取与处理指导文件"）
+   - 不硬编码 <maintext>；先 formatAsTavernRegexedString 跑正则，再 DOM 手术
+   - 选项在正则前从原文提取（5 种标签）
+   - API 不可用时回退 SAMPLE_RAWTEXT
+   ============================================================ */
+const Extract = {
+  hasTavern() {
+    return typeof getCurrentMessageId === 'function' && typeof getChatMessages === 'function';
+  },
+
+  /** 取当前楼层原始文本 */
+  getRawText() {
+    try {
+      if (!this.hasTavern()) return window.SAMPLE_RAWTEXT || '';
+      const id = getCurrentMessageId();
+      const msgs = getChatMessages(id);
+      return (msgs && msgs[0] && msgs[0].message) || '';
+    } catch (e) {
+      return window.SAMPLE_RAWTEXT || '';
+    }
+  },
+
+  /** 选项提取：正则处理之前从原文取，兼容两种写法
+   *  - 块式：<options>行1\n行2</options>（取最后一个块，按行拆）
+   *  - 单式：<option>A</option><option>B</option>（每个标签即一项）
+   *  优先块式；若无则用单式。 */
+  extractOptions(rawText) {
+    if (!rawText) return [];
+    const blocks = [
+      /<options>([\s\S]*?)<\/options>/gi,
+      /<choices>([\s\S]*?)<\/choices>/gi,
+      /<select>([\s\S]*?)<\/select>/gi,
+    ];
+    for (const p of blocks) {
+      const m = [...rawText.matchAll(p)];
+      if (m.length) {
+        const last = m[m.length - 1][1];
+        const opts = last.split('\n').map(s => s.trim()).filter(Boolean);
+        if (opts.length) return opts;
+      }
+    }
+    const singles = [
+      /<option>([\s\S]*?)<\/option>/gi,
+      /<choice>([\s\S]*?)<\/choice>/gi,
+    ];
+    for (const p of singles) {
+      const m = [...rawText.matchAll(p)];
+      if (m.length) return m.map(x => x[1].trim()).filter(Boolean);
+    }
+    return [];
+  },
+
+  /** 正文清理：跑酒馆正则 -> DOM 手术剥结构壳 -> 保留内联美化 */
+  extractCleanContent(rawText) {
+    if (!rawText) return '';
+    // 先剥离选项块，避免选项混入正文
+    let text = rawText.replace(/<\/?(?:option|options|choice|choices|select)>/gi, '');
+
+    // 让酒馆正则处理（切思维链、执行美化正则等）
+    if (typeof formatAsTavernRegexedString === 'function') {
+      try {
+        text = formatAsTavernRegexedString(text, 'ai_output', 'display', { depth: 0 });
+      } catch (e) { /* 失败则用原文 */ }
+    }
+
+    const temp = document.createElement('div');
+    temp.innerHTML = text;
+
+    // 删除绝对不要的元素
+    temp.querySelectorAll('script, style, link').forEach(el => el.remove());
+
+    // 解包结构性标签
+    ['html', 'head', 'body', 'header', 'footer', 'nav'].forEach(tag => {
+      temp.querySelectorAll(tag).forEach(el => el.replaceWith(...el.childNodes));
+    });
+
+    // 智能解包纯布局容器
+    this._unwrapStructural(temp);
+
+    return temp.innerHTML.trim();
+  },
+
+  _unwrapStructural(container) {
+    const wrappers = Array.from(container.querySelectorAll('div, section, article, aside, main'));
+    wrappers.sort((a, b) => this._depth(b) - this._depth(a));
+    wrappers.forEach(el => {
+      if (this._isPureWrapper(el)) el.replaceWith(...el.childNodes);
+    });
+  },
+
+  _depth(el) { let d = 0, n = el; while (n.parentElement) { d++; n = n.parentElement; } return d; },
+
+  _hasDirectText(el) {
+    for (const c of el.childNodes) if (c.nodeType === 3 && c.textContent.trim()) return true;
+    return false;
+  },
+
+  _isPureWrapper(el) {
+    // 有直接文字 -> 不是纯包装
+    if (this._hasDirectText(el)) return false;
+    const style = (el.getAttribute('style') || '').toLowerCase();
+    const contentKw = ['color', 'text-shadow', 'text-decoration', 'font-weight', 'font-style', 'font-size', 'font-family', 'background-color', 'background-image', 'background:', 'animation', 'filter', 'opacity', 'box-shadow', 'letter-spacing', 'transform'];
+    for (const k of contentKw) if (style.includes(k)) return false;
+    const cls = (el.className || '').toString();
+    if (/glow|shine|sparkle|highlight|color|accent|effect|anim|italic|bold|gradient|shadow|pulse|flash|blink|dialogue|speech|quote|narrat/i.test(cls)) return false;
+    const idCls = ((el.id || '') + ' ' + cls).toLowerCase();
+    if (/wrapper|container|layout|outer|main[-_]?text|main[-_]?content|content[-_]?box|message[-_]?body|story[-_]?box|frame|shell|page/i.test(idCls)) return true;
+    if (el.children.length === 1 && !this._hasDirectText(el)) return true;
+    return false;
+  }
+};
+window.Extract = Extract;
+
+
+/* === mvu.js === */
+/* ============================================================
+   MVU 读取与轮询
+   - waitGlobalInitialized('Mvu') 后用 Mvu.getMvuData 取 stat_data
+   - 1s 轮询；rawText 与 stat_data 均未变则跳过
+   - API 不可用（独立预览）回退 SAMPLE_STATE
+   ============================================================ */
+const MVU = {
+  ready: false,
+
+  async init() {
+    if (typeof waitGlobalInitialized === 'function') {
+      try {
+        await waitGlobalInitialized('Mvu');
+        this.ready = (typeof Mvu !== 'undefined');
+      } catch (e) {
+        this.ready = false;
+      }
+    }
+  },
+
+  /** 取当前楼层 stat_data；不可用则回退样例 */
+  getState() {
+    try {
+      if (this.ready && typeof Mvu !== 'undefined' && typeof getCurrentMessageId === 'function') {
+        const id = getCurrentMessageId();
+        const data = Mvu.getMvuData({ type: 'message', message_id: id });
+        if (data && data.stat_data) return data.stat_data;
+      }
+    } catch (e) { /* fall through */ }
+    return window.SAMPLE_STATE;
+  },
+
+  isLive() {
+    return this.ready && typeof Mvu !== 'undefined' && typeof getCurrentMessageId === 'function';
+  }
+};
+window.MVU = MVU;
+
+
+/* === render.js === */
+/* ============================================================
+   暮归旅店 · 数据驱动渲染器
+   stat_data -> 左页八面板 / 右页 HUD / 正文 / 选项
+   - 子标签（建筑 已建成/蓝图、库存分类、任务分类）数据驱动
+   - 烹饪只展示材料文本，不判断够不够、不禁用
+   - 一切玩家动作经 /setinput 发给 AI，前端不本地改状态
+   ============================================================ */
+(function () {
+  'use strict';
+
+  const $  = (s, r = document) => r.querySelector(s);
+  const $ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const NS = 'http://www.w3.org/2000/svg';
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- 通用 DOM ---------- */
+  function h(tag, attrs = {}, children = []) {
+    const e = document.createElement(tag);
+    Object.entries(attrs).forEach(([k, v]) => {
+      if (v === null || v === undefined) return;
+      if (k === 'class') e.className = v;
+      else if (k === 'html') e.innerHTML = v;
+      else if (k === 'text') e.textContent = v;
+      else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v);
+    });
+    (Array.isArray(children) ? children : [children]).forEach((c) => {
+      if (c == null || c === false) return;
+      e.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(c) : c);
+    });
+    return e;
+  }
+  function sh(tag, attrs = {}, children = []) {
+    const e = document.createElementNS(NS, tag);
+    Object.entries(attrs).forEach(([k, v]) => {
+      if (v === null || v === undefined) return;
+      if (k === 'class') e.setAttribute('class', v);
+      else if (k === 'html') e.innerHTML = v;
+      else e.setAttribute(k, v);
+    });
+    (Array.isArray(children) ? children : [children]).forEach((c) => {
+      if (c == null || c === false) return;
+      e.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(c) : c);
+    });
+    return e;
+  }
+
+  /* ---------- 数值 / 对象工具 ---------- */
+  const num = (v, d = 0) => { const n = Number(v); return isNaN(n) ? d : n; };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const entries = (o) => (o && typeof o === 'object' ? Object.entries(o) : []);
+  const HAS_LODASH = (typeof _ !== 'undefined') && _ && typeof _.get === 'function';
+  function get(o, p, d) {
+    if (HAS_LODASH) { const r = _.get(o, p); return r === undefined ? d : r; }
+    let x = o;
+    for (const part of String(p).split('.')) {
+      if (x == null || typeof x !== 'object') { x = undefined; break; }
+      x = x[part];
+    }
+    return x === undefined ? d : x;
+  }
+
+  /* ---------- 品质 / 主题色 ---------- */
+  const QUALITY = ['粗糙', '普通', '优良', '精品', '传说'];
+  const qClass = (q) => (QUALITY.includes(q) ? 'q-tag--' + q : '');
+  const DIM_KEYS = ['美食', '知识', '舒适', '冒险', '文化', '自然'];
+  const DIM_COLOR = {
+    美食: 'var(--dim-food)', 知识: 'var(--dim-lore)', 舒适: 'var(--dim-comfort)',
+    冒险: 'var(--dim-adventure)', 文化: 'var(--dim-culture)', 自然: 'var(--dim-nature)',
+  };
+  const DIM_NAME = { 美食: '美食', 知识: '知识', 舒适: '舒适', 冒险: '冒险', 文化: '文化', 自然: '自然' };
+
+  /* ---------- 图标推断 ---------- */
+  function itemIcon(name) {
+    name = name || '';
+    if (/菇|菌|茸/.test(name)) return 'mushroom';
+    if (/麦|粉|谷|米|面/.test(name)) return 'grain';
+    if (/蛋/.test(name)) return 'egg';
+    if (/草|药|香/.test(name)) return 'herb';
+    if (/鱼/.test(name)) return 'fish';
+    if (/蜜|糖/.test(name)) return 'honey';
+    if (/木|柴|板|梁/.test(name)) return 'wood';
+    if (/石|矿|砖|板/.test(name)) return 'stone';
+    if (/花|兰|菊|薇/.test(name)) return 'flower';
+    if (/符石|宝石|晶|魔石|露/.test(name)) return 'gem';
+    return 'bag';
+  }
+  function buildingIcon(name) {
+    name = name || '';
+    if (/灶|厨/.test(name)) return 'kitchen';
+    if (/烤|炉/.test(name)) return 'oven';
+    if (/酿|酒/.test(name)) return 'brewery';
+    if (/菜|畦|田|园|圃/.test(name)) return 'garden';
+    if (/书|阁|典|图/.test(name)) return 'library';
+    if (/井/.test(name)) return 'well';
+    if (/台|前台|接待|柜/.test(name)) return 'house';
+    return 'hammer';
+  }
+  function tileIcon(type) {
+    const m = { 旅店: 'house', 田地: 'garden', 森林: 'tree', 溪流: 'lake', 山岩: 'mountain', 洞穴: 'cave', 遗迹: 'ruin', 矿: 'mountain' };
+    return m[type] || 'compass';
+  }
+  function visitorIcon(type) {
+    type = type || '';
+    if (/术士|法师|巫|魔/.test(type)) return 'mage';
+    if (/贵族|特殊|王|侯|贵/.test(type)) return 'noble';
+    if (/商|贩/.test(type)) return 'merchant';
+    return 'person';
+  }
+
+  /* ---------- 格式化 ---------- */
+  function formatFunds(silver) {
+    silver = num(silver, 0);
+    const g = Math.floor(silver / 100), s = silver % 100;
+    return g > 0 ? `${g}金${s}银` : `${s}银`;
+  }
+  const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  const weekday = (n) => WEEKDAYS[clamp(num(n, 1) - 1, 0, 6)];
+  function weatherIcon(w) {
+    w = (w || '') + '';
+    if (/晴/.test(w)) return 'sun';
+    if (/雨/.test(w)) return 'rain';
+    if (/雪/.test(w)) return 'snow';
+    if (/云|阴|雾/.test(w)) return 'cloud';
+    return 'sun';
+  }
+  function prestigeTier(p) {
+    p = num(p, 0);
+    if (p >= 100) return '日耀';
+    if (p >= 50) return '月华';
+    if (p >= 20) return '星辉';
+    if (p > 0) return '萤火';
+    return '初启';
+  }
+  function normalizeRes(res) {
+    if (!res) return [];
+    if (Array.isArray(res)) return res.filter(Boolean).map((r) => ({ name: r[0], qty: r[1] }));
+    if (typeof res === 'object') return Object.entries(res).map(([name, qty]) => ({ name, qty }));
+    return [];
+  }
+  function collectCount(c) {
+    if (c == null) return 0;
+    if (typeof c === 'number') return c;
+    if (typeof c === 'object') return Object.values(c).reduce((a, b) => a + num(b, 0), 0);
+    return 0;
+  }
+
+  /* ---------- 吐司 / 粒子 / 指令（共享） ---------- */
+  const TOAST_ICONS = { success: 'check', warn: 'warning', error: 'warning', magic: 'sparkle', info: 'info' };
+  function toast(type, title, msg) {
+    const stack = document.getElementById('toastStack'); if (!stack) return;
+    const t = h('div', { class: `toast toast--${type}`, role: 'status' }, [
+      h('span', { class: 'ic toast__icon', html: Icon.get(TOAST_ICONS[type] || 'info') }),
+      h('div', { class: 'toast__body' }, [
+        h('div', { class: 'toast__title' }, title),
+        msg ? h('div', { class: 'toast__msg' }, msg) : null
+      ])
+    ]);
+    stack.appendChild(t);
+    setTimeout(() => { t.classList.add('is-out'); setTimeout(() => t.remove(), 280); }, 3600);
+  }
+  function burst(x, y) {
+    if (reduceMotion) return;
+    const layer = document.getElementById('burstLayer'); if (!layer) return;
+    for (let i = 0; i < 7; i++) {
+      const s = h('span', { class: 'star-burst', html: Icon.get('sparkle') });
+      const ang = (Math.PI * 2 * i) / 7, dist = 26 + Math.random() * 42;
+      s.style.left = x + 'px'; s.style.top = y + 'px';
+      s.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
+      s.style.setProperty('--dy', Math.sin(ang) * dist + 'px');
+      layer.appendChild(s); setTimeout(() => s.remove(), 900);
+    }
+  }
+  /** 把意图写入酒馆输入框（/setinput），不在本地改状态 */
+  function triggerSlash(cmd) {
+    let ok = false;
+    try {
+      if (typeof executeSlashCommandsWithOptions === 'function') { executeSlashCommandsWithOptions(cmd); ok = true; }
+      else if (typeof executeSlashCommands === 'function') { executeSlashCommands(cmd); ok = true; }
+    } catch (e) { ok = false; }
+    const intent = cmd.replace(/^\/setinput\s*/, '');
+    toast('info', ok ? '已写入输入框' : '意图', intent);
+    return ok;
+  }
+  window.toast = toast; window.burst = burst; window.triggerSlash = triggerSlash;
+
+  /* ---------- 六维雷达 ---------- */
+  function polar(cx, cy, r, deg) {
+    const a = (deg - 90) * Math.PI / 180;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  }
+  function drawRadar(svg, axes, vals, max, opts = {}) {
+    const size = opts.size || 220, cx = size / 2, cy = size / 2;
+    const R = size / 2 - (opts.pad || 38), n = axes.length;
+    const ang = (i) => (360 / n) * i;
+    svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+    svg.innerHTML = '';
+    for (let g = 1; g <= 4; g++) {
+      const rr = (R * g) / 4, pts = [];
+      for (let i = 0; i < n; i++) { const [x, y] = polar(cx, cy, rr, ang(i)); pts.push(`${x.toFixed(1)},${y.toFixed(1)}`); }
+      svg.appendChild(sh('polygon', { class: 'radar__grid', points: pts.join(' '), style: g === 4 ? 'stroke:var(--color-border-strong)' : '' }));
+    }
+    axes.forEach((ax, i) => {
+      const [x, y] = polar(cx, cy, R, ang(i));
+      svg.appendChild(sh('line', { class: 'radar__axis', x1: cx, y1: cy, x2: x.toFixed(1), y2: y.toFixed(1) }));
+      if (opts.showLabels !== false) {
+        const [lx, ly] = polar(cx, cy, R + (opts.labelPad || 16), ang(i));
+        svg.appendChild(sh('text', { class: 'radar__label', x: lx.toFixed(1), y: ly.toFixed(1), fill: ax.color || 'var(--color-text-soft)' }, ax.name || ax));
+      }
+    });
+    const area = sh('polygon', { class: 'radar__area', points: '' });
+    svg.appendChild(area);
+    const verts = [];
+    vals.forEach((v, i) => {
+      const vt = sh('circle', { class: 'radar__vertex', cx, cy, r: opts.vertexR || 3.4 });
+      if (axes[i].color) vt.style.fill = axes[i].color;
+      svg.appendChild(vt); verts.push(vt);
+      if (opts.showVals !== false) {
+        const [tx, ty] = polar(cx, cy, R + (opts.labelPad || 16) - 4, ang(i));
+        svg.appendChild(sh('text', { class: 'radar__val', x: tx.toFixed(1), y: (ty + 7).toFixed(1) }, String(v)));
+      }
+      if (opts.onVertex) {
+        vt.addEventListener('mouseenter', () => opts.onVertex(axes[i], i));
+        vt.addEventListener('click', () => opts.onVertex(axes[i], i));
+      }
+    });
+    const start = performance.now(), dur = reduceMotion ? 1 : (opts.dur || 850);
+    function frame(now) {
+      const t = Math.min(1, (now - start) / dur), ease = 1 - Math.pow(1 - t, 3);
+      const pts = vals.map((v, i) => { const r = R * clamp(v / max, 0, 1) * ease; const [x, y] = polar(cx, cy, r, ang(i)); return `${x.toFixed(1)},${y.toFixed(1)}`; });
+      area.setAttribute('points', pts.join(' '));
+      verts.forEach((vt, i) => { const r = R * clamp(vals[i] / max, 0, 1) * ease; const [x, y] = polar(cx, cy, r, ang(i)); vt.setAttribute('cx', x.toFixed(1)); vt.setAttribute('cy', y.toFixed(1)); });
+      if (t < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- 通用片段 ---------- */
+  function panelH(text, right) {
+    return `<div class="panel-h">${text}${right ? `<span class="list-h__count">${right}</span>` : ''}</div>`;
+  }
+  function emptyState(icon, title, desc) {
+    return `<div class="empty-state"><span class="ic empty-state__icon" data-i="${icon}"></span><div class="empty-state__title">${title}</div><div class="empty-state__desc">${desc}</div></div>`;
+  }
+  function dimBars(inf, max = 10) {
+    return `<div class="dim-bars">${DIM_KEYS.map((k) => {
+      const v = num(inf && inf[k], 0);
+      const neg = v < 0;
+      const pct = neg ? 0 : clamp(v / max * 100, 0, 100);
+      return `<div class="dim-bar"><div class="dim-bar__track"><div class="dim-bar__fill" style="width:${pct}%;background:${DIM_COLOR[k]}"></div></div><span class="dim-bar__label">${DIM_NAME[k]} ${v}</span></div>`;
+    }).join('')}</div>`;
+  }
+  function pillsFrom(arr, cls = '') {
+    return (arr || []).filter(Boolean).map((t) => `<span class="pill ${cls}">${t}</span>`).join('');
+  }
+
+  /* ============================================================
+     HUD（右页顶栏 + 底栏状态）
+     ============================================================ */
+  function renderHud(s) {
+    const t = get(s, '世界.时间', {});
+    const inn = get(s, '旅店', {});
+    const me = get(s, '大掌柜', {});
+    const energy = clamp(num(get(me, '精力', 0), 0), 0, 100);
+    const stress = clamp(num(get(me, '压力', 0), 0), 0, 100);
+    const fame = num(get(inn, '声望', 0), 0);
+
+    $('#hudWeather') && (Icon.set($('#hudWeather'), weatherIcon(get(t, '天气', '晴'))));
+    $('#hudDate') && ($('#hudDate').textContent = `第${num(get(t, '年', 1), 1)}年 · ${get(t, '季节', '春')}季第${num(get(t, '天数', 1), 1)}天`);
+    $('#hudWeekday') && ($('#hudWeekday').textContent = `${weekday(get(t, '星期', 1))} · ${get(t, '天气', '晴')}`);
+    $('#hudInn') && ($('#hudInn').textContent = '暮归旅店');
+    $('#hudLevel') && ($('#hudLevel').textContent = `声望 · ${prestigeTier(fame)}`);
+    $('#hudFunds') && ($('#hudFunds').textContent = formatFunds(get(inn, '资金', 0)));
+    $('#hudPrestigeFill') && ($('#hudPrestigeFill').style.setProperty('--p', clamp(fame, 0, 100) + '%'));
+
+    const eFill = $('#energyFill');
+    if (eFill) {
+      eFill.style.setProperty('--p', energy + '%');
+      eFill.classList.toggle('low', energy < 20);
+      const ebar = eFill.closest('.bar'); if (ebar) ebar.classList.toggle('low', energy < 20);
+      $('#energyVal') && ($('#energyVal').textContent = `${energy}/100`);
+    }
+    const sFill = $('#stressFill');
+    if (sFill) {
+      sFill.style.setProperty('--p', stress + '%');
+      const sbar = sFill.closest('.bar');
+      if (sbar) { sbar.classList.toggle('warn', stress >= 50 && stress < 80); sbar.classList.toggle('critical', stress >= 80); }
+      $('#stressVal') && ($('#stressVal').textContent = `${stress}/100`);
+    }
+  }
+
+  /* ============================================================
+     左页各面板
+     ============================================================ */
+
+  /* ---- 总览 ---- */
+  function renderOverview(container, s) {
+    const ec = get(s, '访客生态', {});
+    const fc = get(s, '当日预报', {});
+    const inf = get(ec, '设施引力', {});
+    const axes = DIM_KEYS.map((k) => ({ name: DIM_NAME[k], key: k, color: DIM_COLOR[k] }));
+    const vals = DIM_KEYS.map((k) => num(inf[k], 0));
+    const maxV = Math.max(10, ...vals, 1);
+    const total = num(get(ec, '总引力值', 0), 0);
+
+    container.innerHTML =
+      panelH('六维引力', `总引力 ${total}`) +
+      `<div class="radar-wrap">
+         <svg class="radar" id="radarOverview" role="img" aria-label="六维引力雷达"></svg>
+         <div class="dim-bubble" id="dimBubble" style="display:none"><div class="dim-bubble__title" id="dimBubbleTitle"></div><div id="dimBubbleBody"></div></div>
+       </div>` +
+      panelH('引力公式') +
+      `<div class="gravity-formula">
+         <div class="g-term" data-g="声望引力"><span class="g-term__label">声望</span><span class="g-term__val">${num(get(ec, '声望引力', 0), 0)}</span></div>
+         <span class="g-plus">+</span>
+         <div class="g-term" data-g="设施引力"><span class="g-term__label">设施</span><span class="g-term__val">${vals.reduce((a, b) => a + b, 0)}</span></div>
+         <span class="g-plus">+</span>
+         <div class="g-term" data-g="服务引力"><span class="g-term__label">服务</span><span class="g-term__val">${num(get(ec, '服务引力', 0), 0)}</span></div>
+         <span class="g-plus">+</span>
+         <div class="g-term" data-g="环境引力"><span class="g-term__label">环境</span><span class="g-term__val">${num(get(ec, '环境引力', 0), 0)}</span></div>
+         <span class="g-eq">=</span>
+         <div class="g-total"><span class="g-term__label">总引力</span><span class="g-total__val">${total}</span></div>
+       </div>` +
+      panelH('当日预报') +
+      `<div class="card">
+         <div class="row row--between" style="margin-bottom:6px"><span class="card__sub"><span class="ic" data-i="${weatherIcon(get(fc, '天气', get(s, '世界.时间.天气', '晴')))}" style="--ic:16px;color:var(--color-primary)"></span> 天气 · ${get(fc, '天气', '—')}</span><span class="card__sub">引力 · <span class="num" style="color:var(--color-primary)">${num(get(fc, '引力值', total), 0)}</span></span></div>
+         <div class="card__sub" style="margin-bottom:6px">访客池：${get(fc, '访客池', '—')}</div>
+         <div class="list-h"><span>注意事项</span></div>
+         ${(get(fc, '注意事项', []) || []).map((x) => `<div class="card__sub" style="margin:3px 0;line-height:1.6">· ${x}</div>`).join('') || '<div class="faint" style="font-size:var(--font-size-xs)">今日无事须记。</div>'}
+       </div>`;
+    Icon.render(container);
+
+    const svg = $('#radarOverview', container);
+    const bubble = $('#dimBubble', container);
+    drawRadar(svg, axes, vals, maxV, {
+      size: 220, pad: 40, labelPad: 18,
+      onVertex: (ax) => {
+        $('#dimBubbleTitle', container).textContent = `${ax.name} · 设施引力 ${num(inf[ax.key], 0)}`;
+        $('#dimBubbleTitle', container).style.color = ax.color;
+        $('#dimBubbleBody', container).innerHTML = dimBars({ [ax.key]: inf[ax.key] }, 10);
+        bubble.style.display = 'block';
+      }
+    });
+    $('.g-term', container).forEach((el) => {
+      el.addEventListener('click', () => {
+        const k = el.dataset.g;
+        toast('info', k, `当前贡献引力 ${num(get(ec, k, 0), 0)} 点。`);
+      });
+    });
+  }
+
+  /* ---- 库存 + 食谱 ---- */
+  function renderInventory(container, s) {
+    const inn = get(s, '旅店', {});
+    const stock = get(inn, '库存', {});
+    const recipes = get(inn, '配方', {});
+    const all = entries(stock);
+    const cats = ['全部', ...Array.from(new Set(all.map(([, v]) => v && v.分类).filter(Boolean)))];
+    const cat = UI.invCat && cats.includes(UI.invCat) ? UI.invCat : '全部';
+    const q = (UI.invSearch || '').trim().toLowerCase();
+    const filtered = all.filter(([name, v]) => {
+      const okCat = cat === '全部' || (v && v.分类 === cat);
+      const okSearch = !q || String(name).toLowerCase().includes(q);
+      return okCat && okSearch;
+    });
+
+    const segHtml = `<div class="seg">${cats.map((c) => `<button class="seg__item ${c === cat ? 'is-active' : ''}" data-cat="${c}">${c}</button>`).join('')}</div>`;
+    const searchHtml = `<div class="search"><span class="ic search__icon" data-i="search"></span><input id="invSearch" type="text" placeholder="搜索物品……" value="${UI.invSearch || ''}" /></div>`;
+    const listHtml = filtered.length
+      ? filtered.map(([name, v]) => {
+          const qty = num(v && v.数量, 0);
+          const q2 = (v && v.品质) || '普通';
+          return `<div class="item-row" data-item="${name}">
+            <span class="ic item-row__icon" data-i="${itemIcon(name)}"></span>
+            <div class="item-row__main"><div class="item-row__name">${name}</div><div class="item-row__meta">${(v && v.分类) || '杂项'} · ${(v && v.描述) || ''}</div></div>
+            <span class="q-tag ${qClass(q2)}">${q2}</span>
+            <span class="item-row__qty">×${qty}</span>
+          </div>`;
+        }).join('')
+      : emptyState('bag', '行囊空空', '尚无此类物品。');
+
+    const recArr = entries(recipes);
+    const recHtml = recArr.length
+      ? recArr.map(([name, r]) => {
+          const price = num(r && r.售价, 0), diff = num(r && r.难度, 0), fac = (r && r.需要设施) || '厨房';
+          return `<div class="recipe" data-recipe="${name}">
+            <div class="recipe__head"><span class="ic" data-i="pot" style="--ic:16px;color:var(--color-primary)"></span><span class="recipe__name">${name}</span><span class="pill pill--amber">难度 ${diff}</span></div>
+            <div class="recipe__mats">材料：${(r && r.材料) || '随性发挥'}</div>
+            <div class="recipe__foot"><span class="card__sub">设施 · ${fac}</span><span class="num" style="color:var(--color-primary)">${price} 银</span></div>
+          </div>`;
+        }).join('')
+      : emptyState('scroll', '尚无食谱', '获得配方后将显示于此。');
+
+    container.innerHTML = segHtml + searchHtml +
+      panelH('物品', `${filtered.length} / ${all.length}`) + listHtml +
+      panelH('食谱', `${recArr.length}`) + recHtml;
+    Icon.render(container);
+
+    $('.seg__item', container).forEach((b) => b.addEventListener('click', () => {
+      UI.invCat = b.dataset.cat; renderInventory(container, Render.state);
+    }));
+    const search = $('#invSearch', container);
+    if (search) search.addEventListener('input', () => { UI.invSearch = search.value; renderInventory(container, Render.state); });
+    $('.recipe', container).forEach((r) => r.addEventListener('click', () => {
+      triggerSlash(`/setinput 烹制：${r.dataset.recipe}`);
+      burst(window.innerWidth / 2, window.innerHeight * 0.7);
+    }));
+  }
+
+  /* ---- 建筑 ---- */
+  function renderBuilding(container, s) {
+    const b = get(s, '建筑', {});
+    const built = entries(get(b, '已建成', {}));
+    const blue = entries(get(b, '蓝图', {}));
+    const tab = UI.buildTab || 'built';
+    const seg = `<div class="seg">
+      <button class="seg__item ${tab === 'built' ? 'is-active' : ''}" data-bt="built">已建成 · ${built.length}</button>
+      <button class="seg__item ${tab === 'blue' ? 'is-active' : ''}" data-bt="blue">蓝图 · ${blue.length}</button>
+    </div>`;
+
+    let body = '';
+    if (tab === 'built') {
+      body = built.length ? built.map(([name, v]) => {
+        const lv = num(v && v.等级, 1), st = (v && v.工作状态) || '正常';
+        const produce = (v && v.产出) || '—', cd = num(v && v.产出倒计时, 0), maint = num(v && v.维护费用, 0);
+        const rune = (v && v.符文升级) || '无';
+        const ready = cd === 0 && produce && produce !== '—';
+        return `<div class="building ${ready ? 'is-ready' : ''}" data-build="${name}">
+          <div class="building__head">
+            <span class="ic building__icon" data-i="${buildingIcon(name)}"></span>
+            <span class="building__name">${name}</span>
+            <span class="building__lv">Lv.${lv}</span>
+            <span class="building__status ${st}">${st}</span>
+          </div>
+          <div class="card__sub" style="margin-bottom:4px">${(v && v.描述) || ''}</div>
+          ${dimBars(v && v.影响力, 10)}
+          <div class="row row--between" style="margin-top:4px">
+            <span class="card__sub">产出 · ${produce}${cd > 0 ? `（${cd}日）` : (ready ? '（就绪）' : '')}</span>
+            <span class="card__sub">维护 · <span class="num">${maint} 银</span></span>
+          </div>
+          ${rune && rune !== '无' ? `<div class="row" style="margin-top:4px"><span class="pill pill--mint"><span class="ic" data-i="sparkle" style="--ic:12px"></span>符文 · ${rune}</span></div>` : ''}
+        </div>`;
+      }).join('') : emptyState('hammer', '尚未营建', '前往「蓝图」择一开工。');
+    } else {
+      body = blue.length ? blue.map(([name, v]) => {
+        const cost = (v && v.建造成本) || {};
+        const mat = cost.物资 || '—', cash = num(cost.现金, 0);
+        const cond = (v && v.解锁条件) || '';
+        const neg = (v && v.负面描述) || '';
+        return `<div class="building" data-blue="${name}">
+          <div class="building__head">
+            <span class="ic building__icon" data-i="${buildingIcon(name)}"></span>
+            <span class="building__name">${name}</span>
+          </div>
+          <div class="card__sub" style="margin-bottom:4px">${(v && v.功能描述) || ''}</div>
+          ${dimBars(v && v.影响力, 10)}
+          ${cond ? `<div class="cond-list">解锁：${cond}</div>` : ''}
+          <div class="cost-list"><span class="cost-item">${cash} 银</span><span class="cost-item">${mat}</span></div>
+          ${neg ? `<div class="card__sub" style="color:var(--color-danger);margin-top:4px">⚠ ${neg}</div>` : ''}
+          <button class="btn btn--primary btn--sm btn--block" data-build-btn="${name}" style="margin-top:6px"><span class="ic btn__icon" data-i="hammer"></span>建造</button>
+        </div>`;
+      }).join('') : emptyState('scroll', '暂无蓝图', '随声望与剧情推进，新蓝图将逐步显现。');
+    }
+
+    container.innerHTML = seg + body;
+    Icon.render(container);
+    $('.seg__item', container).forEach((b) => b.addEventListener('click', () => {
+      UI.buildTab = b.dataset.bt; renderBuilding(container, Render.state);
+    }));
+    $('[data-build-btn]', container).forEach((btn) => btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      triggerSlash(`/setinput 建造：${btn.dataset.buildBtn}`);
+      burst(window.innerWidth / 2, window.innerHeight * 0.7);
+    }));
+  }
+
+  /* ---- 地图 ---- */
+  function renderMap(container, s) {
+    const tiles = get(s, '世界.地块', {});
+    const explored = new Set(entries(tiles).map(([k]) => k));
+    const N = 15, C = 7;
+    const neighbors = (x, y) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => explored.has(`${x + dx},${y + dy}`));
+
+    let cells = '';
+    for (let r = 0; r < N; r++) {
+      for (let c = 0; c < N; c++) {
+        const x = c - C, y = r - C, key = `${x},${y}`;
+        if (explored.has(key)) {
+          const t = tiles[key];
+          const center = x === 0 && y === 0;
+          cells += `<div class="map-cell explored ${center ? 'center' : ''}" data-x="${x}" data-y="${y}" title="${get(t, '类型', '地块')} (${x},${y})"><span class="ic" data-i="${tileIcon(get(t, '类型', ''))}"></span></div>`;
+        } else {
+          const adj = neighbors(x, y);
+          cells += `<div class="map-cell fog ${adj ? 'adjacent' : ''}" data-x="${x}" data-y="${y}">${adj ? '<span class="faint" style="font-size:8px">?</span>' : ''}</div>`;
+        }
+      }
+    }
+
+    container.innerHTML =
+      panelH('疆域图志', '探索约耗 15 精力') +
+      `<div class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>点击已探明地块查看详情；点击迷雾边缘探索新地。</div></div>` +
+      `<div class="map-grid" style="grid-template-columns:repeat(${N},1fr)">${cells}</div>` +
+      `<div id="tileDetail"></div>`;
+    Icon.render(container);
+
+    $('.map-cell.explored', container).forEach((cell) => {
+      cell.addEventListener('click', () => showTile(container, tiles, +cell.dataset.x, +cell.dataset.y));
+    });
+    $('.map-cell.fog.adjacent', container).forEach((cell) => {
+      cell.addEventListener('click', () => {
+        triggerSlash(`/setinput 探索：(${cell.dataset.x},${cell.dataset.y})`);
+        burst(window.innerWidth / 2, window.innerHeight * 0.7);
+      });
+    });
+  }
+  function showTile(container, tiles, x, y) {
+    const t = tiles[`${x},${y}`] || {};
+    const res = normalizeRes(get(t, '资源', []));
+    const cnt = collectCount(get(t, '本季采集次数', 0));
+    const box = $('#tileDetail', container);
+    if (!box) return;
+    const resHtml = res.length ? res.map((r) => `<div class="dim-source"><span>${r.name}</span><span>×${r.qty}</span></div>`).join('')
+      : '<div class="faint" style="font-size:var(--font-size-xs)">此地暂无可采资源。</div>';
+    box.innerHTML =
+      `<div class="card tile-detail">
+        <div class="building__head">
+          <span class="ic building__icon" data-i="${tileIcon(get(t, '类型', ''))}" style="color:var(--color-primary)"></span>
+          <span class="building__name">${get(t, '类型', '地块')} · (${x},${y})</span>
+          <span class="pill">本季已采 ${cnt}</span>
+        </div>
+        <p class="card__sub" style="line-height:1.7;margin:4px 0 8px">${get(t, '描述', '')}</p>
+        <div class="list-h"><span>当前可采集</span></div>
+        <div>${resHtml}</div>
+        <button class="btn btn--primary btn--sm btn--block" data-gather="${x},${y}" style="margin-top:8px"><span class="ic btn__icon" data-i="bag"></span>前往采集</button>
+      </div>`;
+    Icon.render(box);
+    $('[data-gather]', box).addEventListener('click', () => {
+      triggerSlash(`/setinput 采集：(${x},${y})`);
+      burst(window.innerWidth / 2, window.innerHeight * 0.7);
+    });
+  }
+
+  /* ---- 员工 ---- */
+  function renderStaff(container, s) {
+    const staff = entries(get(s, '旅店.员工', {}));
+    if (!staff.length) { container.innerHTML = emptyState('person', '尚无雇员', '经由招募渠道寻访帮手。'); Icon.render(container); return; }
+    container.innerHTML = panelH('员工名册', `${staff.length}`) + staff.map(([name, m], i) => {
+      const attr = get(m, '属性', {}), st = get(m, '状态', {}), job = get(m, '职业信息', {}), gem = get(m, '心之宝石', {});
+      const skills = get(m, '技能', []) || [];
+      const axes = ['技艺', '悟性', '体力', '亲和', '专注'];
+      const vals = axes.map((k) => num(attr[k], 0));
+      const morale = clamp(num(get(st, '士气', 0), 0), 0, 100);
+      const loyal = clamp(num(get(st, '忠诚度', 0), 0), 0, 100);
+      const ener = clamp(num(get(st, '精力', 0), 0), 0, 100);
+      const light = (gem.闪光圣岩 || []), dark = (gem.暗影原石 || []);
+      return `<div class="staff-card ${morale < 30 ? 'low-morale' : ''}">
+        <div class="staff-card__head">
+          <div class="staff-avatar">${(name || '?').slice(0, 1)}</div>
+          <div style="flex:1"><div class="staff-card__name">${name}</div><div class="staff-card__role">${get(job, '职业', '帮工')} · <span class="class-badge">${get(job, '阶级', 'T1')}</span></div></div>
+          <svg class="mini-radar" id="radarStaff${i}" viewBox="0 0 50 50"></svg>
+        </div>
+        <div class="staff-card__stats">
+          <div class="stat-line"><span class="stat-line__label">精力 ${ener}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${ener}%;background:var(--color-primary)"></div></div></div>
+          <div class="stat-line"><span class="stat-line__label">士气 ${morale}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${morale}%;background:var(--color-success)"></div></div></div>
+          <div class="stat-line"><span class="stat-line__label">忠诚 ${loyal}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${loyal}%;background:var(--color-accent)"></div></div></div>
+        </div>
+        <div class="row" style="gap:4px;flex-wrap:wrap;margin-top:6px">
+          <span class="pill">日薪 ${num(get(job, '日薪', 0), 0)} 银</span>
+          ${skills.map((sk) => `<span class="pill pill--mint">${sk}</span>`).join('')}
+        </div>
+        ${(light.length || dark.length) ? `<div class="row" style="gap:4px;flex-wrap:wrap;margin-top:4px">
+          ${light.map((x) => `<span class="gem-tag gem-tag--light">◈ ${x}</span>`).join('')}
+          ${dark.map((x) => `<span class="gem-tag gem-tag--dark">◈ ${x}</span>`).join('')}
+        </div>` : ''}
+        ${get(m, '描述', '') ? `<div class="card__sub" style="margin-top:4px;line-height:1.6">${m.描述}</div>` : ''}
+      </div>`;
+    }).join('');
+    Icon.render(container);
+    staff.forEach(([, m], i) => {
+      const svg = $(`#radarStaff${i}`, container); if (!svg) return;
+      const attr = get(m, '属性', {});
+      const axes = ['技艺', '悟性', '体力', '亲和', '专注'].map((k) => ({ name: k }));
+      const vals = axes.map(() => 0);
+      const realVals = ['技艺', '悟性', '体力', '亲和', '专注'].map((k) => num(attr[k], 0));
+      drawRadar(svg, axes, realVals, Math.max(15, ...realVals, 1), { size: 50, pad: 4, labelPad: 0, showLabels: false, showVals: false, vertexR: 1.6, dur: 600 });
+    });
+  }
+
+  /* ---- 访客 ---- */
+  function renderVisitor(container, s) {
+    const vis = entries(get(s, '旅店.当前访客', {}));
+    if (!vis.length) { container.innerHTML = emptyState('key', '堂内无人', '今日尚无访客登门。'); Icon.render(container); return; }
+    container.innerHTML = panelH('堂上宾客', `${vis.length}`) + vis.map(([name, v]) => {
+      const sat = clamp(num(get(v, '满意度', 0), 0), 0, 100);
+      const r = 16, c = 2 * Math.PI * r, off = c * (1 - sat / 100);
+      const col = sat >= 70 ? 'var(--color-success)' : sat >= 40 ? 'var(--color-warning)' : 'var(--color-danger)';
+      const special = /特殊|贵族|稀有/.test(get(v, '类型', ''));
+      const pref = pillsFrom(get(v, '需求偏好', []), 'pill--mint');
+      const resist = (get(v, '抗性标签', []) || []).map((t) => `<span class="pill resist-tag" style="border-style:dashed;color:var(--color-danger)">${t}</span>`).join('');
+      const seed = pillsFrom(get(v, '携带种子', []), 'pill--amber');
+      return `<div class="visitor-card ${special ? 'special' : ''}">
+        <div class="visitor-card__head">
+          <span class="ic" data-i="${visitorIcon(get(v, '类型', ''))}" style="--ic:20px;color:var(--color-primary)"></span>
+          <span class="visitor-card__name">${name}</span>
+          <span class="pill">${get(v, '类型', '访客')}</span>
+          <div class="satisfaction"><svg width="40" height="40"><circle class="satisfaction__track" cx="20" cy="20" r="${r}"></circle><circle class="satisfaction__fill" cx="20" cy="20" r="${r}" stroke="${col}" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"></circle></svg><span class="satisfaction__val" style="color:${col}">${sat}</span></div>
+        </div>
+        <div class="row" style="gap:4px;flex-wrap:wrap;margin:4px 0"><span class="card__sub">消费 · ${get(v, '消费能力', '中')}</span><span class="card__sub">状态 · ${get(v, '状态', '在店')}</span></div>
+        <div class="visitor-card__tags">${pref}${resist}${seed}</div>
+      </div>`;
+    }).join('');
+    Icon.render(container);
+  }
+
+  /* ---- 任务 ---- */
+  function renderQuest(container, s) {
+    const eng = get(s, '叙事引擎', {});
+    const tab = UI.questTab || 'commission';
+    const seg = `<div class="seg">
+      <button class="seg__item ${tab === 'commission' ? 'is-active' : ''}" data-qt="commission">委托</button>
+      <button class="seg__item ${tab === 'bond' ? 'is-active' : ''}" data-qt="bond">羁绊</button>
+      <button class="seg__item ${tab === 'seed' ? 'is-active' : ''}" data-qt="seed">种子</button>
+    </div>`;
+    let body = '';
+    if (tab === 'commission') {
+      const arr = entries(get(eng, '委托任务', {}));
+      body = arr.length ? arr.map(([name, q]) => {
+        const st = (q && q.状态) || '进行中';
+        return `<div class="quest-card">
+          <div class="quest-card__head"><span class="ic" data-i="scroll" style="--ic:16px;color:var(--color-primary)"></span><span class="quest-card__name">${name}</span><span class="pill ${st === '已完成' ? 'pill--green' : st === '已失败' || st === '已过期' ? 'pill--red' : ''}">${st}</span></div>
+          <div class="quest-card__desc">${(q && q.描述) || ''}</div>
+          <div class="row row--between"><span class="card__sub">时限 · ${(q && q.时限) || '不限'}</span><span class="card__sub">报酬 · <span style="color:var(--color-primary)">${(q && q.报酬) || '—'}</span></span></div>
+        </div>`;
+      }).join('') : emptyState('scroll', '暂无委托', '随着故事推进，委托将接踵而至。');
+    } else if (tab === 'bond') {
+      const arr = entries(get(eng, '羁绊故事', {}));
+      body = arr.length ? arr.map(([name, q]) => `<div class="quest-card" style="border-left-color:var(--color-accent)">
+        <div class="quest-card__head"><span class="ic" data-i="key" style="--ic:16px;color:var(--color-accent)"></span><span class="quest-card__name">${name}</span><span class="pill pill--mint">${(q && q.当前阶段) || '未开启'}</span></div>
+        <div class="quest-card__desc">${(q && q.描述) || ''}</div>
+        ${q && q.触发条件 ? `<div class="card__sub">触发 · ${q.触发条件}</div>` : ''}
+      </div>`).join('') : emptyState('key', '尚无羁绊', '与人往复交心，方结羁绊。');
+    } else {
+      const arr = entries(get(eng, '任务种子', {}));
+      body = arr.length ? arr.map(([name, q]) => `<div class="quest-card" style="border-left-color:var(--dim-lore)">
+        <div class="quest-card__head"><span class="ic" data-i="sparkle" style="--ic:16px;color:hsl(280 45% 58%)"></span><span class="quest-card__name">${name}</span><span class="pill">${(q && q.状态) || '潜伏中'}</span></div>
+        <div class="quest-card__desc">来源 · ${(q && q.来源) || '—'}　潜在任务 · ${(q && q.潜在任务) || '—'}</div>
+        <div class="row row--between"><span class="card__sub">优先级 ${num(q && q.优先级, 0)}</span><span class="card__sub">报酬 · ${(q && q.报酬) || '—'}</span></div>
+      </div>`).join('') : emptyState('sparkle', '无埋设种子', '事件种子将在交互中埋下。');
+    }
+    container.innerHTML = seg + body;
+    Icon.render(container);
+    $('.seg__item', container).forEach((b) => b.addEventListener('click', () => { UI.questTab = b.dataset.qt; renderQuest(container, Render.state); }));
+  }
+
+  /* ---- 农牧 ---- */
+  function renderFarm(container, s) {
+    const farm = get(s, '农牧', {});
+    const plots = entries(get(farm, '农田网格', {}));
+    const comp = get(farm, '堆肥箱', {});
+    const live = entries(get(farm, '畜牧', {}));
+    let html = panelH('农田', `${plots.length} 块`);
+    html += plots.length ? plots.map(([key, p]) => {
+      const state = (p && p.状态) || '荒地';
+      const crop = (p && p.作物) || '';
+      const days = num(p && p.剩余天数, 0);
+      const watered = p && p.今日已浇水, fert = p && p.已施肥;
+      const total = days > 0 ? days : 1;
+      // 估算生长进度：状态种植中时，无明确总期，用剩余天数反推不可靠，仅作展示
+      const pct = state === '种植中' ? (crop ? clamp(100 - days * 18, 5, 100) : 0) : 0;
+      const ripe = state === '种植中' && days <= 0;
+      const x = num(p && p.x, 0), y = num(p && p.y, 0);
+      return `<div class="crop-plot" data-plot="${x},${y}">
+        <div class="crop-plot__head">
+          <span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'carrot'}" style="--ic:18px;color:${ripe ? 'var(--color-primary)' : 'var(--color-success)'}"></span>
+          <span class="crop-plot__name">(${x},${y}) · ${state}${crop ? ' · ' + crop : ''}</span>
+          <span class="ic status-icon ${watered ? '已浇水' : '未浇水'}" data-i="${watered ? 'water' : 'herb'}" title="${watered ? '已浇水' : '未浇水'}"></span>
+          ${fert ? '<span class="ic status-icon 已施肥" data-i="fertilize" title="已施肥"></span>' : ''}
+        </div>
+        ${state === '种植中' && crop ? `<div class="row row--between" style="margin:3px 0"><span class="card__sub">${ripe ? '已成熟' : `约 ${days} 日后成熟`}</span>${p && p.品质修正 ? `<span class="card__sub">品质修正 ${p.品质修正}</span>` : ''}</div><div class="grow-bar"><div class="grow-bar__fill" style="width:${pct}%"></div></div>` : ''}
+        <div class="row" style="gap:6px;margin-top:6px">
+          ${state === '种植中' && crop ? (ripe ? `<button class="btn btn--primary btn--sm" data-harvest="${x},${y}"><span class="ic btn__icon" data-i="bag"></span>收获</button>` : `<button class="btn btn--sm" data-water="${x},${y}"><span class="ic btn__icon" data-i="water"></span>浇水</button>`) : ''}
+          ${state === '荒地' ? `<button class="btn btn--sm" data-till="${x},${y}"><span class="ic btn__icon" data-i="hammer"></span>开垦</button>` : ''}
+          ${state === '已开垦' ? `<button class="btn btn--sm" data-plant="${x},${y}"><span class="ic btn__icon" data-i="grain"></span>播种</button>` : ''}
+        </div>
+      </div>`;
+    }).join('') : emptyState('wheat', '无农田', '前往地图开垦新田。');
+
+    html += panelH('堆肥箱');
+    html += `<div class="card"><div class="row row--between"><span class="card__sub">状态 · ${(comp && comp.状态) || '空'}</span><span class="card__sub">倒计时 · <span class="num">${num(comp && comp.倒计时, 0)}</span></span></div></div>`;
+
+    html += panelH('畜牧', `${live.length}`);
+    html += live.length ? live.map(([name, l]) => {
+      const hp = clamp(num(get(l, '健康度', 0), 0), 0, 100);
+      const col = hp >= 50 ? 'var(--color-success)' : 'var(--color-danger)';
+      return `<div class="livestock-card"><div class="building__head"><span class="ic building__icon" data-i="garden"></span><span class="building__name">${name}</span></div>
+        <div class="row row--between"><span class="card__sub">饲料 · ${num(get(l, '饲料倒计时', 0), 0)} 日</span><span class="card__sub">产出 · ${num(get(l, '产出倒计时', 0), 0)} 日</span></div>
+        <div class="stat-line" style="margin-top:4px"><span class="stat-line__label">健康 ${hp}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${hp}%;background:${col}"></div></div></div>
+      </div>`;
+    }).join('') : emptyState('garden', '无牲畜', '建造畜牧设施后将显示于此。');
+
+    container.innerHTML = html;
+    Icon.render(container);
+    // 农事动作（各自指令不同）
+    $('[data-water]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 浇水：(${b.dataset.water})`); }));
+    $('[data-harvest]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 收获：(${b.dataset.harvest})`); }));
+    $('[data-till]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 开垦：(${b.dataset.till})`); }));
+    $('[data-plant]', container).forEach((b) => b.addEventListener('click', () => { triggerSlash(`/setinput 播种：(${b.dataset.plant})`); }));
+  }
+
+  /* ============================================================
+     对外接口
+     ============================================================ */
+  const PANELS = {
+    overview: renderOverview,
+    inventory: renderInventory,
+    building: renderBuilding,
+    map: renderMap,
+    staff: renderStaff,
+    visitor: renderVisitor,
+    quest: renderQuest,
+    farm: renderFarm,
+  };
+  const SLICE = {
+    overview: (s) => JSON.stringify({ ec: get(s, '访客生态'), fc: get(s, '当日预报') }),
+    inventory: (s) => JSON.stringify({ inv: get(s, '旅店.库存'), rec: get(s, '旅店.配方') }),
+    building: (s) => JSON.stringify(get(s, '建筑')),
+    map: (s) => JSON.stringify(get(s, '世界.地块')),
+    staff: (s) => JSON.stringify(get(s, '旅店.员工')),
+    visitor: (s) => JSON.stringify(get(s, '旅店.当前访客')),
+    quest: (s) => JSON.stringify(get(s, '叙事引擎')),
+    farm: (s) => JSON.stringify(get(s, '农牧')),
+  };
+  const UI = { invCat: '全部', invSearch: '', buildTab: 'built', questTab: 'commission' };
+  const panelSig = {};
+
+  const Render = {
+    state: {},
+    raw: '',
+
+    hud(s) { try { renderHud(s); } catch (e) { console.error('hud', e); } },
+
+    panel(name, s, force) {
+      const fn = PANELS[name]; if (!fn) return;
+      const container = document.querySelector(`.panel[data-panel="${name}"]`);
+      if (!container) return;
+      const sig = SLICE[name] ? SLICE[name](s) : '';
+      if (!force && sig === panelSig[name]) return;
+      panelSig[name] = sig;
+      try { fn(container, s); } catch (e) { console.error('panel ' + name, e); }
+    },
+
+    narrative(rawText) {
+      const el = document.getElementById('narrative');
+      if (!el) return;
+      const html = Extract.extractCleanContent(rawText);
+      if (html && html.trim()) el.innerHTML = html;
+      else el.innerHTML = '<p class="muted">展卷静待故事浮现……</p>';
+    },
+
+    choices(rawText) {
+      const box = document.getElementById('choices');
+      if (!box) return;
+      const opts = Extract.extractOptions(rawText);
+      if (!opts.length) { box.innerHTML = ''; return; }
+      box.innerHTML = opts.map((o, i) => {
+        const plain = String(o).replace(/<[^>]+>/g, '').trim();
+        return `<button class="choice" data-choice="${i}" data-plain="${plain.replace(/"/g, '&quot;')}">
+          <span class="choice__mark">${['◇', '◈', '✦', '❖', '✧'][i % 5]}</span>
+          <span class="choice__text">${o}</span>
+        </button>`;
+      }).join('');
+      $('.choice', box).forEach((b) => b.addEventListener('click', () => {
+        triggerSlash(`/setinput ${b.dataset.plain}`);
+        burst(window.innerWidth / 2, window.innerHeight * 0.7);
+      }));
+    }
+  };
+
+  window.Render = Render;
+})();
+
+
+/* === app.js === */
+/* ============================================================
+   暮归旅店 · 双页书交互主控
+   翻页标签切换（inkBleed）/ 底栏动作 / 主题 / 设置
+   1s 轮询：rawText + stat_data 变化才重渲染（逐面板签名比对）
+   所有玩家动作经 /setinput 发给 AI，前端不本地改状态
+   ============================================================ */
+(function () {
+  'use strict';
+
+  const $  = (s, r = document) => r.querySelector(s);
+  const $ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+  /* ---------- 当前标签 ---------- */
+  function currentTab() {
+    const t = $('.tab.is-active');
+    return t ? t.dataset.tab : 'overview';
+  }
+
+  /* ---------- 翻页：切换左页功能面板 ---------- */
+  function openTab(name) {
+    const panel = $(`.panel[data-panel="${name}"]`);
+    if (!panel) return;
+    $('.tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === name));
+    $('.panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === name));
+    // 面板由 display:none 转 block 时自动重放 inkBleed 翻页动效；立即渲染该面板
+    Render.panel(name, Render.state, true);
+  }
+
+  /* ---------- 主题 ---------- */
+  function setTheme(th) {
+    document.documentElement.setAttribute('data-theme', th);
+    const tg = $('#themeToggle');
+    if (tg) Icon.set(tg, th === 'night' ? 'sun' : 'moon');
+  }
+  function toggleTheme() {
+    setTheme(document.documentElement.getAttribute('data-theme') === 'night' ? 'day' : 'night');
+  }
+
+  /* ---------- 设置浮卡（轻量，非全屏覆层） ---------- */
+  function openSettings() {
+    const existing = document.getElementById('settingsPop');
+    if (existing) { existing.remove(); return; }
+    const pop = h('div', { class: 'settings-pop', id: 'settingsPop', role: 'dialog', 'aria-label': '设置' });
+    const close = () => pop.remove();
+
+    pop.appendChild(h('div', { class: 'settings-pop__head' }, [
+      h('span', { class: 'ic', html: Icon.get('settings') }),
+      h('span', { class: 'settings-pop__title' }, '掌柜手记'),
+      h('button', { class: 'settings-pop__close', 'aria-label': '关闭', onclick: close },
+        h('span', { class: 'ic', html: Icon.get('close') }))
+    ]));
+
+    const themeBtn = h('button', { class: 'btn btn--ghost btn--sm' },
+      document.documentElement.getAttribute('data-theme') === 'night' ? '当前：夜 · 切昼' : '当前：昼 · 切夜');
+    themeBtn.addEventListener('click', () => {
+      toggleTheme();
+      themeBtn.textContent = document.documentElement.getAttribute('data-theme') === 'night' ? '当前：夜 · 切昼' : '当前：昼 · 切夜';
+    });
+    pop.appendChild(h('div', { class: 'set-row' }, [
+      h('div', null, [
+        h('div', { class: 'set-row__title' }, '昼夜主题'),
+        h('div', { class: 'faint', style: 'font-size:var(--font-size-2xs)' }, '羊皮纸昼景 / 靛蓝烛夜')
+      ]),
+      themeBtn
+    ]));
+
+    pop.appendChild(h('div', { class: 'notice notice--info', style: 'margin-top:var(--space-3)' }, [
+      h('span', { class: 'ic notice__icon', html: Icon.get('info') }),
+      h('div', null, '本界面由酒馆助手驱动，状态读自 MVU 变量；动作经 /setinput 写入输入框，由 AI 推进世界。')
+    ]));
+
+    document.body.appendChild(pop);
+    Icon.render(pop);
+    // 点击浮卡外部关闭
+    setTimeout(() => {
+      const handler = (e) => { if (!pop.contains(e.target)) { close(); document.removeEventListener('mousedown', handler); } };
+      document.addEventListener('mousedown', handler);
+    }, 0);
+  }
+
+  function h(tag, attrs = {}, children = []) {
+    const e = document.createElement(tag);
+    Object.entries(attrs).forEach(([k, v]) => {
+      if (v === null || v === undefined) return;
+      if (k === 'class') e.className = v;
+      else if (k === 'html') e.innerHTML = v;
+      else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v);
+    });
+    (Array.isArray(children) ? children : [children]).forEach((c) => {
+      if (c == null || c === false) return;
+      e.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(c) : c);
+    });
+    return e;
+  }
+
+  /* ---------- 底栏动作 ---------- */
+  function dockAction(act) {
+    switch (act) {
+      case 'cook': openTab('inventory'); toast('info', '灶事', '择一道食谱烹制。'); break;
+      case 'water': triggerSlash('/setinput 浇灌所有农田'); break;
+      case 'rest': triggerSlash('/setinput 小憩片刻，恢复精力'); break;
+      case 'endday': triggerSlash('/setinput 归寝入眠，结束今天'); break;
+    }
+  }
+
+  /* ---------- 轮询刷新 ---------- */
+  let lastRaw = null, lastSig = null, started = false;
+
+  function refresh(force) {
+    const raw = Extract.getRawText();
+    const state = MVU.getState();
+    const sig = JSON.stringify(state);
+    const rawChanged = force || raw !== lastRaw;
+    const stateChanged = force || sig !== lastSig;
+
+    Render.state = state;
+    Render.raw = raw;
+
+    if (stateChanged) {
+      Render.hud(state);
+      Render.panel(currentTab(), state, false);
+    }
+    if (rawChanged) {
+      Render.narrative(raw);
+      Render.choices(raw);
+    }
+    lastRaw = raw;
+    lastSig = sig;
+  }
+
+  /* ---------- 初始化 ---------- */
+  async function init() {
+    Icon.render(document);
+
+    // 等待 MVU 就绪
+    await MVU.init();
+
+    // 首屏渲染
+    Render.state = MVU.getState();
+    Render.raw = Extract.getRawText();
+    Render.hud(Render.state);
+    Render.panel(currentTab(), Render.state, true);
+    Render.narrative(Render.raw);
+    Render.choices(Render.raw);
+    lastRaw = Render.raw;
+    lastSig = JSON.stringify(Render.state);
+
+    // 翻页标签
+    $('.tab').forEach((t) => t.addEventListener('click', () => openTab(t.dataset.tab)));
+
+    // 主题 / 设置
+    const themeBtn = $('#themeToggle'); if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+    const setBtn = $('#settingsBtn'); if (setBtn) setBtn.addEventListener('click', openSettings);
+
+    // 底栏
+    $('.dock__btn').forEach((b) => b.addEventListener('click', () => dockAction(b.dataset.act)));
+
+    // Esc 关设置
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { const p = document.getElementById('settingsPop'); if (p) p.remove(); }
+    });
+
+    // 1s 轮询
+    if (!started) { started = true; setInterval(refresh, 1000); }
+
+    // 欢迎语
+    setTimeout(() => toast('magic', '暮归旅店 · 开张志', '愿这盏烛火，照亮你重建家业的路。'), 500);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
+</script>
 </body>
 </html>

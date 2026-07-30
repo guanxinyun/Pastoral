@@ -1,0 +1,113 @@
+/* ============================================================
+   正文 / 选项提取（按"酒馆正文提取与处理指导文件"）
+   - 不硬编码 <maintext>；先 formatAsTavernRegexedString 跑正则，再 DOM 手术
+   - 选项在正则前从原文提取（5 种标签）
+   - API 不可用时回退 SAMPLE_RAWTEXT
+   ============================================================ */
+const Extract = {
+  hasTavern() {
+    return typeof getCurrentMessageId === 'function' && typeof getChatMessages === 'function';
+  },
+
+  /** 取当前楼层原始文本 */
+  getRawText() {
+    try {
+      if (!this.hasTavern()) return window.SAMPLE_RAWTEXT || '';
+      const id = getCurrentMessageId();
+      const msgs = getChatMessages(id);
+      return (msgs && msgs[0] && msgs[0].message) || '';
+    } catch (e) {
+      return window.SAMPLE_RAWTEXT || '';
+    }
+  },
+
+  /** 选项提取：正则处理之前从原文取，兼容两种写法
+   *  - 块式：<options>行1\n行2</options>（取最后一个块，按行拆）
+   *  - 单式：<option>A</option><option>B</option>（每个标签即一项）
+   *  优先块式；若无则用单式。 */
+  extractOptions(rawText) {
+    if (!rawText) return [];
+    const blocks = [
+      /<options>([\s\S]*?)<\/options>/gi,
+      /<choices>([\s\S]*?)<\/choices>/gi,
+      /<select>([\s\S]*?)<\/select>/gi,
+    ];
+    for (const p of blocks) {
+      const m = [...rawText.matchAll(p)];
+      if (m.length) {
+        const last = m[m.length - 1][1];
+        const opts = last.split('\n').map(s => s.trim()).filter(Boolean);
+        if (opts.length) return opts;
+      }
+    }
+    const singles = [
+      /<option>([\s\S]*?)<\/option>/gi,
+      /<choice>([\s\S]*?)<\/choice>/gi,
+    ];
+    for (const p of singles) {
+      const m = [...rawText.matchAll(p)];
+      if (m.length) return m.map(x => x[1].trim()).filter(Boolean);
+    }
+    return [];
+  },
+
+  /** 正文清理：跑酒馆正则 -> DOM 手术剥结构壳 -> 保留内联美化 */
+  extractCleanContent(rawText) {
+    if (!rawText) return '';
+    // 先剥离选项块，避免选项混入正文
+    let text = rawText.replace(/<\/?(?:option|options|choice|choices|select)>/gi, '');
+
+    // 让酒馆正则处理（切思维链、执行美化正则等）
+    if (typeof formatAsTavernRegexedString === 'function') {
+      try {
+        text = formatAsTavernRegexedString(text, 'ai_output', 'display', { depth: 0 });
+      } catch (e) { /* 失败则用原文 */ }
+    }
+
+    const temp = document.createElement('div');
+    temp.innerHTML = text;
+
+    // 删除绝对不要的元素
+    temp.querySelectorAll('script, style, link').forEach(el => el.remove());
+
+    // 解包结构性标签
+    ['html', 'head', 'body', 'header', 'footer', 'nav'].forEach(tag => {
+      temp.querySelectorAll(tag).forEach(el => el.replaceWith(...el.childNodes));
+    });
+
+    // 智能解包纯布局容器
+    this._unwrapStructural(temp);
+
+    return temp.innerHTML.trim();
+  },
+
+  _unwrapStructural(container) {
+    const wrappers = Array.from(container.querySelectorAll('div, section, article, aside, main'));
+    wrappers.sort((a, b) => this._depth(b) - this._depth(a));
+    wrappers.forEach(el => {
+      if (this._isPureWrapper(el)) el.replaceWith(...el.childNodes);
+    });
+  },
+
+  _depth(el) { let d = 0, n = el; while (n.parentElement) { d++; n = n.parentElement; } return d; },
+
+  _hasDirectText(el) {
+    for (const c of el.childNodes) if (c.nodeType === 3 && c.textContent.trim()) return true;
+    return false;
+  },
+
+  _isPureWrapper(el) {
+    // 有直接文字 -> 不是纯包装
+    if (this._hasDirectText(el)) return false;
+    const style = (el.getAttribute('style') || '').toLowerCase();
+    const contentKw = ['color', 'text-shadow', 'text-decoration', 'font-weight', 'font-style', 'font-size', 'font-family', 'background-color', 'background-image', 'background:', 'animation', 'filter', 'opacity', 'box-shadow', 'letter-spacing', 'transform'];
+    for (const k of contentKw) if (style.includes(k)) return false;
+    const cls = (el.className || '').toString();
+    if (/glow|shine|sparkle|highlight|color|accent|effect|anim|italic|bold|gradient|shadow|pulse|flash|blink|dialogue|speech|quote|narrat/i.test(cls)) return false;
+    const idCls = ((el.id || '') + ' ' + cls).toLowerCase();
+    if (/wrapper|container|layout|outer|main[-_]?text|main[-_]?content|content[-_]?box|message[-_]?body|story[-_]?box|frame|shell|page/i.test(idCls)) return true;
+    if (el.children.length === 1 && !this._hasDirectText(el)) return true;
+    return false;
+  }
+};
+window.Extract = Extract;
