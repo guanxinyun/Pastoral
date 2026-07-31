@@ -134,6 +134,47 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(JSON.parse(win.localStorage.getItem('mrfz_settings')).variablePresets.normal.blockDepthEntries === false, '放行选择可持久化');
     blockDepth.checked = true; blockDepth.dispatchEvent(new win.Event('change', { bubbles: true }));
     doc.getElementById('presetSettingsForm').dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
+
+    // 组装方式：预设的占位符枚举里没有 user_input，必须能显式选择送达方式。
+    const assembly = doc.querySelector('[name="normalAssembly"]');
+    ok(!!assembly && assembly.value === 'compile', '预设页提供组装方式且默认编译成消息列表');
+    ok(!assembly.closest('[data-preset-assembly]').hidden, '固定预设模式下组装方式可见');
+    const assemblyNote = doc.querySelector('[data-assembly-note="normal"]');
+    ok(assemblyNote && /强制追加/.test(assemblyNote.textContent), '编译方式说明保证送达');
+    const effectiveText = doc.querySelector('[data-preset-effective="normal"]');
+    ok(/任务消息强制置于末位/.test(effectiveText.textContent), '实际发送说明反映编译方式');
+    assembly.value = 'inject'; assembly.dispatchEvent(new win.Event('change', { bubbles: true }));
+    ok(/可能不进入请求/.test(assemblyNote.textContent), '切到注入方式后明确警示可能丢失');
+    ok(/depth 0 注入/.test(effectiveText.textContent), '实际发送说明同步为注入方式');
+    doc.getElementById('presetSettingsForm').dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
+    ok(JSON.parse(win.localStorage.getItem('mrfz_settings')).variablePresets.normal.assembly === 'inject', '组装方式可持久化');
+
+    // 注入方式的预览应如实说明落点不确定。
+    doc.querySelector('[data-preview-assembly="normal"]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    const assemblyPreview = doc.querySelector('[data-assembly-preview="normal"]');
+    ok(assemblyPreview && !assemblyPreview.hidden && /should_scan: false/.test(assemblyPreview.textContent),
+      '注入预览说明任务消息不参与世界书扫描');
+    ok(/落点由酒馆决定/.test(assemblyPreview.textContent), '注入预览如实说明落点不确定');
+
+    // 编译方式的预览应逐条列出消息，且末位是任务消息。
+    win.getPreset = () => ({
+      settings: {},
+      prompts: [
+        { id: 'main', name: '主提示', enabled: true, role: 'system', content: '预设主提示内容' },
+        { id: 'charDescription', name: '角色描述', enabled: true, role: 'system', position: { type: 'relative' } },
+        { id: '禁用项', name: '禁用项', enabled: false, role: 'system', content: '不该出现' }
+      ],
+      prompts_unused: [],
+      extensions: {}
+    });
+    assembly.value = 'compile'; assembly.dispatchEvent(new win.Event('change', { bubbles: true }));
+    doc.querySelector('[data-preview-assembly="normal"]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    ok(/预设提示词条目/.test(assemblyPreview.textContent), '编译预览逐条列出预设提示词');
+    ok(/本项目变量更新任务/.test(assemblyPreview.textContent), '编译预览包含变量更新任务消息');
+    ok(/末位，数组字面对象/.test(assemblyPreview.textContent), '编译预览标明任务消息在末位且不可丢弃');
+    ok(!/不该出现/.test(assemblyPreview.textContent), '编译预览不含被禁用的预设条目');
+    assembly.value = 'compile'; assembly.dispatchEvent(new win.Event('change', { bubbles: true }));
+    doc.getElementById('presetSettingsForm').dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
     doc.querySelector('[data-settings-tab="prompts"]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
     const normalPrompt = doc.querySelector('[name="normalPrompt"]');
     const enddayPrompt = doc.querySelector('[name="enddayPrompt"]');

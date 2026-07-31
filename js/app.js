@@ -259,6 +259,21 @@
       card.appendChild(h('p', { class: 'faint set-help' }, '“预设”指酒馆 Chat Completion 预设（提示词管理器里的提示词条目与生成参数）。不带预设时用 generateRaw，预设的主提示词、越狱、历史后指令都不参与。'));
       mode.value = setting.mode;
       card.appendChild(h('label', { class: 'set-field' }, [h('span', { class: 'set-field__label' }, '预设模式'), mode]));
+
+      // 预设的占位符枚举里没有 user_input，所以有预设时必须显式决定任务消息怎么送达。
+      const assembly = h('select', { class: 'set-input', name: kind + 'Assembly', 'aria-label': title + '组装方式' }, [
+        h('option', { value: 'compile' }, '编译成消息列表（保证送达）'),
+        h('option', { value: 'inject' }, '保真 + 注入（可能丢失）')
+      ]);
+      assembly.value = setting.assembly === 'inject' ? 'inject' : 'compile';
+      const assemblyField = h('label', { class: 'set-field', 'data-preset-assembly': kind }, [
+        h('span', { class: 'set-field__label' }, '组装方式'),
+        h('span', { class: 'faint set-help' }, '酒馆预设里没有“用户输入”这个槽位，所以任务消息的送达方式必须显式指定。'),
+        assembly
+      ]);
+      card.appendChild(assemblyField);
+      const assemblyNote = h('p', { class: 'faint set-help', 'data-assembly-note': kind });
+      card.appendChild(assemblyNote);
       const missingPreset = setting.presetName && !presetNames.includes(setting.presetName)
         ? [h('option', { value: setting.presetName }, setting.presetName + '（已不存在，请重新选择）')]
         : [];
@@ -303,9 +318,45 @@
 
       const effective = h('p', { class: 'faint set-help preset-effective', 'data-preset-effective': kind });
       card.appendChild(effective);
+
+      const compiledPreview = h('pre', { class: 'prompt-preview', 'data-assembly-preview': kind, hidden: '' });
+      const previewBtn = h('button', { class: 'btn btn--ghost btn--sm', type: 'button', 'data-preview-assembly': kind }, '预览本阶段组装结果');
+      previewBtn.addEventListener('click', () => {
+        const draft = {
+          mode: mode.value,
+          presetName: fixed.querySelector('select').value,
+          assembly: assembly.value,
+          blockDepthEntries: blockDepth.checked,
+          context: {}
+        };
+        Object.keys(contextLabels).forEach((key) => {
+          const input = card.querySelector('[name="' + kind + 'Context_' + key + '"]');
+          draft.context[key] = !!(input && input.checked);
+        });
+        try {
+          const task = ApiEngine.buildPrompt({
+            purpose: kind,
+            baseline: window.MVU && MVU.getDataSnapshot ? MVU.getDataSnapshot() : { stat_data: {} },
+            calculated: kind === 'endday' ? { 说明: '预览占位，实际由脚本结算填入' } : null
+          });
+          compiledPreview.textContent = describeAssembly(draft, task);
+          compiledPreview.hidden = false;
+          compiledPreview.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } catch (e) { toast('error', '无法生成组装预览', e && e.message || String(e)); }
+      });
+      card.appendChild(h('div', { class: 'settings-actions' }, previewBtn));
+      card.appendChild(compiledPreview);
+
       const sync = () => {
         fixed.hidden = mode.value !== 'fixed';
         context.hidden = mode.value !== 'none';
+        assemblyField.hidden = mode.value === 'none';
+        assemblyNote.hidden = mode.value === 'none';
+        if (mode.value !== 'none') {
+          assemblyNote.textContent = assembly.value === 'inject'
+            ? '⚠ 保真：预设的提示词、参数与深度条目完全由酒馆组装，任务消息以 depth 0 注入聊天区。落点由酒馆决定，若该预设没有启用聊天历史条目，任务消息仍可能不进入请求。'
+            : '读取该预设，按原顺序把启用的提示词条目编译成消息列表，末尾强制追加变量更新任务。任务消息不可能丢失；代价是预设的 squash_system_messages、角色名前缀、reasoning_effort 等设置不生效，in_chat 深度条目改为相对位置。';
+        }
         const checkedContext = Object.keys(contextLabels).filter((key) => {
           const input = card.querySelector('[name="' + kind + 'Context_' + key + '"]');
           return input && input.checked;
@@ -316,13 +367,14 @@
           if (checkedContext.length) parts.push('额外携带：' + checkedContext.join('、'));
           else parts.push('不携带任何角色卡或世界书内容');
         } else {
-          parts.push(mode.value === 'current' ? '使用酒馆当前预设的提示词与参数' : '使用固定预设的提示词与参数');
-          parts.push('本项目更新指导仍作为用户输入发送');
+          parts.push(mode.value === 'current' ? '使用酒馆当前预设' : '使用固定预设');
+          parts.push(assembly.value === 'inject' ? '预设完全保真，任务消息以 depth 0 注入' : '预设编译成消息列表，任务消息强制置于末位');
         }
         parts.push(blockDepth.checked ? '已屏蔽深度注入与作者注释' : '⚠ 放行深度注入与作者注释');
         effective.textContent = '实际发送：' + parts.join('；') + '。';
       };
       mode.addEventListener('change', sync);
+      assembly.addEventListener('change', sync);
       blockDepth.addEventListener('change', sync);
       card.querySelectorAll('[name^="' + kind + 'Context_"]').forEach((input) => input.addEventListener('change', sync));
       sync();
@@ -343,6 +395,7 @@
         return {
           mode: presetForm.elements[kind + 'PresetMode'].value,
           presetName: presetForm.elements[kind + 'PresetName'].value,
+          assembly: presetForm.elements[kind + 'Assembly'].value,
           blockDepthEntries: !!presetForm.elements[kind + 'BlockDepth'].checked,
           temperature: presetForm.elements[kind + 'Temperature'].value,
           context
@@ -363,6 +416,45 @@
     backdrop.appendChild(pop); document.body.appendChild(backdrop);
     Icon.render(pop);
     backdrop.addEventListener('mousedown', (e) => { if (e.target === backdrop) close(); });
+  }
+
+  /** 把本阶段的组装结果渲染成可核验的清单：序号、角色、来源、字符数。 */
+  function describeAssembly(preset, task) {
+    const line = (index, role, source, size) => `${String(index).padStart(2, ' ')}. [${role}] ${source} · ${size} 字`;
+    if (preset.mode === 'none') {
+      const list = ApiEngine.orderedPrompts(preset.context);
+      const rows = list.map((item, i) => (item === 'user_input'
+        ? line(i + 1, 'user', '本项目变量更新任务', task.length)
+        : line(i + 1, 'system', '酒馆占位符 ' + item, '由酒馆填充')));
+      return ['不带预设 · generateRaw', ''].concat(rows, ['', '任务消息位置：第 ' + list.length + ' 条（末位，由 user_input 占位符承载）']).join('\n');
+    }
+    if (preset.assembly === 'inject') {
+      return [
+        '保真 + 注入 · generate(preset_name=' + (preset.mode === 'current' ? 'in_use' : preset.presetName) + ')',
+        '',
+        '预设的提示词条目、生成参数与 in_chat 深度条目全部由酒馆组装，此处无法逐条列出。',
+        '',
+        '注入的任务消息：',
+        '  role: system',
+        '  position: in_chat, depth: 0',
+        '  should_scan: false（不参与世界书绿灯扫描）',
+        '  长度: ' + task.length + ' 字',
+        '',
+        '⚠ 落点由酒馆决定。若该预设没有启用聊天历史条目，任务消息仍可能不进入最终请求。',
+        '如需结构性保证，改用「编译成消息列表」。'
+      ].join('\n');
+    }
+    const name = preset.mode === 'current' ? 'in_use' : preset.presetName;
+    let compiled;
+    try { compiled = ApiEngine.compilePreset(name, preset, task); }
+    catch (e) { return '无法编译预设「' + name + '」：' + (e && e.message || e); }
+    const rows = compiled.map((item, i) => (typeof item === 'string'
+      ? line(i + 1, 'system', '酒馆占位符 ' + item, '由酒馆填充')
+      : line(i + 1, item.role, item.content === task ? '本项目变量更新任务' : '预设提示词条目', item.content.length)));
+    return ['编译成消息列表 · generateRaw（预设：' + name + '）', ''].concat(rows, [
+      '',
+      '任务消息位置：第 ' + compiled.length + ' 条（末位，数组字面对象，酒馆无法丢弃）'
+    ]).join('\n');
   }
 
   function h(tag, attrs = {}, children = []) {

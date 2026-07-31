@@ -211,31 +211,134 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       '勾选的上下文不被清空');
     ok(pickedOverrides.chat_history.with_depth_entries === false, '即使勾选聊天历史也仍屏蔽深度注入条目');
 
-    settingsState.variablePresets.endday = { mode: 'current', presetName: '', context: allContext };
+    // 以下预设模式断言针对 inject（保真）策略；compile 策略在 [3b] 单独覆盖。
+    settingsState.variablePresets.endday = { mode: 'current', presetName: '', assembly: 'inject', context: allContext };
     configs.length = 0; rawConfigs.length = 0; attempts = 2;
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'endday' });
     ok(configs[0].preset_name === 'in_use' && rawConfigs.length === 0, '归寝 current 模式跟随酒馆当前预设');
     ok(configs[0].overrides && configs[0].overrides.chat_history.with_depth_entries === false,
       'current 模式也屏蔽世界书深度注入条目');
     ok(configs[0].overrides.char_description === undefined, 'current 模式不清空预设自身要用的占位符');
-    settingsState.variablePresets.endday = { mode: 'current', presetName: '', context: allContext, blockDepthEntries: false };
+    settingsState.variablePresets.endday = { mode: 'current', presetName: '', assembly: 'inject', context: allContext, blockDepthEntries: false };
     configs.length = 0; attempts = 2;
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'endday' });
     ok(!configs[0].overrides || !configs[0].overrides.chat_history, '取消勾选屏蔽后放行深度注入与作者注释');
-    settingsState.variablePresets.endday = { mode: 'current', presetName: '', context: allContext };
-    settingsState.variablePresets.normal = { mode: 'fixed', presetName: '变量专用', context: allContext };
+    settingsState.variablePresets.endday = { mode: 'current', presetName: '', assembly: 'inject', context: allContext };
+    settingsState.variablePresets.normal = { mode: 'fixed', presetName: '变量专用', assembly: 'inject', context: allContext };
     configs.length = 0; attempts = 2;
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
     ok(configs[0].preset_name === '变量专用', '普通 fixed 模式使用玩家指定预设');
-    settingsState.variablePresets.normal = { mode: 'fixed', presetName: '已删除预设', context: Object.assign({}, noContext) };
+    settingsState.variablePresets.normal = { mode: 'fixed', presetName: '已删除预设', assembly: 'inject', context: Object.assign({}, noContext) };
     configs.length = 0; rawConfigs.length = 0; attempts = 2;
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
     ok(configs.length === 0 && JSON.stringify(rawConfigs[0].ordered_prompts) === JSON.stringify(['user_input']), '固定预设不存在时本次降级为真正的不带预设');
 
+    console.log('\n[3b] 预设编译器：任务消息必须送达');
+    // 关键：预设的占位符 id 枚举里没有 user_input（_types_split/09-preset.txt 出现 0 次），
+    // 所以 generate({preset_name, user_input}) 无法保证前端指导进入请求。
+    win.getPreset = (name) => {
+      if (name === '无历史块预设') {
+        return {
+          settings: { temperature: 1.5, squash_system_messages: true },
+          prompts: [
+            { id: 'main', name: '主提示', enabled: true, role: 'system', content: '你是角色扮演助手' },
+            { id: 'jailbreak', name: '越狱', enabled: true, role: 'system', content: '越狱内容' },
+            { id: 'charDescription', name: '角色描述', enabled: true, role: 'system', position: { type: 'relative' } },
+            { id: '已禁用', name: '禁用条目', enabled: false, role: 'system', content: '不应出现' },
+            { id: '空内容', name: '空条目', enabled: true, role: 'system', content: '   ' }
+          ],
+          prompts_unused: [{ id: 'unused', name: '未用', enabled: true, role: 'system', content: '也不应出现' }],
+          extensions: {}
+        };
+      }
+      return {
+        settings: {},
+        prompts: [
+          { id: 'main', name: '主提示', enabled: true, role: 'system', content: '当前预设主提示' },
+          { id: 'worldInfoBefore', name: '世界书前', enabled: true, role: 'system', position: { type: 'relative' } },
+          { id: 'chatHistory', name: '聊天历史', enabled: true, role: 'system', position: { type: 'relative' } },
+          { id: '深度条目', name: '深度注入条目', enabled: true, role: 'user', content: '深度内容', position: { type: 'in_chat', depth: 2, order: 1 } }
+        ],
+        prompts_unused: [],
+        extensions: {}
+      };
+    };
+    win.getPresetNames = () => ['剧情预设', '变量专用', '无历史块预设', '【Pastoral 内部】空白变量更新'];
+
+    const compiled = win.ApiEngine.compilePreset('无历史块预设', { context: allContext }, '任务消息内容');
+    ok(Array.isArray(compiled) && compiled.length > 0, '编译器返回消息列表');
+    const lastEntry = compiled[compiled.length - 1];
+    ok(lastEntry && lastEntry.role === 'user' && lastEntry.content === '任务消息内容',
+      '预设没有 chatHistory 条目时任务消息仍在末位送达');
+    ok(compiled.some((x) => x && x.content === '你是角色扮演助手'), '保留预设启用的系统提示词');
+    ok(!compiled.some((x) => x && /不应出现/.test(String(x.content || ''))), '跳过 enabled=false 条目');
+    ok(!compiled.some((x) => x && /也不应出现/.test(String(x.content || ''))), '跳过 prompts_unused 条目');
+    ok(!compiled.some((x) => x && typeof x === 'object' && String(x.content || '').trim() === ''), '跳过空内容条目');
+    ok(compiled.includes('char_description'), '占位符条目映射为 generateRaw 占位符');
+    ok(compiled.indexOf('char_description') < compiled.length - 1, '占位符位于任务消息之前');
+
+    const filtered = win.ApiEngine.compilePreset('无历史块预设', { context: Object.assign({}, noContext) }, '任务');
+    ok(!filtered.includes('char_description'), '取消勾选的占位符即使预设启用也被过滤');
+    ok(filtered[filtered.length - 1].content === '任务', '过滤占位符后任务消息仍在末位');
+
+    const ordered = win.ApiEngine.compilePreset('剧情预设', { context: allContext }, '任务');
+    ok(ordered.indexOf('world_info_before') < ordered.indexOf('chat_history'), '占位符保持预设原顺序');
+    ok(ordered[ordered.length - 1].content === '任务', '含 chatHistory 的预设任务消息同样在末位');
+
+    settingsState.variablePresets.normal = { mode: 'fixed', presetName: '无历史块预设', assembly: 'compile', context: Object.assign({}, noContext) };
+    configs.length = 0; rawConfigs.length = 0; attempts = 2;
+    await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
+    ok(configs.length === 0 && rawConfigs.length === 1, 'compile 模式走 generateRaw 而非 generate');
+    const compiledPrompts = rawConfigs[0].ordered_prompts;
+    const compiledTask = compiledPrompts[compiledPrompts.length - 1];
+    ok(compiledTask && /玩家普通变量要求/.test(compiledTask.content), 'compile 模式任务消息含前端保存的指导');
+    ok(/内置输出格式：JSONPatch/.test(compiledTask.content), 'compile 模式任务消息含输出格式');
+    ok(!compiledPrompts.includes('user_input'), 'compile 模式不依赖 user_input 占位符');
+
+    settingsState.variablePresets.normal = { mode: 'fixed', presetName: '无历史块预设', assembly: 'inject', context: Object.assign({}, noContext) };
+    configs.length = 0; rawConfigs.length = 0; attempts = 2;
+    await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
+    ok(configs.length === 1 && rawConfigs.length === 0, 'inject 模式走 generate 保真路径');
+    ok(configs[0].preset_name === '无历史块预设', 'inject 模式传入所选预设名');
+    const injected = (configs[0].injects || [])[0];
+    ok(injected && /玩家普通变量要求/.test(injected.content), 'inject 模式任务消息经 injects 送入');
+    ok(injected && injected.position === 'in_chat' && injected.depth === 0, 'inject 落点为聊天区最深处');
+    ok(injected && injected.should_scan === false, 'inject 任务文本不参与世界书绿灯扫描');
+    ok(configs[0].max_chat_history !== 0, 'inject 模式不再把聊天历史截断为 0');
+
+    let repairPrompts = [];
+    settingsState.variablePresets.normal = { mode: 'fixed', presetName: '无历史块预设', assembly: 'compile', context: Object.assign({}, noContext) };
+    rawConfigs.length = 0;
+    win.generateRaw = async (config) => {
+      rawConfigs.push(config);
+      repairPrompts.push(config.ordered_prompts[config.ordered_prompts.length - 1].content);
+      return rawConfigs.length === 1 ? '完全没有标签' : okReply;
+    };
+    await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
+    ok(repairPrompts.length === 2 && /玩家普通变量要求/.test(repairPrompts[1]) && /只需修正格式/.test(repairPrompts[1]),
+      'compile 模式格式纠正仍携带完整任务消息');
+
+    let injectRepairs = [];
+    settingsState.variablePresets.normal = { mode: 'fixed', presetName: '无历史块预设', assembly: 'inject', context: Object.assign({}, noContext) };
+    configs.length = 0;
+    win.generate = async (config) => {
+      configs.push(config);
+      injectRepairs.push((config.injects || [])[0].content);
+      return configs.length === 1 ? '完全没有标签' : okReply;
+    };
+    await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
+    ok(injectRepairs.length === 2 && /玩家普通变量要求/.test(injectRepairs[1]) && /只需修正格式/.test(injectRepairs[1]),
+      'inject 模式格式纠正仍携带完整任务消息');
+    ok(createdPresets.length === 0, '两种组装方式都不写入任何预设');
+    ok(typeof win.loadPreset === 'undefined', '两种组装方式都不切换玩家当前预设');
+
+    win.generate = async (config) => { attempts++; configs.push(config); return attempts < 3 ? Promise.reject(new Error('temporary')) : okReply; };
+    win.generateRaw = async (config) => { attempts++; rawConfigs.push(config); return attempts < 3 ? Promise.reject(new Error('temporary')) : okReply; };
+
     const statusEvents = [];
     win.addEventListener('pastoral:api-status', (e) => statusEvents.push(e.detail));
     let testConfig = null;
-    settingsState.variablePresets.normal = { mode: 'current', presetName: '', context: allContext };
+    settingsState.variablePresets.normal = { mode: 'current', presetName: '', assembly: 'inject', context: allContext };
     win.generate = async (config) => { testConfig = config; return 'PASTORAL_API_OK'; };
     const tested = await win.ApiEngine.testSecondApi({ url: 'https://probe.example/v1', key: 'probe-secret', model: 'probe-model', timeout: 1000 });
     ok(tested.ok && tested.target === 'probe.example', '第二 API 连接测试返回目标主机与成功结果');

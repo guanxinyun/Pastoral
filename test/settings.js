@@ -91,6 +91,28 @@ if (fs.existsSync(sourcePath)) {
   ok(S.load().variablePresets.normal.temperature === 0.3, '重新读取时温度保持已保存值');
 }
 
+if (fs.existsSync(sourcePath)) {
+  const dom = new JSDOM('<!doctype html>', { runScripts: 'dangerously', url: 'http://localhost/' });
+  const { window: win } = dom;
+  win.localStorage.setItem('mrfz_settings', JSON.stringify({ 旧字段: '保留我' }));
+  win.eval(fs.readFileSync(sourcePath, 'utf8'));
+  const S = win.Settings;
+  const fresh = S.normalize({});
+  ok(fresh.variablePresets.normal.assembly === 'compile' && fresh.variablePresets.endday.assembly === 'compile',
+    '默认组装方式为编译成消息列表');
+  const chosen = S.normalize({ variablePresets: { normal: { assembly: 'inject' }, endday: { assembly: 'compile' } } });
+  ok(chosen.variablePresets.normal.assembly === 'inject', '可选择保真注入组装');
+  ok(chosen.variablePresets.endday.assembly === 'compile', '两阶段组装方式互不影响');
+  const bogus = S.normalize({ variablePresets: { normal: { assembly: '乱填' }, endday: { assembly: 123 } } });
+  ok(bogus.variablePresets.normal.assembly === 'compile' && bogus.variablePresets.endday.assembly === 'compile',
+    '非法组装方式归一化为编译');
+  const saved = S.save({ variablePresets: { endday: { assembly: 'inject' } } });
+  ok(saved.variablePresets.endday.assembly === 'inject' && saved.variablePresets.normal.assembly === 'compile',
+    '只改归寝组装方式不影响普通阶段');
+  ok(S.load().variablePresets.endday.assembly === 'inject', '组装方式可持久化并重新读取');
+  ok(S.load().旧字段 === '保留我', '新增字段不破坏未知旧字段兼容');
+}
+
 
 console.log(failed ? `\n✗ ${failed} 项失败` : '\n✓ 全部通过');
 process.exit(failed ? 1 : 0);

@@ -236,11 +236,80 @@ const ApiEngine = (function () {
     };
   }
 
+  // 预设里的占位符条目 id → generateRaw 的占位符字符串。
+  const PRESET_PLACEHOLDER_IDS = {
+    worldInfoBefore: 'world_info_before',
+    personaDescription: 'persona_description',
+    charDescription: 'char_description',
+    charPersonality: 'char_personality',
+    scenario: 'scenario',
+    worldInfoAfter: 'world_info_after',
+    dialogueExamples: 'dialogue_examples',
+    chatHistory: 'chat_history'
+  };
+  // 占位符字符串 → 本项目上下文勾选键，用于按玩家勾选过滤。
+  const PLACEHOLDER_CONTEXT_KEYS = CONTEXT_PLACEHOLDERS.reduce((out, [key, placeholder]) => {
+    out[placeholder] = key;
+    return out;
+  }, {});
+
+  /**
+   * 把选中的酒馆预设编译成 generateRaw 的 ordered_prompts。
+   *
+   * 存在的理由：预设的占位符提示词 id 枚举里没有 `user_input`（见
+   * _types_split/09-preset.txt 的 PresetPlaceholderPrompt），`Overrides` 也没有对应字段，
+   * 所以 generate({ preset_name, user_input }) 无法保证任务消息进入最终请求 ——
+   * 落点完全取决于该预设是否启用了聊天历史条目。编译后任务消息是数组里的字面对象，
+   * 酒馆没有任何环节能把它丢掉。
+   *
+   * 已知保真损失：`in_chat` 深度条目按其在数组中的位置转为相对位置；
+   * 预设的 settings（squash_system_messages、角色名前缀、reasoning_effort 等）不随
+   * ordered_prompts 传递，采样参数改由本项目的 samplingOverrides() 经 custom_api 控制。
+   */
+  function compilePreset(presetName, preset, taskPrompt) {
+    const selected = (preset && preset.context) || {};
+    let source;
+    try {
+      source = typeof getPreset === 'function' ? getPreset(presetName) : null;
+    } catch (e) {
+      throw new Error('读取预设“' + presetName + '”失败：' + (e && e.message || e));
+    }
+    if (!source || !Array.isArray(source.prompts)) {
+      throw new Error('预设“' + presetName + '”内容不可用，无法编译');
+    }
+    const out = [];
+    source.prompts.forEach((item) => {
+      if (!item || item.enabled === false) return;
+      const placeholder = PRESET_PLACEHOLDER_IDS[item.id];
+      if (placeholder) {
+        // 玩家勾选优先于预设：取消勾选的上下文即使预设启用也不发送。
+        const contextKey = PLACEHOLDER_CONTEXT_KEYS[placeholder];
+        if (contextKey && selected[contextKey] !== true) return;
+        if (!out.includes(placeholder)) out.push(placeholder);
+        return;
+      }
+      const content = String(item.content == null ? '' : item.content);
+      if (!content.trim()) return;
+      const role = ['system', 'user', 'assistant'].includes(item.role) ? item.role : 'system';
+      out.push({ role, content });
+    });
+    // 任务消息强制置于末位，且必须存在。
+    const task = String(taskPrompt == null ? '' : taskPrompt);
+    if (!task.trim()) throw new Error('变量更新任务消息为空，拒绝发送不完整请求');
+    out.push({ role: 'user', content: task });
+    const last = out[out.length - 1];
+    if (!last || typeof last !== 'object' || last.content !== task) {
+      throw new Error('编译后未能确认任务消息在位，已中止本次变量请求');
+    }
+    return out;
+  }
+
   /**
    * 解析本次变量请求的预设策略。
    * - none：完全不使用酒馆预设，走 generateRaw + ordered_prompts
-   * - current：generate + 'in_use'
-   * - fixed：generate + 指定预设名；预设已删除时本次降级为 none
+   * - current/fixed + compile：读预设编译成 generateRaw 消息列表，任务消息强制在末位
+   * - current/fixed + inject：generate + preset_name，任务消息走 injects
+   * - fixed 预设已删除时本次降级为 none
    */
   function resolvePreset(kind, config) {
     const selected = variablePresetConfig(kind, config);
@@ -248,7 +317,8 @@ const ApiEngine = (function () {
     const shared = {
       context: selected.context || {},
       blockDepthEntries: selected.blockDepthEntries !== false,
-      temperature: selected.temperature
+      temperature: selected.temperature,
+      assembly: selected.assembly === 'inject' ? 'inject' : 'compile'
     };
     if (selected.mode === 'current') return Object.assign({ mode: 'current', presetName: 'in_use' }, shared);
     if (selected.mode === 'fixed') {
@@ -277,8 +347,30 @@ const ApiEngine = (function () {
         ordered_prompts: orderedPrompts(preset.context)
       }));
     }
-    if (typeof generate !== 'function') throw new Error('当前环境不支持按酒馆预设生成');
-    return generate(Object.assign(base, { preset_name: preset.presetName }));
+    if (preset.assembly === 'inject') {
+      // 保真路径：预设的提示词、settings、in_chat 深度条目全部由酒馆组装。
+      if (typeof generate !== 'function') throw new Error('当前环境不支持按酒馆预设生成');
+      // max_chat_history: 0 会把唯一能承载注入的聊天区截断掉，预设模式必须留出该区域。
+      const history = base.max_chat_history === 0 || base.max_chat_history == null ? 1 : base.max_chat_history;
+      return generate(Object.assign(base, {
+        preset_name: preset.presetName,
+        max_chat_history: history,
+        injects: [{
+          role: 'system',
+          content: base.user_input,
+          position: 'in_chat',
+          depth: 0,
+          // 任务文本不得进入世界书绿灯扫描文本，否则会激活无关条目。
+          should_scan: false
+        }].concat(Array.isArray(base.injects) ? base.injects : [])
+      }));
+    }
+    // compile 路径：任务消息作为数组字面对象，结构上不可能丢失。
+    if (typeof generateRaw !== 'function') throw new Error('当前环境缺少 generateRaw，无法编译预设消息列表');
+    return generateRaw(Object.assign(base, {
+      max_chat_history: base.max_chat_history == null ? 0 : base.max_chat_history,
+      ordered_prompts: compilePreset(preset.presetName, preset, base.user_input)
+    }));
   }
 
   /** 只讲格式、不重述规则的纠正提示，附上模型自己刚才的输出。 */
@@ -513,6 +605,7 @@ const ApiEngine = (function () {
     LEGACY_PRESET_NAME,
     availablePresetNames,
     orderedPrompts,
+    compilePreset,
     buildOverrides,
     inspectApi,
     normalizeUrl,

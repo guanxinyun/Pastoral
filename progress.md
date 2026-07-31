@@ -39,6 +39,18 @@
 - `npm test` 全量通过；修改脚本 `node --check` 通过；`git diff --check` 通过；`index.html` 已重建并与 `public/index.html` 一致。
 - 提交范围只含本任务的 12 个已跟踪文件；未暂存用户已有的删除项、MVU 文档和拆分参考文件。
 
+### 2026-08-01 05:30 — 变量请求组装重构（新一轮）
+- 玩家实测：固定预设下仍带酒馆正文预设、且前端更新提示词没有进入请求。
+- 根因确证：预设的占位符提示词 id 枚举里**没有 `user_input`**（`_types_split/09-preset.txt` 全文出现 0 次），`Overrides` 也无对应字段，因此 `generate({ preset_name, user_input })` 无法保证任务消息进入最终请求；三处调用点还硬编码 `max_chat_history: 0`，把唯一可承载它的聊天区截断为零。
+- 否决"假世界书注入"：条目仍需经预设占位符或深度注入，送达问题原样存在；`enabled: false` 永不激活；世界书是共享状态会污染主剧情。
+- 否决"临时克隆预设"：会改动全局酒馆状态，且本仓库 `LEGACY_PRESET_NAME` 就是该模式留下的历史债。
+- 按玩家要求两种策略都做：`compile`（默认，读预设编译成 `generateRaw` 消息列表，任务消息强制末位）与 `inject`（保真 `generate` + `injects` depth 0）。
+- 上下文勾选优先于预设：取消勾选的占位符即使预设启用也被过滤，已实测确认。
+- 设计文档：`docs/specs/2026-08-01-variable-request-assembly-design.md`。
+- 实测（固定预设无 `chatHistory` 条目）：compile 编译出 4 条消息、任务消息 11677 字在末位；禁用条目与 `prompts_unused` 均未进入；inject 的 `max_chat_history` 由 0 改为 1 且 `should_scan: false`。
+- 未验证：`generateRaw` 的 `RolePrompt.content` 是否仍执行宏替换（本地实测 `{{char}}` 原样透传，真实替换由酒馆运行时决定）；角色卡历史后指令在 `generateRaw` 路径下的行为。
+- `npm test` 373 项全通过；`node --check`、`git diff --check`、`index.html` 与 `public/index.html` 一致。
+
 ## Decisions Made
 - 2026-08-01 主剧情保持酒馆原生 `/send` 与 `/trigger await=true`，不由 Pastoral 选择预设。
 - 2026-08-01 变量更新使用 `generate + preset_name`；`generateRaw` 仅作为 none 模式旧环境回退。
