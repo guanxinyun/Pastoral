@@ -65,6 +65,32 @@ if (fs.existsSync(sourcePath)) {
   ok(withRules.promptFor('endday', customCfg) === withRules.builtinGuide('endday'), '只改日常不影响归寝内置指导');
 }
 
+if (fs.existsSync(sourcePath)) {
+  const dom = new JSDOM('<!doctype html>', { runScripts: 'dangerously', url: 'http://localhost/' });
+  const { window: win } = dom;
+  win.eval(fs.readFileSync(sourcePath, 'utf8'));
+  const S = win.Settings;
+  const fresh = S.normalize({});
+  ok(fresh.variablePresets.normal.blockDepthEntries === true && fresh.variablePresets.endday.blockDepthEntries === true,
+    '默认屏蔽世界书深度注入条目与作者注释');
+  ok(fresh.variablePresets.normal.temperature === 0 && fresh.variablePresets.endday.temperature === 0, '默认采样温度为 0');
+  const explicit = S.normalize({ variablePresets: {
+    normal: { blockDepthEntries: false, temperature: 0.7 },
+    endday: { blockDepthEntries: true, temperature: 9 }
+  } });
+  ok(explicit.variablePresets.normal.blockDepthEntries === false, '可显式放行深度注入条目');
+  ok(explicit.variablePresets.normal.temperature === 0.7, '保留合法采样温度');
+  ok(explicit.variablePresets.endday.temperature === 2, '越界采样温度收敛到上限 2');
+  const broken = S.normalize({ variablePresets: { normal: { temperature: 'hot', blockDepthEntries: 'yes' } } });
+  ok(broken.variablePresets.normal.temperature === 0, '非法温度归一化为 0');
+  ok(broken.variablePresets.normal.blockDepthEntries === true, '非布尔屏蔽值归一化为默认屏蔽');
+  const roundTrip = S.save({ variablePresets: { normal: { blockDepthEntries: false, temperature: 0.3 } } });
+  ok(roundTrip.variablePresets.normal.blockDepthEntries === false && roundTrip.variablePresets.normal.temperature === 0.3,
+    '两项新设置可持久化');
+  ok(roundTrip.variablePresets.endday.blockDepthEntries === true, '只改普通阶段不影响归寝阶段');
+  ok(S.load().variablePresets.normal.temperature === 0.3, '重新读取时温度保持已保存值');
+}
+
 
 console.log(failed ? `\n✗ ${failed} 项失败` : '\n✓ 全部通过');
 process.exit(failed ? 1 : 0);

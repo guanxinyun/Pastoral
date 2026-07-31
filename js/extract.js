@@ -135,6 +135,56 @@ const Extract = {
     }
   },
 
+  /** 去掉 Markdown 代码围栏，小模型经常把标签或 JSON 包在 ``` 里。 */
+  _stripFences(rawText) {
+    return String(rawText || '').replace(/```[a-zA-Z]*\s*([\s\S]*?)```/g, '$1');
+  },
+
+  /** 从任意文本里找出第一段成对括号完整的 JSON 数组。 */
+  _firstJsonArray(text) {
+    const source = String(text || '');
+    for (let start = source.indexOf('['); start !== -1; start = source.indexOf('[', start + 1)) {
+      let depth = 0, inString = false, escaped = false;
+      for (let i = start; i < source.length; i++) {
+        const ch = source[i];
+        if (inString) {
+          if (escaped) escaped = false;
+          else if (ch === '\\') escaped = true;
+          else if (ch === '"') inString = false;
+          continue;
+        }
+        if (ch === '"') { inString = true; continue; }
+        if (ch === '[') depth++;
+        else if (ch === ']') {
+          depth--;
+          if (depth === 0) return source.slice(start, i + 1);
+        }
+      }
+    }
+    return '';
+  },
+
+  /**
+   * 尽量把模型输出救成合法 UpdateVariable 标签。
+   * 只补格式，绝不猜测或编造操作内容；救不回来仍返回 ''。
+   */
+  salvageUpdateVariable(rawText) {
+    const direct = this.normalizeUpdateVariable(rawText);
+    if (direct) return direct;
+    const text = this._stripFences(rawText);
+    const unfenced = this.normalizeUpdateVariable(text);
+    if (unfenced) return unfenced;
+    // 有 JSONPatch 但缺 Analysis：补一个占位 Analysis，操作内容原样保留。
+    const patchBlock = text.match(/<JSONPatch\b[^>]*>([\s\S]*?)<\/JSONPatch>/i);
+    const analysis = text.match(/<Analysis\b[^>]*>([\s\S]*?)<\/Analysis>/i);
+    const body = patchBlock ? patchBlock[1] : this._firstJsonArray(text);
+    if (!String(body || '').trim()) return '';
+    const note = analysis ? analysis[1].trim() : '模型未提供 Analysis，已由前端补全格式。';
+    const rebuilt = '<UpdateVariable><Analysis>' + (note || '格式已由前端补全。') + '</Analysis><JSONPatch>'
+      + String(body).trim() + '</JSONPatch></UpdateVariable>';
+    return this.normalizeUpdateVariable(rebuilt);
+  },
+
   /** 移除原标签后追加新标签，剧情/选项/总结等其他内容保持原顺序。 */
   replaceUpdateVariable(rawText, updateTag) {
     const body = this.stripUpdateVariable(rawText);

@@ -90,13 +90,44 @@
       h('input', { class: 'set-input', name, value, type: type || 'text', min: min == null ? null : min, autocomplete: name === 'secondApiKey' ? 'off' : null })
     ]);
     apiBox.appendChild(field('URL', 'secondApiUrl', cfg.secondApi.url, 'url'));
+    apiBox.appendChild(h('p', { class: 'faint set-help' }, '填到 /v1 为止，例如 http://127.0.0.1:7861/v1，不要写 /chat/completions。'));
     apiBox.appendChild(field('API Key', 'secondApiKey', cfg.secondApi.key, 'password'));
     apiBox.appendChild(field('模型名', 'secondApiModel', cfg.secondApi.model));
+    const modelList = h('datalist', { id: 'secondApiModelList' });
+    apiBox.appendChild(modelList);
+    apiBox.querySelector('[name="secondApiModel"]').setAttribute('list', 'secondApiModelList');
+    const fetchModels = h('button', { class: 'btn btn--ghost btn--sm', type: 'button', 'data-fetch-models': '' }, '获取模型列表');
+    fetchModels.addEventListener('click', async () => {
+      fetchModels.disabled = true; fetchModels.textContent = '正在获取…';
+      try {
+        const names = await ApiEngine.fetchModelList({
+          url: form.elements.secondApiUrl.value, key: form.elements.secondApiKey.value
+        });
+        modelList.innerHTML = '';
+        names.forEach((name) => modelList.appendChild(h('option', { value: name })));
+        if (!names.length) toast('warn', '未获取到模型', '目标服务返回了空列表，模型名需要手动填写。');
+        else toast('success', '已获取 ' + names.length + ' 个模型', '在模型名输入框展开即可选择。');
+      } catch (e) { toast('error', '获取模型列表失败', e && e.message || String(e)); }
+      finally { fetchModels.disabled = false; fetchModels.textContent = '获取模型列表'; }
+    });
+    apiBox.appendChild(h('div', { class: 'settings-actions' }, fetchModels));
     apiBox.appendChild(field('超时时间（ms）', 'secondApiTimeout', cfg.secondApi.timeout, 'number', 1000));
     apiBox.appendChild(field('最大重试次数', 'secondApiRetries', cfg.secondApi.maxRetries, 'number', 0));
+    apiBox.appendChild(h('p', { class: 'faint set-help' }, '格式不合规时程序会自动追加一次纠正请求，不占用这里的重试次数。'));
+    const apiCheck = h('p', { class: 'faint set-help preset-effective', 'data-api-check': '' });
+    apiBox.appendChild(apiCheck);
+    const syncCheck = () => {
+      const issues = ApiEngine.inspectApi({
+        url: form.elements.secondApiUrl.value, key: form.elements.secondApiKey.value, model: form.elements.secondApiModel.value
+      });
+      apiCheck.textContent = issues.length ? '⚠ ' + issues.join('；') : '✓ 配置项已填全，可测试连接。';
+    };
+    ['secondApiUrl', 'secondApiKey', 'secondApiModel'].forEach((name) => {
+      apiBox.querySelector('[name="' + name + '"]').addEventListener('input', syncCheck);
+    });
     form.appendChild(apiBox);
 
-    const syncMode = () => { apiBox.hidden = mode.value !== 'multi'; };
+    const syncMode = () => { apiBox.hidden = mode.value !== 'multi'; if (mode.value === 'multi') syncCheck(); };
     mode.addEventListener('change', syncMode); syncMode();
     const save = h('button', { class: 'btn btn--primary btn--block', type: 'submit' }, '保存 API 设置');
     form.appendChild(save);
@@ -127,16 +158,19 @@
     form.appendChild(retry);
     form.addEventListener('submit', (e) => {
       e.preventDefault();
+      const cleanUrl = ApiEngine.normalizeUrl(form.elements.secondApiUrl.value);
+      form.elements.secondApiUrl.value = cleanUrl;
       const next = Settings.save({ apiMode: mode.value, secondApi: {
-        url: form.elements.secondApiUrl.value,
+        url: cleanUrl,
         key: form.elements.secondApiKey.value,
         model: form.elements.secondApiModel.value,
         timeout: form.elements.secondApiTimeout.value,
         maxRetries: form.elements.secondApiRetries.value
       } });
-      if (next.apiMode === 'multi' && !Settings.isSecondApiComplete(next)) {
-        toast('warn', '设置已保存', '第二 API 配置尚不完整，调用时将自动降级。');
-      } else toast('success', '设置已保存', next.apiMode === 'multi' ? '双轨 API 已启用。' : '当前使用单 API。');
+      syncCheck();
+      const issues = next.apiMode === 'multi' ? ApiEngine.inspectApi(next.secondApi) : [];
+      if (issues.length) toast('warn', '设置已保存，但配置不可用', issues.join('；'));
+      else toast('success', '设置已保存', next.apiMode === 'multi' ? '双轨 API 已启用。' : '当前使用单 API。');
     });
     apiPage.appendChild(form);
 
@@ -152,14 +186,42 @@
       h('span', { class: 'faint set-help' }, help),
       h('textarea', { class: 'set-input set-textarea', name, rows: '14', spellcheck: 'false', placeholder: '留空则使用程序内置默认指导' }, value)
     ]);
-    promptForm.appendChild(h('div', { class: 'notice notice--info set-notice' }, '这两份指导就是变量请求实际发送的规则，程序自带默认值，不再读取世界书。输出格式由程序自动合并附加。'));
+    promptForm.appendChild(h('div', { class: 'notice notice--info set-notice' }, [
+      h('div', {}, '这两份指导就是变量请求实际发送的规则，全部保存在前端本地，程序自带默认值。'),
+      h('div', {}, '不读取世界书：绑定世界书里无需存在“变量更新规则”或“变量输出格式”条目。输出格式由程序自动合并附加。')
+    ]));
     promptForm.appendChild(promptField('日常变量更新指导', 'normalPrompt', cfg.prompts.normal || builtinGuide('normal'), '每次主模型回复后的常规更新使用。'));
     promptForm.appendChild(promptField('归寝日结指导', 'enddayPrompt', cfg.prompts.endday || builtinGuide('endday'), '点击归寝时的跨日结算使用；脚本已完成的扣费、作物成长和设施引力不会重复执行。'));
     const promptActions = h('div', { class: 'settings-actions' }, [
+      h('button', { class: 'btn btn--ghost', type: 'button', 'data-preview-prompt': 'normal' }, '预览日常请求'),
+      h('button', { class: 'btn btn--ghost', type: 'button', 'data-preview-prompt': 'endday' }, '预览归寝请求'),
       h('button', { class: 'btn btn--ghost', type: 'button', 'data-reset-prompts': '' }, '恢复内置默认'),
       h('button', { class: 'btn btn--primary', type: 'submit' }, '保存指导')
     ]);
     promptForm.appendChild(promptActions);
+    const preview = h('pre', { class: 'prompt-preview', 'data-prompt-preview': '', hidden: '' });
+    promptForm.appendChild(preview);
+    $$('[data-preview-prompt]', promptForm).forEach((btn) => btn.addEventListener('click', () => {
+      const kind = btn.dataset.previewPrompt;
+      // 用输入框里的当前文本预览，未保存也能看到实际效果。
+      const draft = {
+        prompts: {
+          normal: promptForm.elements.normalPrompt.value,
+          endday: promptForm.elements.enddayPrompt.value
+        }
+      };
+      try {
+        const text = ApiEngine.buildPrompt({
+          purpose: kind,
+          config: draft,
+          baseline: window.MVU && MVU.getDataSnapshot ? MVU.getDataSnapshot() : { stat_data: {} },
+          calculated: kind === 'endday' ? { salary: 0, maintenance: 0, 说明: '预览占位，实际由脚本结算填入' } : null
+        });
+        preview.textContent = text;
+        preview.hidden = false;
+        preview.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      } catch (e) { toast('error', '无法生成预览', e && e.message || String(e)); }
+    }));
     promptForm.addEventListener('submit', (e) => {
       e.preventDefault();
       // 与内置默认完全相同时存空串，后续升级默认指导仍能自动生效。
@@ -194,6 +256,7 @@
         h('option', { value: 'current' }, '跟随酒馆当前预设'),
         h('option', { value: 'fixed' }, '固定指定预设')
       ]);
+      card.appendChild(h('p', { class: 'faint set-help' }, '“预设”指酒馆 Chat Completion 预设（提示词管理器里的提示词条目与生成参数）。不带预设时用 generateRaw，预设的主提示词、越狱、历史后指令都不参与。'));
       mode.value = setting.mode;
       card.appendChild(h('label', { class: 'set-field' }, [h('span', { class: 'set-field__label' }, '预设模式'), mode]));
       const missingPreset = setting.presetName && !presetNames.includes(setting.presetName)
@@ -217,13 +280,60 @@
         }))
       ]);
       card.appendChild(context);
-      const sync = () => { fixed.hidden = mode.value !== 'fixed'; context.hidden = mode.value !== 'none'; };
-      mode.addEventListener('change', sync); sync();
+
+      // 三种模式共用：酒馆默认会把世界书按深度插入的条目和作者注释带进任何请求。
+      const blockDepth = h('input', { type: 'checkbox', name: kind + 'BlockDepth', value: '1' });
+      blockDepth.checked = setting.blockDepthEntries !== false;
+      card.appendChild(h('label', { class: 'preset-check preset-check--wide' }, [
+        blockDepth,
+        h('div', {}, [
+          h('span', {}, '屏蔽世界书按深度注入条目与作者注释'),
+          h('span', { class: 'faint set-help' }, '酒馆默认会把它们塞进每个请求，包括不带预设时。变量计算不需要它们，取消勾选才会放行。')
+        ])
+      ]));
+      const temperature = h('input', {
+        class: 'set-input', name: kind + 'Temperature', type: 'number',
+        min: '0', max: '2', step: '0.1', value: String(setting.temperature == null ? 0 : setting.temperature)
+      });
+      card.appendChild(h('label', { class: 'set-field' }, [
+        h('span', { class: 'set-field__label' }, '采样温度'),
+        h('span', { class: 'faint set-help' }, '变量计算建议 0，稳定复现。仅在第二 API 生效；跟随主 API 时由主 API 决定。'),
+        temperature
+      ]));
+
+      const effective = h('p', { class: 'faint set-help preset-effective', 'data-preset-effective': kind });
+      card.appendChild(effective);
+      const sync = () => {
+        fixed.hidden = mode.value !== 'fixed';
+        context.hidden = mode.value !== 'none';
+        const checkedContext = Object.keys(contextLabels).filter((key) => {
+          const input = card.querySelector('[name="' + kind + 'Context_' + key + '"]');
+          return input && input.checked;
+        }).map((key) => contextLabels[key]);
+        const parts = [];
+        if (mode.value === 'none') {
+          parts.push('本次只发送：本项目更新指导 + 输出格式 + 最近三层正文 + 当前变量快照');
+          if (checkedContext.length) parts.push('额外携带：' + checkedContext.join('、'));
+          else parts.push('不携带任何角色卡或世界书内容');
+        } else {
+          parts.push(mode.value === 'current' ? '使用酒馆当前预设的提示词与参数' : '使用固定预设的提示词与参数');
+          parts.push('本项目更新指导仍作为用户输入发送');
+        }
+        parts.push(blockDepth.checked ? '已屏蔽深度注入与作者注释' : '⚠ 放行深度注入与作者注释');
+        effective.textContent = '实际发送：' + parts.join('；') + '。';
+      };
+      mode.addEventListener('change', sync);
+      blockDepth.addEventListener('change', sync);
+      card.querySelectorAll('[name^="' + kind + 'Context_"]').forEach((input) => input.addEventListener('change', sync));
+      sync();
       return card;
     };
     presetForm.appendChild(presetCard('normal', '普通变量更新'));
     presetForm.appendChild(presetCard('endday', '归寝变量更新'));
-    presetForm.appendChild(h('div', { class: 'notice notice--info set-notice' }, '主剧情仍使用酒馆正常发送和当前预设；这里仅控制主剧情后的变量请求。'));
+    presetForm.appendChild(h('div', { class: 'notice notice--info set-notice' }, [
+      h('div', {}, '主剧情仍使用酒馆正常发送和当前预设；这里仅控制主剧情后的变量请求。'),
+      h('div', {}, '变量更新规则与输出格式全部来自本程序（“更新提示词”页），世界书里不需要、也不会被读取任何变量更新条目。')
+    ]));
     presetForm.appendChild(h('div', { class: 'settings-actions' }, h('button', { class: 'btn btn--primary', type: 'submit' }, '保存变量预设')));
     presetForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -233,6 +343,8 @@
         return {
           mode: presetForm.elements[kind + 'PresetMode'].value,
           presetName: presetForm.elements[kind + 'PresetName'].value,
+          blockDepthEntries: !!presetForm.elements[kind + 'BlockDepth'].checked,
+          temperature: presetForm.elements[kind + 'Temperature'].value,
           context
         };
       };
@@ -363,7 +475,21 @@
       h('div', { class: 'daily-summary-copy' }, String(report.summary || '').trim() || (report.updateOk === false ? '确定性结算已完成；额外变量更新失败。' : '日结完成，变量已更新。')),
       report.updateError ? h('div', { class: 'notice notice--warn' }, '额外更新错误：' + report.updateError) : null
     ]));
-    dialog.appendChild(h('div', { class: 'daily-modal__foot' }, [h('span', { class: 'faint' }, detail && detail.source === 'second' ? '由第二 API 结算' : '由当前主 API 结算'), h('button', { class: 'btn btn--primary', type: 'button', onclick: close }, '合上账簿')]));
+    // 结算来源必须与实际发生的事情一致，失败时不能冒充成功来源。
+    const attribution = (() => {
+      const r = report;
+      if (r.pending) return '脚本确定性结算已完成，等待变量更新…';
+      if (r.updateOk === false) {
+        if (r.source === 'second') return '第二 API 更新失败 · 仅保留脚本确定性结算';
+        if (r.source === 'main') return '当前主 API 更新失败 · 仅保留脚本确定性结算';
+        return '变量更新未完成 · 仅保留脚本确定性结算';
+      }
+      if (r.source === 'second') return '脚本确定性结算 + 第二 API 变量更新';
+      if (r.source === 'main') return '脚本确定性结算 + 当前主 API 变量更新';
+      if (r.source === 'script') return '仅脚本确定性结算';
+      return '结算来源未知';
+    })();
+    dialog.appendChild(h('div', { class: 'daily-modal__foot' }, [h('span', { class: 'faint' }, attribution), h('button', { class: 'btn btn--primary', type: 'button', onclick: close }, '合上账簿')]));
     backdrop.appendChild(dialog); document.body.appendChild(backdrop); Icon.render(dialog);
     const focusables = () => Array.from(dialog.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
     const first = focusables()[0]; if (first) first.focus();

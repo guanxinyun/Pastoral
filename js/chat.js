@@ -450,7 +450,14 @@ const Chat = (function () {
               (error) => console.warn('[Pastoral][MVU]', '迟到的首次日结写回失败', error && error.message || error)
             ).catch((error) => console.error('[Pastoral][MVU]', '迟到写回后的事实锁定失败', error && error.message || error));
           }
-          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: outcome && outcome.summary, source: outcome && outcome.source, updateOk: complete, updateError }, calculated || {}) }));
+          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({
+            summary: outcome && outcome.summary,
+            // 没拿到结果时归为脚本结算，不冒充任何 API 的成功。
+            source: (outcome && outcome.source) || 'script',
+            apiMode: mode,
+            updateOk: complete,
+            updateError
+          }, calculated || {}) }));
           setRequestStatus(complete ? '归寝完成' : '归寝部分完成', complete ? '账簿已更新。' : updateError || '确定性结算已保留，但变量更新未完整完成。', false);
         }
       }

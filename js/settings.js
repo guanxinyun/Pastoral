@@ -26,6 +26,11 @@ const Settings = (function () {
   const variablePresetDefaults = () => ({
     mode: 'none',
     presetName: '',
+    // 世界书"按深度插入"条目与作者注释默认屏蔽：酒馆默认会带上它们，
+    // 但它们不是变量更新规则，只会污染计算。三种模式一致生效。
+    blockDepthEntries: true,
+    // 变量计算要稳定复现，默认不继承剧情预设的高温。
+    temperature: 0,
     context: Object.assign({}, VARIABLE_CONTEXT_DEFAULTS)
   });
   const DEFAULTS = {
@@ -71,6 +76,9 @@ const Settings = (function () {
     const preset = merge(variablePresetDefaults(), object(value));
     preset.mode = ['none', 'current', 'fixed'].includes(preset.mode) ? preset.mode : 'none';
     preset.presetName = String(preset.presetName == null ? '' : preset.presetName).trim();
+    preset.blockDepthEntries = preset.blockDepthEntries !== false;
+    const temperature = Number(preset.temperature);
+    preset.temperature = Number.isFinite(temperature) ? Math.min(2, Math.max(0, temperature)) : 0;
     preset.context = merge(VARIABLE_CONTEXT_DEFAULTS, object(preset.context));
     Object.keys(VARIABLE_CONTEXT_DEFAULTS).forEach((key) => { preset.context[key] = !!preset.context[key]; });
     return preset;

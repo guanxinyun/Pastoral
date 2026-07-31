@@ -39,6 +39,16 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   ok(/_.move\("a","b"\)/.test(commands), 'move 转换为 _.move');
   ok(win.Extract.patchToMvuCommands('<UpdateVariable><Analysis>x</Analysis><JSONPatch>[{"op":"replace","path":"/旅店/员工/甲/技能/0","value":"新技能"}]</JSONPatch></UpdateVariable>') === '_.set("旅店.员工.甲.技能[0]","新技能")', '数组 JSON Pointer 转换为 MVU 下标路径');
 
+  console.log('\n[1b] 格式救援：只补格式，不编造内容');
+  ok(win.Extract.salvageUpdateVariable('```xml\n' + secondTag + '\n```') === secondTag, '剥离 Markdown 代码围栏后接受标签');
+  const noAnalysis = win.Extract.salvageUpdateVariable('<UpdateVariable><JSONPatch>[{"op":"delta","path":"/旅店/资金","value":5}]</JSONPatch></UpdateVariable>');
+  ok(/<Analysis>/.test(noAnalysis) && /"value":5/.test(noAnalysis), '缺 Analysis 时补占位并保留原操作');
+  const bareArray = win.Extract.salvageUpdateVariable('这是结果：\n[{"op":"replace","path":"/旅店/资金","value":7}]');
+  ok(/<UpdateVariable>/.test(bareArray) && /"value":7/.test(bareArray), '裸 JSON 数组能救成合法标签');
+  ok(win.Extract.salvageUpdateVariable('完全没有任何补丁内容') === '', '无补丁内容时不伪造更新');
+  ok(win.Extract.salvageUpdateVariable('[{"op":"delta","path":"/a","value":"字符串"}]') === '', '救援后仍按原规则拒绝非法操作');
+  ok(win.Extract.salvageUpdateVariable('[{"op":"replace","path":"/_只读","value":1}]') === '', '救援不绕过只读路径保护');
+
   console.log('\n[2] 设施引力与前端确定性日结');
   {
     const calcDom = new JSDOM('<!doctype html>', { runScripts: 'dangerously', url: 'http://localhost/' });
@@ -179,15 +189,40 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(createdPresets.length === 0, '不再向玩家预设列表写入内部空白预设');
     ok(!win.ApiEngine.availablePresetNames().includes('【Pastoral 内部】空白变量更新'), '遗留内部预设不出现在可选列表中');
 
+    // 酒馆默认 with_depth_entries=true，会把世界书按深度注入条目和作者注释带进任何请求。
+    const firstOverrides = rawConfigs[0].overrides || {};
+    ok(firstOverrides.chat_history && firstOverrides.chat_history.with_depth_entries === false,
+      'none 模式屏蔽世界书按深度注入的条目');
+    ok(firstOverrides.chat_history && firstOverrides.chat_history.author_note === '', 'none 模式清空作者注释');
+    ok(JSON.stringify(firstOverrides.chat_history.prompts) === '[]', '未勾选聊天历史时聊天历史被清空');
+    ok(firstOverrides.char_description === '' && firstOverrides.world_info_before === '' && firstOverrides.world_info_after === ''
+      && firstOverrides.persona_description === '' && firstOverrides.scenario === '' && firstOverrides.char_personality === ''
+      && firstOverrides.dialogue_examples === '', 'none 模式清空全部未勾选占位符，杜绝角色卡与世界书残留');
+    ok(rawConfigs[0].custom_api.temperature === 0 && rawConfigs[0].custom_api.top_p === 'unset'
+      && rawConfigs[0].custom_api.frequency_penalty === 'unset' && rawConfigs[0].custom_api.presence_penalty === 'unset',
+      '变量请求不继承剧情预设的采样参数');
+
     settingsState.variablePresets.normal = { mode: 'none', presetName: '', context: Object.assign({}, noContext, { chatHistory: true, charDescription: true }) };
     rawConfigs.length = 0; attempts = 2;
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
     ok(JSON.stringify(rawConfigs[0].ordered_prompts) === JSON.stringify(['char_description', 'chat_history', 'user_input']), '勾选的上下文按酒馆默认顺序追加');
+    const pickedOverrides = rawConfigs[0].overrides || {};
+    ok(pickedOverrides.char_description === undefined && pickedOverrides.chat_history.prompts === undefined,
+      '勾选的上下文不被清空');
+    ok(pickedOverrides.chat_history.with_depth_entries === false, '即使勾选聊天历史也仍屏蔽深度注入条目');
 
     settingsState.variablePresets.endday = { mode: 'current', presetName: '', context: allContext };
     configs.length = 0; rawConfigs.length = 0; attempts = 2;
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'endday' });
     ok(configs[0].preset_name === 'in_use' && rawConfigs.length === 0, '归寝 current 模式跟随酒馆当前预设');
+    ok(configs[0].overrides && configs[0].overrides.chat_history.with_depth_entries === false,
+      'current 模式也屏蔽世界书深度注入条目');
+    ok(configs[0].overrides.char_description === undefined, 'current 模式不清空预设自身要用的占位符');
+    settingsState.variablePresets.endday = { mode: 'current', presetName: '', context: allContext, blockDepthEntries: false };
+    configs.length = 0; attempts = 2;
+    await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'endday' });
+    ok(!configs[0].overrides || !configs[0].overrides.chat_history, '取消勾选屏蔽后放行深度注入与作者注释');
+    settingsState.variablePresets.endday = { mode: 'current', presetName: '', context: allContext };
     settingsState.variablePresets.normal = { mode: 'fixed', presetName: '变量专用', context: allContext };
     configs.length = 0; attempts = 2;
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });

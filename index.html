@@ -1228,6 +1228,12 @@ body.is-immersive .journal__stream {
 .preset-check { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: var(--space-2) var(--space-3); color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-deep); cursor: pointer; transition: color var(--t-base), border-color var(--t-base), background var(--t-base); }
 .preset-check:hover, .preset-check:focus-within { color: var(--color-text); border-color: var(--color-primary); background: var(--amber-glow); }
 .preset-check input { width: 18px; height: 18px; accent-color: var(--color-primary); }
+.preset-check--wide { align-items: flex-start; margin-top: var(--space-2); }
+.preset-check--wide input { margin-top: 2px; flex: 0 0 auto; }
+.preset-check--wide .set-help { display: block; margin-top: var(--space-1); }
+.preset-effective { margin: var(--space-2) 0 0; padding: var(--space-2) var(--space-3); border-left: 2px solid var(--color-primary); background: var(--color-bg-deep); border-radius: var(--radius-sm); }
+.prompt-preview { max-height: 40vh; margin: var(--space-3) 0 0; padding: var(--space-3); overflow: auto; font-family: var(--font-mono, ui-monospace, monospace); font-size: var(--font-size-xs, 0.75rem); line-height: 1.6; color: var(--color-text-muted); white-space: pre-wrap; word-break: break-word; background: var(--color-bg-deep); border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.prompt-preview[hidden] { display: none; }
 @media (min-width: 640px) { .preset-context__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 639px) { .settings-tabs { grid-template-columns: 1fr; } }
 
@@ -2071,6 +2077,56 @@ const Extract = {
     }
   },
 
+  /** 去掉 Markdown 代码围栏，小模型经常把标签或 JSON 包在 ``` 里。 */
+  _stripFences(rawText) {
+    return String(rawText || '').replace(/```[a-zA-Z]*\s*([\s\S]*?)```/g, '$1');
+  },
+
+  /** 从任意文本里找出第一段成对括号完整的 JSON 数组。 */
+  _firstJsonArray(text) {
+    const source = String(text || '');
+    for (let start = source.indexOf('['); start !== -1; start = source.indexOf('[', start + 1)) {
+      let depth = 0, inString = false, escaped = false;
+      for (let i = start; i < source.length; i++) {
+        const ch = source[i];
+        if (inString) {
+          if (escaped) escaped = false;
+          else if (ch === '\\') escaped = true;
+          else if (ch === '"') inString = false;
+          continue;
+        }
+        if (ch === '"') { inString = true; continue; }
+        if (ch === '[') depth++;
+        else if (ch === ']') {
+          depth--;
+          if (depth === 0) return source.slice(start, i + 1);
+        }
+      }
+    }
+    return '';
+  },
+
+  /**
+   * 尽量把模型输出救成合法 UpdateVariable 标签。
+   * 只补格式，绝不猜测或编造操作内容；救不回来仍返回 ''。
+   */
+  salvageUpdateVariable(rawText) {
+    const direct = this.normalizeUpdateVariable(rawText);
+    if (direct) return direct;
+    const text = this._stripFences(rawText);
+    const unfenced = this.normalizeUpdateVariable(text);
+    if (unfenced) return unfenced;
+    // 有 JSONPatch 但缺 Analysis：补一个占位 Analysis，操作内容原样保留。
+    const patchBlock = text.match(/<JSONPatch\b[^>]*>([\s\S]*?)<\/JSONPatch>/i);
+    const analysis = text.match(/<Analysis\b[^>]*>([\s\S]*?)<\/Analysis>/i);
+    const body = patchBlock ? patchBlock[1] : this._firstJsonArray(text);
+    if (!String(body || '').trim()) return '';
+    const note = analysis ? analysis[1].trim() : '模型未提供 Analysis，已由前端补全格式。';
+    const rebuilt = '<UpdateVariable><Analysis>' + (note || '格式已由前端补全。') + '</Analysis><JSONPatch>'
+      + String(body).trim() + '</JSONPatch></UpdateVariable>';
+    return this.normalizeUpdateVariable(rebuilt);
+  },
+
   /** 移除原标签后追加新标签，剧情/选项/总结等其他内容保持原顺序。 */
   replaceUpdateVariable(rawText, updateTag) {
     const body = this.stripUpdateVariable(rawText);
@@ -2863,6 +2919,11 @@ const Settings = (function () {
   const variablePresetDefaults = () => ({
     mode: 'none',
     presetName: '',
+    // 世界书"按深度插入"条目与作者注释默认屏蔽：酒馆默认会带上它们，
+    // 但它们不是变量更新规则，只会污染计算。三种模式一致生效。
+    blockDepthEntries: true,
+    // 变量计算要稳定复现，默认不继承剧情预设的高温。
+    temperature: 0,
     context: Object.assign({}, VARIABLE_CONTEXT_DEFAULTS)
   });
   const DEFAULTS = {
@@ -2908,6 +2969,9 @@ const Settings = (function () {
     const preset = merge(variablePresetDefaults(), object(value));
     preset.mode = ['none', 'current', 'fixed'].includes(preset.mode) ? preset.mode : 'none';
     preset.presetName = String(preset.presetName == null ? '' : preset.presetName).trim();
+    preset.blockDepthEntries = preset.blockDepthEntries !== false;
+    const temperature = Number(preset.temperature);
+    preset.temperature = Number.isFinite(temperature) ? Math.min(2, Math.max(0, temperature)) : 0;
     preset.context = merge(VARIABLE_CONTEXT_DEFAULTS, object(preset.context));
     Object.keys(VARIABLE_CONTEXT_DEFAULTS).forEach((key) => { preset.context[key] = !!preset.context[key]; });
     return preset;
@@ -3339,6 +3403,63 @@ const ApiEngine = (function () {
   function log(prefix, stage, detail) { console.info(prefix, stage, detail || ''); }
   function error(prefix, stage, value) { console.error(prefix, stage, value && value.message || value); }
   function hostOf(url) { try { return new URL(url).host || url; } catch (e) { return String(url || '未知地址'); } }
+
+  /** 去掉首尾空白和多余结尾斜杠；不改写玩家填写的路径（/v1 等一律保留）。 */
+  function normalizeUrl(url) {
+    return String(url == null ? '' : url).trim().replace(/\/+$/, '');
+  }
+
+  /** 填写体检：只报明确能判定的问题，判断不了就不拦。 */
+  function inspectApi(api) {
+    const issues = [];
+    const url = normalizeUrl(api && api.url);
+    if (!url) issues.push('URL 为空');
+    else if (!/^https?:\/\//i.test(url)) issues.push('URL 缺少 http:// 或 https:// 前缀');
+    else {
+      try {
+        const parsed = new URL(url);
+        if (/\/chat\/completions$/i.test(parsed.pathname)) issues.push('URL 不要写到 /chat/completions，填到 /v1 即可');
+      } catch (e) { issues.push('URL 格式无法解析'); }
+    }
+    if (!String(api && api.key || '').trim()) issues.push('API Key 为空');
+    if (!String(api && api.model || '').trim()) issues.push('模型名为空');
+    return issues;
+  }
+
+  /** 把底层报错翻成能直接照做的说明，并保留原文便于排查。 */
+  function describeFailure(err, api, label) {
+    const raw = String(err && err.message || err || '未知错误').trim();
+    const target = hostOf(api && api.url);
+    const local = /^(127\.|localhost|0\.0\.0\.0|\[::1\])/i.test(target);
+    let hint = '';
+    if (/timeou?t|超时/i.test(raw)) {
+      hint = local
+        ? '本地服务没有在超时时间内响应：确认 ' + target + ' 正在运行，且该模型没有卡在长思考。'
+        : '目标地址没有在超时时间内响应，可加大超时时间或检查网络。';
+    } else if (/\b401\b|unauthor|invalid.*key|api key/i.test(raw)) hint = 'API Key 被拒绝，检查 Key 是否正确、是否带了多余空格。';
+    else if (/\b403\b|forbidden/i.test(raw)) hint = '目标拒绝访问，检查 Key 权限或来源限制。';
+    else if (/\b404\b|not found/i.test(raw)) hint = '路径不存在：URL 通常应填到 /v1，且模型名要与该服务实际提供的一致。';
+    else if (/\b429\b|rate limit/i.test(raw)) hint = '被限流，降低频率或稍后重试。';
+    else if (/\b5\d\d\b|internal server|bad gateway/i.test(raw)) hint = '目标服务内部错误，通常是上游或代理本身的问题。';
+    else if (/failed to fetch|networkerror|econnrefused|连接|network/i.test(raw)) {
+      hint = local
+        ? '连不上 ' + target + '：确认本地代理已启动并监听该端口。'
+        : '网络请求失败，确认地址可达且允许跨域访问。';
+    } else if (/model/i.test(raw) && /not|unsupport|unknown/i.test(raw)) hint = '模型名不被目标服务接受，用“获取模型列表”确认可用名称。';
+    const detail = hint ? raw + '｜' + hint : raw;
+    const out = new Error((label ? label + '：' : '') + detail);
+    out.cause = err;
+    out.raw = raw;
+    return out;
+  }
+
+  /** 响应片段，用于把“格式不对”变成看得见的原因。 */
+  function snippet(text, limit) {
+    const flat = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!flat) return '（空响应）';
+    const max = limit || 160;
+    return flat.length > max ? flat.slice(0, max) + '…' : flat;
+  }
   function status(stage, message, loading, detail) {
     window.dispatchEvent(new CustomEvent('pastoral:api-status', { detail: Object.assign({ stage, message, loading: !!loading }, detail || {}) }));
   }
@@ -3346,6 +3467,10 @@ const ApiEngine = (function () {
   function textResult(result) {
     if (typeof result === 'string') return result;
     if (result && typeof result.content === 'string') return result.content;
+    // 工具调用形态没有正文，明确报出来，避免退化成“空响应”这类无用错误。
+    if (result && Array.isArray(result.tool_calls) && result.tool_calls.length) {
+      throw new Error('目标模型返回了 tool_calls 而不是文本，变量请求需要纯文本输出');
+    }
     return '';
   }
 
@@ -3410,12 +3535,13 @@ const ApiEngine = (function () {
     ].filter(Boolean).join('\n\n');
   }
 
-  function timeoutCall(factory, timeout, generationId) {
+  function timeoutCall(factory, timeout, generationId, label) {
     let timer;
+    const who = label || '第二 API';
     const timeoutPromise = new Promise((_, reject) => {
       timer = setTimeout(() => {
         try { if (typeof stopGenerationById === 'function') stopGenerationById(generationId); } catch (e) { /* ignore */ }
-        reject(new Error('第二 API 请求超时（' + timeout + 'ms）'));
+        reject(new Error(who + '请求超时（' + timeout + 'ms）'));
       }, timeout);
     });
     return Promise.race([Promise.resolve().then(factory), timeoutPromise]).finally(() => clearTimeout(timer));
@@ -3448,6 +3574,44 @@ const ApiEngine = (function () {
   }
 
   /**
+   * 关键：`overrides.chat_history.with_depth_entries` 默认为 true，
+   * 所以世界书"按深度插入"的条目和作者注释即使走 generateRaw + ordered_prompts 也会被带进来。
+   * 这里显式清空未选用的上下文，让变量请求真正只发本项目的指导与正文。
+   */
+  function buildOverrides(preset) {
+    const selected = (preset && preset.context) || {};
+    const usingPreset = preset && preset.mode !== 'none';
+    const overrides = {};
+    // none 模式：未勾选的占位符一律置空，杜绝角色卡/世界书残留。
+    if (!usingPreset) {
+      CONTEXT_PLACEHOLDERS.forEach(([key, placeholder]) => {
+        if (placeholder === 'chat_history') return;
+        if (selected[key] !== true) overrides[placeholder] = '';
+      });
+    }
+    // 三种模式都屏蔽深度注入与作者注释：它们不属于"变量更新规则"，只会污染计算。
+    if (preset && preset.blockDepthEntries !== false) {
+      overrides.chat_history = { with_depth_entries: false, author_note: '' };
+    }
+    if (!usingPreset && selected.chatHistory !== true) {
+      overrides.chat_history = Object.assign({ with_depth_entries: false, author_note: '' }, overrides.chat_history, { prompts: [] });
+    }
+    return Object.keys(overrides).length ? overrides : null;
+  }
+
+  /** 变量计算要稳定复现，不继承剧情预设的高温与惩罚参数。 */
+  function samplingOverrides(preset) {
+    const temperature = preset && Number.isFinite(Number(preset.temperature)) ? Number(preset.temperature) : 0;
+    return {
+      temperature,
+      frequency_penalty: 'unset',
+      presence_penalty: 'unset',
+      top_p: 'unset',
+      top_k: 'unset'
+    };
+  }
+
+  /**
    * 解析本次变量请求的预设策略。
    * - none：完全不使用酒馆预设，走 generateRaw + ordered_prompts
    * - current：generate + 'in_use'
@@ -3455,62 +3619,98 @@ const ApiEngine = (function () {
    */
   function resolvePreset(kind, config) {
     const selected = variablePresetConfig(kind, config);
-    if (selected.mode === 'current') return { mode: 'current', presetName: 'in_use' };
+    // 深度注入屏蔽与采样参数对三种模式一致生效。
+    const shared = {
+      context: selected.context || {},
+      blockDepthEntries: selected.blockDepthEntries !== false,
+      temperature: selected.temperature
+    };
+    if (selected.mode === 'current') return Object.assign({ mode: 'current', presetName: 'in_use' }, shared);
     if (selected.mode === 'fixed') {
-      if (availablePresetNames().includes(selected.presetName)) return { mode: 'fixed', presetName: selected.presetName };
+      if (availablePresetNames().includes(selected.presetName)) {
+        return Object.assign({ mode: 'fixed', presetName: selected.presetName }, shared);
+      }
       if (typeof toast === 'function') {
         toast('warn', '变量预设不存在', '“' + selected.presetName + '”已不存在，本次改用不带预设。');
       }
     }
-    return { mode: 'none', presetName: '', context: selected.context || {} };
+    return Object.assign({ mode: 'none', presetName: '' }, shared);
   }
 
   async function generateVariable(config, kind, settings) {
     const preset = resolvePreset(kind, settings);
+    const overrides = buildOverrides(preset);
+    // 采样参数只在走自定义 API 时能覆盖；跟随主 API 时保持原样。
+    const base = Object.assign({}, config);
+    if (base.custom_api) base.custom_api = Object.assign({}, samplingOverrides(preset), base.custom_api);
+    if (overrides) base.overrides = Object.assign({}, overrides, base.overrides);
     if (preset.mode === 'none') {
       // generateRaw 才能完全绕开酒馆预设；只发我们指定的占位符和本次任务提示。
       if (typeof generateRaw !== 'function') throw new Error('当前环境缺少 generateRaw，无法发送不带预设的变量请求');
-      return generateRaw(Object.assign({}, config, {
-        max_chat_history: config.max_chat_history == null ? 0 : config.max_chat_history,
+      return generateRaw(Object.assign(base, {
+        max_chat_history: base.max_chat_history == null ? 0 : base.max_chat_history,
         ordered_prompts: orderedPrompts(preset.context)
       }));
     }
     if (typeof generate !== 'function') throw new Error('当前环境不支持按酒馆预设生成');
-    return generate(Object.assign({}, config, { preset_name: preset.presetName }));
+    return generate(Object.assign(base, { preset_name: preset.presetName }));
+  }
+
+  /** 只讲格式、不重述规则的纠正提示，附上模型自己刚才的输出。 */
+  function repairPrompt(prompt, badReply) {
+    return [
+      prompt,
+      '【上一次输出格式不合规，这是你自己的输出】\n' + String(badReply || '（空）').slice(0, 4000),
+      '【本次只需修正格式】\n严格输出一个 <UpdateVariable><Analysis>简短说明</Analysis><JSONPatch>[...]</JSONPatch></UpdateVariable>。'
+        + 'JSONPatch 必须是合法 JSON 数组，每个元素形如 {"op":"replace|delta|insert|remove|move","path":"/JSON/Pointer","value":...}；'
+        + 'delta 的 value 必须是数字，remove 不带 value，move 用 from 与 to。不要代码围栏，不要解释，不要输出任何标签之外的文字。无变化就输出 []。'
+    ].join('\n\n');
   }
 
   async function callSecondApiForVariable(context) {
     const cfg = Settings.load();
     if (cfg.apiMode !== 'multi') throw new Error('当前未启用多 API 模式');
-    if (!Settings.isSecondApiComplete(cfg)) throw new Error('第二 API 配置不完整');
+    const api = Object.assign({}, cfg.secondApi, { url: normalizeUrl(cfg.secondApi && cfg.secondApi.url) });
+    const issues = inspectApi(api);
+    if (issues.length) throw new Error('第二 API 配置有问题：' + issues.join('；'));
     const prompt = buildPrompt(Object.assign({}, context, { config: cfg }));
-    const api = cfg.secondApi;
+    const target = hostOf(api.url);
     let failure;
     for (let attempt = 0; attempt <= api.maxRetries; attempt++) {
-      const id = 'pastoral-second-' + (++sequence);
       const started = now();
-      const target = hostOf(api.url);
-      log(PREFIX_SECOND, '开始', { id, purpose: context.purpose, attempt: attempt + 1, messageId: context.messageId, target });
-      status('第二 API', `正在请求 ${target} · 第 ${attempt + 1} 次`, true, { id, attempt: attempt + 1, target, purpose: context.purpose });
+      log(PREFIX_SECOND, '开始', { purpose: context.purpose, attempt: attempt + 1, messageId: context.messageId, target, model: api.model });
+      // 每次尝试内部允许一次格式纠正，且不占用玩家设置的重试次数。
+      let id = '', raw = '', updateTag = '', repaired = false;
       try {
-        const raw = textResult(await timeoutCall(() => generateVariable({
-          generation_id: id,
-          user_input: prompt,
-          should_stream: false,
-          should_silence: true,
-          max_chat_history: 0,
-          custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
-        }, context.purpose, cfg), api.timeout, id));
-        const updateTag = Extract.normalizeUpdateVariable(raw);
-        if (!updateTag) throw new Error('第二 API 未返回包含 Analysis 与合法 JSONPatch 数组的 UpdateVariable');
+        for (let pass = 0; pass < 2; pass++) {
+          id = 'pastoral-second-' + (++sequence);
+          const label = pass === 0
+            ? `正在请求 ${target} · 第 ${attempt + 1} 次`
+            : `${target} 输出格式不合规，正在请求纠正…`;
+          status('第二 API', label, true, { id, attempt: attempt + 1, target, purpose: context.purpose, repair: pass > 0 });
+          raw = textResult(await timeoutCall(() => generateVariable({
+            generation_id: id,
+            user_input: pass === 0 ? prompt : repairPrompt(prompt, raw),
+            should_stream: false,
+            should_silence: true,
+            max_chat_history: 0,
+            custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
+          }, context.purpose, cfg), api.timeout, id));
+          updateTag = Extract.salvageUpdateVariable(raw);
+          if (updateTag) { repaired = pass > 0; break; }
+          log(PREFIX_SECOND, '格式不合规', { id, pass: pass + 1, received: snippet(raw) });
+        }
+        if (!updateTag) {
+          throw new Error('模型两次都没给出合法 UpdateVariable（含 Analysis 与 JSONPatch 数组）。实际收到：' + snippet(raw));
+        }
         const elapsedMs = Math.round(now() - started);
-        log(PREFIX_SECOND, '完成', { id, attempt: attempt + 1, elapsedMs, target });
-        status('第二 API 已响应', `${target} · ${elapsedMs}ms，正在写回变量…`, true, { id, elapsedMs, target, purpose: context.purpose });
-        return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'second', id, target, elapsedMs };
+        log(PREFIX_SECOND, '完成', { id, attempt: attempt + 1, elapsedMs, target, repaired });
+        status('第二 API 已响应', `${target} · ${elapsedMs}ms，正在写回变量…`, true, { id, elapsedMs, target, purpose: context.purpose, repaired });
+        return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'second', id, target, elapsedMs, repaired };
       } catch (e) {
-        failure = e;
-        error(PREFIX_SECOND, '失败（尝试 ' + (attempt + 1) + '）', e);
-        status('第二 API 失败', `${target} · ${e && e.message || e}`, attempt < api.maxRetries, { id, target, attempt: attempt + 1, purpose: context.purpose });
+        failure = describeFailure(e, api, '第二 API');
+        error(PREFIX_SECOND, '失败（尝试 ' + (attempt + 1) + '）', failure);
+        status('第二 API 失败', `${target} · ${failure.message}`, attempt < api.maxRetries, { id, target, attempt: attempt + 1, purpose: context.purpose });
       }
     }
     throw failure || new Error('第二 API 调用失败');
@@ -3561,15 +3761,25 @@ const ApiEngine = (function () {
     const id = 'pastoral-daily-main-' + (++sequence);
     const started = now();
     log(PREFIX_MAIN, '日结开始', { messageId: context.messageId });
-    const raw = textResult(await timeoutCall(() => generateVariable({
-      generation_id: id,
-      user_input: prompt,
-      should_stream: false,
-      should_silence: true,
-      max_chat_history: 0
-    }, 'endday', Settings.load()), 30000, id));
-    const updateTag = Extract.normalizeUpdateVariable(raw);
-    if (!updateTag) throw new Error('主 API 日结未返回包含 Analysis 与合法 JSONPatch 数组的 UpdateVariable');
+    const cfg = Settings.load();
+    let raw = '', updateTag = '';
+    for (let pass = 0; pass < 2; pass++) {
+      const passId = pass === 0 ? id : id + '-repair';
+      if (pass > 0) status('主 API 日结', '输出格式不合规，正在请求纠正…', true, { id: passId, purpose: 'endday', repair: true });
+      raw = textResult(await timeoutCall(() => generateVariable({
+        generation_id: passId,
+        user_input: pass === 0 ? prompt : repairPrompt(prompt, raw),
+        should_stream: false,
+        should_silence: true,
+        max_chat_history: 0
+      }, 'endday', cfg), 30000, passId, '主 API 日结'));
+      updateTag = Extract.salvageUpdateVariable(raw);
+      if (updateTag) break;
+      log(PREFIX_MAIN, '日结格式不合规', { pass: pass + 1, received: snippet(raw) });
+    }
+    if (!updateTag) {
+      throw new Error('当前主 API 两次都没给出合法 UpdateVariable（含 Analysis 与 JSONPatch 数组）。实际收到：' + snippet(raw));
+    }
     log(PREFIX_MAIN, '日结完成', { elapsedMs: Math.round(now() - started) });
     return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'main' };
   }
@@ -3624,10 +3834,26 @@ const ApiEngine = (function () {
     }
   }
 
+  /** 拉取目标服务实际提供的模型名，用于排除"模型名写错"这类错误。 */
+  async function fetchModelList(candidate) {
+    if (typeof getModelList !== 'function') throw new Error('当前酒馆版本不提供 getModelList');
+    const api = Object.assign({}, Settings.load().secondApi, candidate || {});
+    const url = normalizeUrl(api.url);
+    if (!url) throw new Error('请先填写 URL');
+    try {
+      const list = await getModelList({ apiurl: url, key: String(api.key || '').trim() });
+      return Array.isArray(list) ? list.filter((name) => typeof name === 'string' && name.trim()) : [];
+    } catch (e) {
+      throw describeFailure(e, Object.assign({}, api, { url }), '获取模型列表失败');
+    }
+  }
+
   async function testSecondApi(candidate) {
     if (typeof generate !== 'function' && typeof generateRaw !== 'function') throw new Error('当前环境缺少变量生成接口，未发送请求');
     const api = Object.assign({}, Settings.load().secondApi, candidate || {});
-    if (!api.url || !api.key || !api.model) throw new Error('请填写 URL、API Key 和模型名');
+    api.url = normalizeUrl(api.url);
+    const issues = inspectApi(api);
+    if (issues.length) throw new Error('未发送请求：' + issues.join('；'));
     const id = 'pastoral-second-test-' + (++sequence);
     const target = hostOf(api.url);
     const started = now();
@@ -3641,14 +3867,15 @@ const ApiEngine = (function () {
         should_silence: true,
         max_chat_history: 0,
         custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
-      }, 'normal', Settings.load()), Math.max(1000, Number(api.timeout) || 30000), id));
+      }, 'normal', Settings.load()), Math.max(1000, Number(api.timeout) || 30000), id, '第二 API 测试'));
       const elapsedMs = Math.round(now() - started);
-      status('第二 API 测试成功', `${target} · ${elapsedMs}ms · ${raw.slice(0, 80) || '收到空文本'}`, false, { id, target, elapsedMs, purpose: 'test' });
+      status('第二 API 测试成功', `${target} · ${elapsedMs}ms · ${snippet(raw, 80) || '收到空文本'}`, false, { id, target, elapsedMs, purpose: 'test' });
       log(PREFIX_SECOND, '连接测试完成', { id, target, elapsedMs });
       return { ok: true, id, target, elapsedMs, raw };
     } catch (e) {
-      status('第二 API 测试失败', `${target} · ${e && e.message || e}`, false, { id, target, purpose: 'test' });
-      throw e;
+      const failure = describeFailure(e, api, '');
+      status('第二 API 测试失败', `${target} · ${failure.message}`, false, { id, target, purpose: 'test' });
+      throw failure;
     }
   }
 
@@ -3661,6 +3888,10 @@ const ApiEngine = (function () {
     LEGACY_PRESET_NAME,
     availablePresetNames,
     orderedPrompts,
+    buildOverrides,
+    inspectApi,
+    normalizeUrl,
+    fetchModelList,
     resolvePreset,
     updateGuide,
     outputFormat,
@@ -4131,7 +4362,14 @@ const Chat = (function () {
               (error) => console.warn('[Pastoral][MVU]', '迟到的首次日结写回失败', error && error.message || error)
             ).catch((error) => console.error('[Pastoral][MVU]', '迟到写回后的事实锁定失败', error && error.message || error));
           }
-          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: outcome && outcome.summary, source: outcome && outcome.source, updateOk: complete, updateError }, calculated || {}) }));
+          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({
+            summary: outcome && outcome.summary,
+            // 没拿到结果时归为脚本结算，不冒充任何 API 的成功。
+            source: (outcome && outcome.source) || 'script',
+            apiMode: mode,
+            updateOk: complete,
+            updateError
+          }, calculated || {}) }));
           setRequestStatus(complete ? '归寝完成' : '归寝部分完成', complete ? '账簿已更新。' : updateError || '确定性结算已保留，但变量更新未完整完成。', false);
         }
       }
@@ -5166,13 +5404,44 @@ window.Chat = Chat;
       h('input', { class: 'set-input', name, value, type: type || 'text', min: min == null ? null : min, autocomplete: name === 'secondApiKey' ? 'off' : null })
     ]);
     apiBox.appendChild(field('URL', 'secondApiUrl', cfg.secondApi.url, 'url'));
+    apiBox.appendChild(h('p', { class: 'faint set-help' }, '填到 /v1 为止，例如 http://127.0.0.1:7861/v1，不要写 /chat/completions。'));
     apiBox.appendChild(field('API Key', 'secondApiKey', cfg.secondApi.key, 'password'));
     apiBox.appendChild(field('模型名', 'secondApiModel', cfg.secondApi.model));
+    const modelList = h('datalist', { id: 'secondApiModelList' });
+    apiBox.appendChild(modelList);
+    apiBox.querySelector('[name="secondApiModel"]').setAttribute('list', 'secondApiModelList');
+    const fetchModels = h('button', { class: 'btn btn--ghost btn--sm', type: 'button', 'data-fetch-models': '' }, '获取模型列表');
+    fetchModels.addEventListener('click', async () => {
+      fetchModels.disabled = true; fetchModels.textContent = '正在获取…';
+      try {
+        const names = await ApiEngine.fetchModelList({
+          url: form.elements.secondApiUrl.value, key: form.elements.secondApiKey.value
+        });
+        modelList.innerHTML = '';
+        names.forEach((name) => modelList.appendChild(h('option', { value: name })));
+        if (!names.length) toast('warn', '未获取到模型', '目标服务返回了空列表，模型名需要手动填写。');
+        else toast('success', '已获取 ' + names.length + ' 个模型', '在模型名输入框展开即可选择。');
+      } catch (e) { toast('error', '获取模型列表失败', e && e.message || String(e)); }
+      finally { fetchModels.disabled = false; fetchModels.textContent = '获取模型列表'; }
+    });
+    apiBox.appendChild(h('div', { class: 'settings-actions' }, fetchModels));
     apiBox.appendChild(field('超时时间（ms）', 'secondApiTimeout', cfg.secondApi.timeout, 'number', 1000));
     apiBox.appendChild(field('最大重试次数', 'secondApiRetries', cfg.secondApi.maxRetries, 'number', 0));
+    apiBox.appendChild(h('p', { class: 'faint set-help' }, '格式不合规时程序会自动追加一次纠正请求，不占用这里的重试次数。'));
+    const apiCheck = h('p', { class: 'faint set-help preset-effective', 'data-api-check': '' });
+    apiBox.appendChild(apiCheck);
+    const syncCheck = () => {
+      const issues = ApiEngine.inspectApi({
+        url: form.elements.secondApiUrl.value, key: form.elements.secondApiKey.value, model: form.elements.secondApiModel.value
+      });
+      apiCheck.textContent = issues.length ? '⚠ ' + issues.join('；') : '✓ 配置项已填全，可测试连接。';
+    };
+    ['secondApiUrl', 'secondApiKey', 'secondApiModel'].forEach((name) => {
+      apiBox.querySelector('[name="' + name + '"]').addEventListener('input', syncCheck);
+    });
     form.appendChild(apiBox);
 
-    const syncMode = () => { apiBox.hidden = mode.value !== 'multi'; };
+    const syncMode = () => { apiBox.hidden = mode.value !== 'multi'; if (mode.value === 'multi') syncCheck(); };
     mode.addEventListener('change', syncMode); syncMode();
     const save = h('button', { class: 'btn btn--primary btn--block', type: 'submit' }, '保存 API 设置');
     form.appendChild(save);
@@ -5203,16 +5472,19 @@ window.Chat = Chat;
     form.appendChild(retry);
     form.addEventListener('submit', (e) => {
       e.preventDefault();
+      const cleanUrl = ApiEngine.normalizeUrl(form.elements.secondApiUrl.value);
+      form.elements.secondApiUrl.value = cleanUrl;
       const next = Settings.save({ apiMode: mode.value, secondApi: {
-        url: form.elements.secondApiUrl.value,
+        url: cleanUrl,
         key: form.elements.secondApiKey.value,
         model: form.elements.secondApiModel.value,
         timeout: form.elements.secondApiTimeout.value,
         maxRetries: form.elements.secondApiRetries.value
       } });
-      if (next.apiMode === 'multi' && !Settings.isSecondApiComplete(next)) {
-        toast('warn', '设置已保存', '第二 API 配置尚不完整，调用时将自动降级。');
-      } else toast('success', '设置已保存', next.apiMode === 'multi' ? '双轨 API 已启用。' : '当前使用单 API。');
+      syncCheck();
+      const issues = next.apiMode === 'multi' ? ApiEngine.inspectApi(next.secondApi) : [];
+      if (issues.length) toast('warn', '设置已保存，但配置不可用', issues.join('；'));
+      else toast('success', '设置已保存', next.apiMode === 'multi' ? '双轨 API 已启用。' : '当前使用单 API。');
     });
     apiPage.appendChild(form);
 
@@ -5228,14 +5500,42 @@ window.Chat = Chat;
       h('span', { class: 'faint set-help' }, help),
       h('textarea', { class: 'set-input set-textarea', name, rows: '14', spellcheck: 'false', placeholder: '留空则使用程序内置默认指导' }, value)
     ]);
-    promptForm.appendChild(h('div', { class: 'notice notice--info set-notice' }, '这两份指导就是变量请求实际发送的规则，程序自带默认值，不再读取世界书。输出格式由程序自动合并附加。'));
+    promptForm.appendChild(h('div', { class: 'notice notice--info set-notice' }, [
+      h('div', {}, '这两份指导就是变量请求实际发送的规则，全部保存在前端本地，程序自带默认值。'),
+      h('div', {}, '不读取世界书：绑定世界书里无需存在“变量更新规则”或“变量输出格式”条目。输出格式由程序自动合并附加。')
+    ]));
     promptForm.appendChild(promptField('日常变量更新指导', 'normalPrompt', cfg.prompts.normal || builtinGuide('normal'), '每次主模型回复后的常规更新使用。'));
     promptForm.appendChild(promptField('归寝日结指导', 'enddayPrompt', cfg.prompts.endday || builtinGuide('endday'), '点击归寝时的跨日结算使用；脚本已完成的扣费、作物成长和设施引力不会重复执行。'));
     const promptActions = h('div', { class: 'settings-actions' }, [
+      h('button', { class: 'btn btn--ghost', type: 'button', 'data-preview-prompt': 'normal' }, '预览日常请求'),
+      h('button', { class: 'btn btn--ghost', type: 'button', 'data-preview-prompt': 'endday' }, '预览归寝请求'),
       h('button', { class: 'btn btn--ghost', type: 'button', 'data-reset-prompts': '' }, '恢复内置默认'),
       h('button', { class: 'btn btn--primary', type: 'submit' }, '保存指导')
     ]);
     promptForm.appendChild(promptActions);
+    const preview = h('pre', { class: 'prompt-preview', 'data-prompt-preview': '', hidden: '' });
+    promptForm.appendChild(preview);
+    $$('[data-preview-prompt]', promptForm).forEach((btn) => btn.addEventListener('click', () => {
+      const kind = btn.dataset.previewPrompt;
+      // 用输入框里的当前文本预览，未保存也能看到实际效果。
+      const draft = {
+        prompts: {
+          normal: promptForm.elements.normalPrompt.value,
+          endday: promptForm.elements.enddayPrompt.value
+        }
+      };
+      try {
+        const text = ApiEngine.buildPrompt({
+          purpose: kind,
+          config: draft,
+          baseline: window.MVU && MVU.getDataSnapshot ? MVU.getDataSnapshot() : { stat_data: {} },
+          calculated: kind === 'endday' ? { salary: 0, maintenance: 0, 说明: '预览占位，实际由脚本结算填入' } : null
+        });
+        preview.textContent = text;
+        preview.hidden = false;
+        preview.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      } catch (e) { toast('error', '无法生成预览', e && e.message || String(e)); }
+    }));
     promptForm.addEventListener('submit', (e) => {
       e.preventDefault();
       // 与内置默认完全相同时存空串，后续升级默认指导仍能自动生效。
@@ -5270,6 +5570,7 @@ window.Chat = Chat;
         h('option', { value: 'current' }, '跟随酒馆当前预设'),
         h('option', { value: 'fixed' }, '固定指定预设')
       ]);
+      card.appendChild(h('p', { class: 'faint set-help' }, '“预设”指酒馆 Chat Completion 预设（提示词管理器里的提示词条目与生成参数）。不带预设时用 generateRaw，预设的主提示词、越狱、历史后指令都不参与。'));
       mode.value = setting.mode;
       card.appendChild(h('label', { class: 'set-field' }, [h('span', { class: 'set-field__label' }, '预设模式'), mode]));
       const missingPreset = setting.presetName && !presetNames.includes(setting.presetName)
@@ -5293,13 +5594,60 @@ window.Chat = Chat;
         }))
       ]);
       card.appendChild(context);
-      const sync = () => { fixed.hidden = mode.value !== 'fixed'; context.hidden = mode.value !== 'none'; };
-      mode.addEventListener('change', sync); sync();
+
+      // 三种模式共用：酒馆默认会把世界书按深度插入的条目和作者注释带进任何请求。
+      const blockDepth = h('input', { type: 'checkbox', name: kind + 'BlockDepth', value: '1' });
+      blockDepth.checked = setting.blockDepthEntries !== false;
+      card.appendChild(h('label', { class: 'preset-check preset-check--wide' }, [
+        blockDepth,
+        h('div', {}, [
+          h('span', {}, '屏蔽世界书按深度注入条目与作者注释'),
+          h('span', { class: 'faint set-help' }, '酒馆默认会把它们塞进每个请求，包括不带预设时。变量计算不需要它们，取消勾选才会放行。')
+        ])
+      ]));
+      const temperature = h('input', {
+        class: 'set-input', name: kind + 'Temperature', type: 'number',
+        min: '0', max: '2', step: '0.1', value: String(setting.temperature == null ? 0 : setting.temperature)
+      });
+      card.appendChild(h('label', { class: 'set-field' }, [
+        h('span', { class: 'set-field__label' }, '采样温度'),
+        h('span', { class: 'faint set-help' }, '变量计算建议 0，稳定复现。仅在第二 API 生效；跟随主 API 时由主 API 决定。'),
+        temperature
+      ]));
+
+      const effective = h('p', { class: 'faint set-help preset-effective', 'data-preset-effective': kind });
+      card.appendChild(effective);
+      const sync = () => {
+        fixed.hidden = mode.value !== 'fixed';
+        context.hidden = mode.value !== 'none';
+        const checkedContext = Object.keys(contextLabels).filter((key) => {
+          const input = card.querySelector('[name="' + kind + 'Context_' + key + '"]');
+          return input && input.checked;
+        }).map((key) => contextLabels[key]);
+        const parts = [];
+        if (mode.value === 'none') {
+          parts.push('本次只发送：本项目更新指导 + 输出格式 + 最近三层正文 + 当前变量快照');
+          if (checkedContext.length) parts.push('额外携带：' + checkedContext.join('、'));
+          else parts.push('不携带任何角色卡或世界书内容');
+        } else {
+          parts.push(mode.value === 'current' ? '使用酒馆当前预设的提示词与参数' : '使用固定预设的提示词与参数');
+          parts.push('本项目更新指导仍作为用户输入发送');
+        }
+        parts.push(blockDepth.checked ? '已屏蔽深度注入与作者注释' : '⚠ 放行深度注入与作者注释');
+        effective.textContent = '实际发送：' + parts.join('；') + '。';
+      };
+      mode.addEventListener('change', sync);
+      blockDepth.addEventListener('change', sync);
+      card.querySelectorAll('[name^="' + kind + 'Context_"]').forEach((input) => input.addEventListener('change', sync));
+      sync();
       return card;
     };
     presetForm.appendChild(presetCard('normal', '普通变量更新'));
     presetForm.appendChild(presetCard('endday', '归寝变量更新'));
-    presetForm.appendChild(h('div', { class: 'notice notice--info set-notice' }, '主剧情仍使用酒馆正常发送和当前预设；这里仅控制主剧情后的变量请求。'));
+    presetForm.appendChild(h('div', { class: 'notice notice--info set-notice' }, [
+      h('div', {}, '主剧情仍使用酒馆正常发送和当前预设；这里仅控制主剧情后的变量请求。'),
+      h('div', {}, '变量更新规则与输出格式全部来自本程序（“更新提示词”页），世界书里不需要、也不会被读取任何变量更新条目。')
+    ]));
     presetForm.appendChild(h('div', { class: 'settings-actions' }, h('button', { class: 'btn btn--primary', type: 'submit' }, '保存变量预设')));
     presetForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -5309,6 +5657,8 @@ window.Chat = Chat;
         return {
           mode: presetForm.elements[kind + 'PresetMode'].value,
           presetName: presetForm.elements[kind + 'PresetName'].value,
+          blockDepthEntries: !!presetForm.elements[kind + 'BlockDepth'].checked,
+          temperature: presetForm.elements[kind + 'Temperature'].value,
           context
         };
       };
@@ -5439,7 +5789,21 @@ window.Chat = Chat;
       h('div', { class: 'daily-summary-copy' }, String(report.summary || '').trim() || (report.updateOk === false ? '确定性结算已完成；额外变量更新失败。' : '日结完成，变量已更新。')),
       report.updateError ? h('div', { class: 'notice notice--warn' }, '额外更新错误：' + report.updateError) : null
     ]));
-    dialog.appendChild(h('div', { class: 'daily-modal__foot' }, [h('span', { class: 'faint' }, detail && detail.source === 'second' ? '由第二 API 结算' : '由当前主 API 结算'), h('button', { class: 'btn btn--primary', type: 'button', onclick: close }, '合上账簿')]));
+    // 结算来源必须与实际发生的事情一致，失败时不能冒充成功来源。
+    const attribution = (() => {
+      const r = report;
+      if (r.pending) return '脚本确定性结算已完成，等待变量更新…';
+      if (r.updateOk === false) {
+        if (r.source === 'second') return '第二 API 更新失败 · 仅保留脚本确定性结算';
+        if (r.source === 'main') return '当前主 API 更新失败 · 仅保留脚本确定性结算';
+        return '变量更新未完成 · 仅保留脚本确定性结算';
+      }
+      if (r.source === 'second') return '脚本确定性结算 + 第二 API 变量更新';
+      if (r.source === 'main') return '脚本确定性结算 + 当前主 API 变量更新';
+      if (r.source === 'script') return '仅脚本确定性结算';
+      return '结算来源未知';
+    })();
+    dialog.appendChild(h('div', { class: 'daily-modal__foot' }, [h('span', { class: 'faint' }, attribution), h('button', { class: 'btn btn--primary', type: 'button', onclick: close }, '合上账簿')]));
     backdrop.appendChild(dialog); document.body.appendChild(backdrop); Icon.render(dialog);
     const focusables = () => Array.from(dialog.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
     const first = focusables()[0]; if (first) first.focus();

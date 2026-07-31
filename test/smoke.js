@@ -115,9 +115,25 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const normalFixed = doc.querySelector('[name="normalPresetName"]');
     ok(!normalFixed.closest('[data-preset-fixed]').hidden && normalFixed.options.length === 2, '固定模式显示酒馆预设列表且排除内部预设');
     normalFixed.value = '变量专用';
+    // 深度注入屏蔽对三种模式都要有，所以不能藏在 none 专属的上下文区域里。
+    const blockDepth = doc.querySelector('[name="normalBlockDepth"]');
+    ok(!!blockDepth && blockDepth.checked, '预设页提供深度注入屏蔽开关且默认开启');
+    ok(!blockDepth.closest('[data-preset-context]'), '深度注入屏蔽独立于 none 专属上下文区域，固定预设模式下同样可见');
+    ok(!!doc.querySelector('[name="normalTemperature"]') && doc.querySelector('[name="normalTemperature"]').value === '0',
+      '预设页提供采样温度且默认 0');
+    const effective = doc.querySelector('[data-preset-effective="normal"]');
+    ok(effective && /已屏蔽深度注入/.test(effective.textContent), '预设页说明本次实际发送内容与屏蔽状态');
     doc.getElementById('presetSettingsForm').dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
     let savedSettings = JSON.parse(win.localStorage.getItem('mrfz_settings'));
     ok(savedSettings.variablePresets.normal.mode === 'fixed' && savedSettings.variablePresets.normal.presetName === '变量专用', '变量预设设置保存到网页缓存');
+    ok(savedSettings.variablePresets.normal.blockDepthEntries === true && savedSettings.variablePresets.normal.temperature === 0,
+      '屏蔽开关与采样温度一并保存');
+    blockDepth.checked = false; blockDepth.dispatchEvent(new win.Event('change', { bubbles: true }));
+    ok(/放行深度注入/.test(effective.textContent), '取消屏蔽后说明文字立即改为放行提示');
+    doc.getElementById('presetSettingsForm').dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
+    ok(JSON.parse(win.localStorage.getItem('mrfz_settings')).variablePresets.normal.blockDepthEntries === false, '放行选择可持久化');
+    blockDepth.checked = true; blockDepth.dispatchEvent(new win.Event('change', { bubbles: true }));
+    doc.getElementById('presetSettingsForm').dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
     doc.querySelector('[data-settings-tab="prompts"]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
     const normalPrompt = doc.querySelector('[name="normalPrompt"]');
     const enddayPrompt = doc.querySelector('[name="enddayPrompt"]');
@@ -130,6 +146,15 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     savedSettings = JSON.parse(win.localStorage.getItem('mrfz_settings'));
     ok(savedSettings.prompts.normal === '玩家普通提示' && savedSettings.prompts.endday === '玩家日结提示', '指导可从设置页面保存到网页缓存');
     ok(win.Settings.promptFor('normal', win.Settings.load()) === '玩家普通提示', '保存后的指导会被变量请求真正读取');
+    // 预览必须反映输入框里的草稿，否则玩家无法确认"到底发了什么"。
+    normalPrompt.value = '草稿指导内容';
+    doc.querySelector('[data-preview-prompt="normal"]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    const previewBox = doc.querySelector('[data-prompt-preview]');
+    ok(previewBox && !previewBox.hidden && /草稿指导内容/.test(previewBox.textContent), '预览显示输入框当前草稿');
+    ok(/变量更新输出格式/.test(previewBox.textContent), '预览包含自动合并的输出格式');
+    doc.querySelector('[data-preview-prompt="endday"]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    ok(/当前阶段：归寝日结/.test(previewBox.textContent), '归寝预览切换到归寝阶段');
+    normalPrompt.value = '玩家普通提示';
     doc.querySelector('[data-reset-prompts]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
     ok(normalPrompt.value === win.Settings.builtinGuide('normal') && JSON.parse(win.localStorage.getItem('mrfz_settings')).prompts.normal === '', '恢复内置默认同时还原文本框与缓存');
     doc.querySelector('.settings-pop__close').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
