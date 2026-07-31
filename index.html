@@ -1971,14 +1971,39 @@ const Extract = {
     return String(rawText || '').replace(/\s*<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>\s*/gi, '\n').trim();
   },
 
-  /** 接受完整标签，或从无标签响应中提取明确的 MVU 命令后包装。 */
+  _validPointer(path) {
+    if (typeof path !== 'string' || path[0] !== '/') return false;
+    return path.split('/').slice(1).every((part) => !/~(?:[^01]|$)/.test(part));
+  },
+
+  _readonlyPointer(path) {
+    return path.split('/').slice(1).some((part) => part.replace(/~1/g, '/').replace(/~0/g, '~').startsWith('_'));
+  },
+
+  /** 仅接受包含 Analysis 与语义合法 JSON Patch 数组的完整更新标签。 */
   normalizeUpdateVariable(rawText) {
     const tagged = this.extractUpdateVariable(rawText);
-    if (tagged) return tagged;
-    const commands = String(rawText || '').match(/_\.(?:set|add|assign|unset|remove)\s*\([\s\S]*?\)\s*;?/g);
-    return commands && commands.length
-      ? '<UpdateVariable>\n' + commands.join('\n') + '\n</UpdateVariable>'
-      : '';
+    if (!tagged || !/<Analysis\b[^>]*>[\s\S]*?<\/Analysis>/i.test(tagged)) return '';
+    const patch = tagged.match(/<JSONPatch\b[^>]*>([\s\S]*?)<\/JSONPatch>/i);
+    if (!patch) return '';
+    try {
+      const operations = JSON.parse(patch[1].trim());
+      const allowed = new Set(['replace', 'delta', 'insert', 'remove', 'move']);
+      const valid = Array.isArray(operations) && operations.every((item) => {
+        if (!item || typeof item !== 'object' || Array.isArray(item) || !allowed.has(item.op)) return false;
+        if (item.op === 'move') {
+          return this._validPointer(item.from) && this._validPointer(item.to)
+            && !this._readonlyPointer(item.from) && !this._readonlyPointer(item.to);
+        }
+        if (!this._validPointer(item.path) || this._readonlyPointer(item.path)) return false;
+        if (item.op === 'remove') return !Object.prototype.hasOwnProperty.call(item, 'value');
+        if (!Object.prototype.hasOwnProperty.call(item, 'value')) return false;
+        return item.op !== 'delta' || (typeof item.value === 'number' && Number.isFinite(item.value));
+      });
+      return valid ? tagged : '';
+    } catch (e) {
+      return '';
+    }
   },
 
   /** 移除原标签后追加新标签，剧情/选项/总结等其他内容保持原顺序。 */
@@ -2233,6 +2258,31 @@ const Assets = (function () {
 window.Assets = Assets;
 
 
+/* === money.js === */
+/* ============================================================
+   货币工具 · 所有金额以整数铜币存储
+   1 金 = 100 银 = 10000 铜
+   ============================================================ */
+const Money = {
+  formatCopper(value) {
+    const numeric = Number(value);
+    const copper = Number.isFinite(numeric) ? Math.trunc(numeric) : 0;
+    const sign = copper < 0 ? '−' : '';
+    let rest = Math.abs(copper);
+    const gold = Math.floor(rest / 10000);
+    rest %= 10000;
+    const silver = Math.floor(rest / 100);
+    const coins = rest % 100;
+    const parts = [];
+    if (gold) parts.push(gold + '金');
+    if (silver) parts.push(silver + '银');
+    if (coins || !parts.length) parts.push(coins + '铜');
+    return sign + parts.join('');
+  }
+};
+window.Money = Money;
+
+
 /* === mvu.js === */
 /* ============================================================
    MVU 读取与轮询
@@ -2433,7 +2483,9 @@ window.MVU = MVU;
 const ApiEngine = (function () {
   'use strict';
 
-  const RULE_ENTRY_NAME = '目前待定';
+  const RULE_ENTRY_NAME = '[mvu_update]变量更新规则';
+  const RULE_ENTRY_NAMES = [RULE_ENTRY_NAME, '变量更新指导', '变量更新规则', '目前待定'];
+  const FORMAT_ENTRY_NAMES = ['[mvu_update]变量输出格式', '变量更新输出格式', '变量输出格式'];
   const PREFIX_MAIN = '[Pastoral][MainAPI]';
   const PREFIX_SECOND = '[Pastoral][SecondAPI]';
   const MAX_SOURCE_LENGTH = 60000;
@@ -2471,12 +2523,13 @@ const ApiEngine = (function () {
     for (const name of names) {
       const entries = await getWorldbook(name);
       (Array.isArray(entries) ? entries : []).forEach((entry) => {
-        if (entry && entry.enabled !== false && entry.name === RULE_ENTRY_NAME && String(entry.content || '').trim()) {
-          parts.push('【' + name + '】\n' + String(entry.content).trim());
+        const entryName = String(entry && entry.name || '').trim();
+        if (entry && entry.enabled !== false && (RULE_ENTRY_NAMES.includes(entryName) || FORMAT_ENTRY_NAMES.includes(entryName)) && String(entry.content || '').trim()) {
+          parts.push('【' + name + ' · ' + entryName + '】\n' + String(entry.content).trim());
         }
       });
     }
-    if (!parts.length) throw new Error('绑定世界书中未找到“' + RULE_ENTRY_NAME + '”条目');
+    if (!parts.length) throw new Error('绑定世界书中未找到变量更新规则或变量输出格式条目');
     return parts.join('\n\n');
   }
 
@@ -2512,15 +2565,17 @@ const ApiEngine = (function () {
     const calculated = context.calculated
       ? '【脚本已确定事实（不得重算或重复应用）】\n' + JSON.stringify(context.calculated)
       : '';
+    const stage = context.purpose === 'endday' ? '归寝日结' : '日常更新';
     return [
       '你是暮归旅店的变量计算引擎，不续写剧情。',
+      '【当前阶段：' + stage + '】\n只处理本阶段规则允许的变化，排除另一阶段职责。所有金额的基础单位是整数铜币：1金币=100银币=10000铜币。',
       '【任务】\n' + purpose,
       '【最近三层正文】\n' + (history || '（无）'),
       '【变量规则】\n' + context.rules,
       '【主生成前当前变量数据】\n' + JSON.stringify(context.baseline && context.baseline.stat_data || {}),
       calculated,
       extra ? '【附加信息】\n' + extra : '',
-      '【输出格式】\n必须输出且只输出一个完整的 <UpdateVariable>...</UpdateVariable> 标签；归寝日结允许在标签前输出简洁总结。不得使用 Markdown 代码围栏。'
+      '【输出格式】\n必须输出且只输出一个完整的 <UpdateVariable><Analysis>...</Analysis><JSONPatch>[...]</JSONPatch></UpdateVariable> 标签；JSONPatch 必须是合法 JSON 数组，无变化时输出 []。不得输出 lodash 命令或 Markdown 代码围栏。归寝日结不得覆盖脚本已确定事实。'
     ].filter(Boolean).join('\n\n');
   }
 
@@ -2558,7 +2613,7 @@ const ApiEngine = (function () {
           custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
         }), api.timeout, id));
         const updateTag = Extract.normalizeUpdateVariable(raw);
-        if (!updateTag) throw new Error('第二 API 未返回 UpdateVariable 或有效 MVU 更新命令');
+        if (!updateTag) throw new Error('第二 API 未返回包含 Analysis 与合法 JSONPatch 数组的 UpdateVariable');
         log(PREFIX_SECOND, '完成', { attempt: attempt + 1, elapsedMs: Math.round(now() - started) });
         return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'second' };
       } catch (e) {
@@ -2621,8 +2676,8 @@ const ApiEngine = (function () {
       max_chat_history: 0,
       ordered_prompts: ['user_input']
     }), 30000, id));
-    const updateTag = Extract.extractUpdateVariable(raw);
-    if (!updateTag) throw new Error('主 API 日结未返回 UpdateVariable');
+    const updateTag = Extract.normalizeUpdateVariable(raw);
+    if (!updateTag) throw new Error('主 API 日结未返回包含 Analysis 与合法 JSONPatch 数组的 UpdateVariable');
     log(PREFIX_MAIN, '日结完成', { elapsedMs: Math.round(now() - started) });
     return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'main' };
   }
@@ -3068,6 +3123,9 @@ const Chat = (function () {
       const messageId = await waitForMainReply(beforeId, token, startCycle);
       console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
       let calculated = null, settledData = null;
+      if (purpose === 'endday' && mode === 'multi' && window.ApiEngine) {
+        await ApiEngine.processAfterMain({ baseline, messageId, purpose: 'normal', calculated: null });
+      }
       if (window.MVU) {
         if (purpose === 'endday' && typeof MVU.settleAndWrite === 'function') {
           const settled = await MVU.settleAndWrite(messageId, 'endday-message-' + messageId);
@@ -3290,10 +3348,8 @@ window.Chat = Chat;
   }
 
   /* ---------- 格式化 ---------- */
-  function formatFunds(silver) {
-    silver = num(silver, 0);
-    const g = Math.floor(silver / 100), s = silver % 100;
-    return g > 0 ? `${g}金${s}银` : `${s}银`;
+  function formatFunds(copper) {
+    return Money.formatCopper(copper);
   }
   const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
   const weekday = (n) => WEEKDAYS[clamp(num(n, 1) - 1, 0, 6)];
@@ -4269,7 +4325,7 @@ window.Chat = Chat;
   }
 
   function formatLedgerNumber(value) {
-    return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(value);
+    return Money.formatCopper(value);
   }
 
   /* ---------- 每日总结模态框 ---------- */

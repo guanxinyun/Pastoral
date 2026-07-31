@@ -1,0 +1,222 @@
+---
+变量输出格式:
+  purpose:
+    - 本条目只定义更新分析与命令格式；变量能否更新、何时更新，以“变量更新指导”中的日常或归寝规则为准。
+    - 每次输出前必须识别当前阶段：日常更新或归寝日结。不得混用两个阶段的职责。
+
+  rule:
+    - 必须在回复末尾一次性输出更新分析和实际更新命令。
+    - 必须输出且只输出一个完整的 <UpdateVariable> 标签；不要使用 Markdown 代码围栏。
+    - <Analysis> 与 <JSONPatch> 都不可缺少；<JSONPatch> 内容必须是可被 JSON.parse 解析的合法 JSON 数组。
+    - 无变量变化时也要输出完整标签，并在 <JSONPatch> 中输出 []，不得为了“看起来有更新”而虚构变化。
+    - 只根据当前回复已经发生的事实和更新前变量快照更新；不要重复累计更早剧情，不要把计划、提议、选项或未成功行动当成结果。
+    - 逐条对照目标变量的 check。没有当前回复证据、阶段不允许或路径不确定时，保持不变。
+    - 不更新字段名以 _ 开头的只读字段，例如 _变量；readonly 字段不得出现在任何操作的 path 或 from 中。
+    - 所有金额的基础单位是整数铜币：1金币 = 100银币 = 10000铜币，1银币 = 100铜币。
+    - 金额值必须先换算后写整数；不得把“2金币”这类带单位文本写进资金、日薪、售价、维护费等 number 字段。
+    - 归寝日结必须先读取“脚本已确定事实”清单；员工日薪、建筑维护费、作物剩余天数、农田每日标记、设施引力、总引力、已结算后的资金不得再次更新或覆盖。
+
+  analysis_steps:
+    - 计算当前回复实际经过的时间；仅记录已经发生的时间，不把预计耗时当成事实。
+    - 判断是否允许剧烈变化：只有特殊事件明确发生，或实际经过时间明显较长时才允许；普通对话通常为 no。
+    - 标明当前阶段（日常更新/归寝日结），列出另一阶段的职责并主动排除。
+    - 逐项检查有证据的变量；说明使用的当前回复事实，不引用已经结算过的旧剧情重复更新。
+    - 对每个金额先写出换算：金币×10000 + 银币×100 + 铜币。
+    - 对 delta 先计算“目标值 - 更新前值”；禁止把目标值直接当作增量。
+    - 写命令前检查目标路径和父级：已有路径用 replace/delta；父级存在但末级键不存在时用 insert；父级不存在时先insert完整父对象，不得直接写悬空子路径。
+    - 检查同一路径是否出现多条操作。一个 JSONPatch 数组内，同一路径只保留一条最终操作；不得先delta后replace、重复扣款或重复发奖。
+    - 新增、删除、移动对象或数组项必须有明确剧情依据；不猜测随机结果、隐藏态度、消费、奖励或资源。
+
+  operations:
+    - replace: 替换已经存在路径的完整值。适合状态、字符串、布尔值、整体对象或必须设为确定目标值的字段。
+    - delta: 给已经存在的 number 路径增加正负增量。value 必须是本轮变化量，不是更新后的目标值。
+    - insert: 向对象增加新键，或向数组插入新项。数组末尾追加使用 /-；新对象应一次写入符合 schema 的完整结构。
+    - remove: 删除已经存在的对象键或数组索引。只有剧情明确失去、离开、消耗至0且规则要求删除时使用。
+    - move: 将已有值从 from 移动到 to。仅在数据确实换位置且 schema 允许时使用；普通数值变化不要使用 move。
+
+  json_pointer:
+    - path、from 与 to 使用 JSON Pointer，从变量根开始，以 / 分隔，例如 /旅店/资金。
+    - 路径片段中的 ~ 必须转义为 ~0，/ 必须转义为 ~1。
+    - 对象键“东/西”应写成 /东~1西；对象键“甲~乙”应写成 /甲~0乙。
+    - 数组使用数字索引；追加到数组末尾使用 -，例如 /旅店/员工/苏半夏/技能/-。
+    - 不要使用 JavaScript 点路径、方括号路径或 _.set 写法。
+
+  format: |-
+    <UpdateVariable>
+    <Analysis>
+    - time passed: ${本轮回复中实际经过的时间；无明确推进则写“无明确时间推进”}
+    - dramatic updates allowed: ${yes/no；给出一句依据}
+    - stage: ${日常更新/归寝日结；说明已排除的另一阶段职责}
+    - evidence: ${逐项概括当前回复中足以支持更新的事实；没有则写“无”}
+    - calculations: ${金额换算、delta与范围裁剪；没有则写“无”}
+    - protected facts: ${归寝时列出脚本确定事实并确认不修改；日常时写“不适用”}
+    </Analysis>
+    <JSONPatch>
+    [
+      { "op": "replace", "path": "${/path/to/existing/variable}", "value": "${new_value}" },
+      { "op": "delta", "path": "${/path/to/existing/number}", "value": ${positive_or_negative_delta} },
+      { "op": "insert", "path": "${/path/to/object/new_key}", "value": "${new_value}" },
+      { "op": "insert", "path": "${/path/to/array/-}", "value": "${new_item}" },
+      { "op": "remove", "path": "${/path/to/existing/key_or_index}" },
+      { "op": "move", "from": "${/path/to/existing/value}", "to": "${/path/to/destination}" }
+    ]
+    </JSONPatch>
+    </UpdateVariable>
+
+正确示例:
+
+  金额换算示例: |-
+    剧情事实：访客实际支付2金币3银币8铜币；更新前旅店资金为50000铜币。
+    计算：2×10000 + 3×100 + 8 = 20308铜币。
+    <UpdateVariable>
+    <Analysis>
+    - time passed: 15分钟
+    - dramatic updates allowed: no；普通结账
+    - stage: 日常更新；不处理跨日结算
+    - evidence: 访客已经支付餐费
+    - calculations: 收入20308铜币；资金目标70308，delta为+20308
+    - protected facts: 不适用
+    </Analysis>
+    <JSONPatch>
+    [
+      { "op": "delta", "path": "/旅店/资金", "value": 20308 }
+    ]
+    </JSONPatch>
+    </UpdateVariable>
+
+  数值增减示例: |-
+    剧情事实：大掌柜完成一次锄地，精力从78减少8。
+    <UpdateVariable>
+    <Analysis>
+    - time passed: 30分钟
+    - dramatic updates allowed: no；普通农事
+    - stage: 日常更新；不推进天数
+    - evidence: 锄地已经完成
+    - calculations: 70-78=-8
+    - protected facts: 不适用
+    </Analysis>
+    <JSONPatch>
+    [
+      { "op": "delta", "path": "/大掌柜/精力", "value": -8 }
+    ]
+    </JSONPatch>
+    </UpdateVariable>
+
+  对象新增示例: |-
+    剧情事实：实际获得此前不存在的“星砂”2份。
+    <UpdateVariable>
+    <Analysis>
+    - time passed: 无明确时间推进
+    - dramatic updates allowed: no；普通奖励
+    - stage: 日常更新；不处理跨日事项
+    - evidence: 星砂已交到玩家手中
+    - calculations: 新键不存在，使用insert完整对象
+    - protected facts: 不适用
+    </Analysis>
+    <JSONPatch>
+    [
+      { "op": "insert", "path": "/旅店/库存/星砂", "value": { "数量": 2, "品质": "优良", "分类": "魔法材料", "描述": "闪烁微光的细砂。" } }
+    ]
+    </JSONPatch>
+    </UpdateVariable>
+
+  数组追加示例: |-
+    剧情事实：苏半夏通过训练明确学会“慢火精炖”。
+    <UpdateVariable>
+    <Analysis>
+    - time passed: 2小时
+    - dramatic updates allowed: no；训练结果明确
+    - stage: 日常更新；不处理跨日恢复
+    - evidence: 技能已经学会
+    - calculations: 技能数组末尾追加
+    - protected facts: 不适用
+    </Analysis>
+    <JSONPatch>
+    [
+      { "op": "insert", "path": "/旅店/员工/苏半夏/技能/-", "value": "慢火精炖" }
+    ]
+    </JSONPatch>
+    </UpdateVariable>
+
+  删除示例: |-
+    剧情事实：最后1份干柴已被实际消耗，规则要求数量为0时移除库存条目。
+    <UpdateVariable>
+    <Analysis>
+    - time passed: 无明确时间推进
+    - dramatic updates allowed: no；正常消耗
+    - stage: 日常更新；不处理跨日事项
+    - evidence: 干柴已经投入炉火
+    - calculations: 更新前数量1，消耗1后为0，remove条目
+    - protected facts: 不适用
+    </Analysis>
+    <JSONPatch>
+    [
+      { "op": "remove", "path": "/旅店/库存/干柴" }
+    ]
+    </JSONPatch>
+    </UpdateVariable>
+
+  无变化示例: |-
+    剧情只有询价和讨论，没有付款、行动成功、物品交付或状态改变。
+    <UpdateVariable>
+    <Analysis>
+    - time passed: 无明确时间推进
+    - dramatic updates allowed: no；没有已发生事件
+    - stage: 日常更新；不处理跨日事项
+    - evidence: 无
+    - calculations: 无
+    - protected facts: 不适用
+    </Analysis>
+    <JSONPatch>
+    []
+    </JSONPatch>
+    </UpdateVariable>
+
+  归寝保护示例: |-
+    提示中的脚本事实为：薪资80铜、维护费20铜、结算后资金49900铜、作物天数已递减、每日标记已重置、引力已重算。
+    AI只更新日期与精力，不再输出资金、作物天数、每日标记或引力路径。
+    <UpdateVariable>
+    <Analysis>
+    - time passed: 一夜
+    - dramatic updates allowed: yes；完成跨日
+    - stage: 归寝日结；不重复日常交易与成长
+    - evidence: 玩家已经归寝，跨入次日
+    - calculations: 日期+1；精力恢复至100
+    - protected facts: 薪资、维护费、作物天数、农田标记、设施引力、总引力、结算资金均不修改
+    </Analysis>
+    <JSONPatch>
+    [
+      { "op": "delta", "path": "/世界/时间/天数", "value": 1 },
+      { "op": "replace", "path": "/大掌柜/精力", "value": 100 }
+    ]
+    </JSONPatch>
+    </UpdateVariable>
+
+错误示例与反例:
+
+  - 错误：{ "op": "delta", "path": "/旅店/资金", "value": 70308 }
+    原因：把目标值70308误当增量；更新前50000、收入20308时，delta只能写20308。
+
+  - 错误：{ "op": "replace", "path": "/旅店/资金", "value": "5金币" }
+    原因：金额字段必须写整数铜币；5金币应写50000。
+
+  - 错误：同一数组中先对 /旅店/资金 delta -100，再replace为49900。
+    原因：同一路径重复操作，容易重复扣款；只保留一条可证明的最终操作。
+
+  - 错误：{ "op": "replace", "path": "旅店.资金", "value": 49900 }
+    原因：这不是JSON Pointer；正确路径是 /旅店/资金。
+
+  - 错误：库存中不存在星砂，却直接replace /旅店/库存/星砂/数量。
+    原因：父级目标不存在；应insert /旅店/库存/星砂 并提供完整对象。
+
+  - 错误：归寝时再次delta旅店资金以扣员工日薪、再次减少作物剩余天数。
+    原因：这些是脚本已确定事实，AI不得重复或覆盖。
+
+  - 错误：玩家只是询问价格，AI却扣款并增加库存。
+    原因：没有已经付款和交付的当前回复证据。
+
+  - 错误：<JSONPatch>[{ op: 'delta', path: '/旅店/资金', value: 100 }]</JSONPatch>
+    原因：非法 JSON；键和字符串必须使用双引号，不能使用单引号或省略引号。
+
+  - 错误：在 <JSONPatch> 外输出第二个更新数组，或输出 _.set/_.add 命令。
+    原因：一个回复只能有一个合法JSONPatch数组，不接受lodash命令。

@@ -109,10 +109,8 @@
   }
 
   /* ---------- 格式化 ---------- */
-  function formatFunds(silver) {
-    silver = num(silver, 0);
-    const g = Math.floor(silver / 100), s = silver % 100;
-    return g > 0 ? `${g}金${s}银` : `${s}银`;
+  function formatFunds(copper) {
+    return Money.formatCopper(copper);
   }
   const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
   const weekday = (n) => WEEKDAYS[clamp(num(n, 1) - 1, 0, 6)];

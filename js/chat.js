@@ -374,6 +374,9 @@ const Chat = (function () {
       const messageId = await waitForMainReply(beforeId, token, startCycle);
       console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
       let calculated = null, settledData = null;
+      if (purpose === 'endday' && mode === 'multi' && window.ApiEngine) {
+        await ApiEngine.processAfterMain({ baseline, messageId, purpose: 'normal', calculated: null });
+      }
       if (window.MVU) {
         if (purpose === 'endday' && typeof MVU.settleAndWrite === 'function') {
           const settled = await MVU.settleAndWrite(messageId, 'endday-message-' + messageId);

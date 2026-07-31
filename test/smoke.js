@@ -123,7 +123,12 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const overviewText = doc.querySelector('.panel.is-active').textContent;
     ok(doc.querySelector('.panel.is-active').innerHTML.trim().length > 0, '左页首个面板有内容');
     ok(/日初资金/.test(overviewText) && /今日变化/.test(overviewText), '总览显示日初资金和今日经营变化');
+    ok(/5金/.test(doc.getElementById('hudFunds').textContent) && /5金/.test(overviewText), '50000 铜币在 HUD 与预报中显示为 5 金');
     ok(/美食\s*11/.test(overviewText) || doc.querySelector('#radarOverview'), '总览使用脚本汇总的六维设施引力');
+    win.dispatchEvent(new win.CustomEvent('pastoral:daily-summary', { detail: { initialFunds: 50000, beforeFunds: 50123, salary: 100, maintenance: 23, afterFunds: 50000, summary: '结算完成' } }));
+    const ledgerText = doc.getElementById('dailySummary').textContent;
+    ok(/5金1银23铜/.test(ledgerText) && /1银/.test(ledgerText) && /23铜/.test(ledgerText) && /5金/.test(ledgerText), '归寝账簿统一显示金银铜单位');
+    doc.querySelector('#dailySummary .settings-pop__close').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
 
     // 快捷动作叠加，不覆盖玩家已有输入
     const ta = doc.getElementById('composerInput');

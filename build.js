@@ -9,7 +9,7 @@ const path = require('path');
 const root = __dirname;
 const CSS = ['tokens', 'base', 'layout', 'components', 'animations'];
 // host 必须最先：唯一宿主判定 + 跨域样式接管
-const JS = ['host', 'icons', 'data', 'extract', 'settings', 'assets', 'mvu', 'api', 'chat', 'render', 'app'];
+const JS = ['host', 'icons', 'data', 'extract', 'settings', 'assets', 'money', 'mvu', 'api', 'chat', 'render', 'app'];
 
 function read(p) {
   return fs.readFileSync(path.join(root, p), 'utf8');

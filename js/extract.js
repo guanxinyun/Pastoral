@@ -61,14 +61,39 @@ const Extract = {
     return String(rawText || '').replace(/\s*<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>\s*/gi, '\n').trim();
   },
 
-  /** 接受完整标签，或从无标签响应中提取明确的 MVU 命令后包装。 */
+  _validPointer(path) {
+    if (typeof path !== 'string' || path[0] !== '/') return false;
+    return path.split('/').slice(1).every((part) => !/~(?:[^01]|$)/.test(part));
+  },
+
+  _readonlyPointer(path) {
+    return path.split('/').slice(1).some((part) => part.replace(/~1/g, '/').replace(/~0/g, '~').startsWith('_'));
+  },
+
+  /** 仅接受包含 Analysis 与语义合法 JSON Patch 数组的完整更新标签。 */
   normalizeUpdateVariable(rawText) {
     const tagged = this.extractUpdateVariable(rawText);
-    if (tagged) return tagged;
-    const commands = String(rawText || '').match(/_\.(?:set|add|assign|unset|remove)\s*\([\s\S]*?\)\s*;?/g);
-    return commands && commands.length
-      ? '<UpdateVariable>\n' + commands.join('\n') + '\n</UpdateVariable>'
-      : '';
+    if (!tagged || !/<Analysis\b[^>]*>[\s\S]*?<\/Analysis>/i.test(tagged)) return '';
+    const patch = tagged.match(/<JSONPatch\b[^>]*>([\s\S]*?)<\/JSONPatch>/i);
+    if (!patch) return '';
+    try {
+      const operations = JSON.parse(patch[1].trim());
+      const allowed = new Set(['replace', 'delta', 'insert', 'remove', 'move']);
+      const valid = Array.isArray(operations) && operations.every((item) => {
+        if (!item || typeof item !== 'object' || Array.isArray(item) || !allowed.has(item.op)) return false;
+        if (item.op === 'move') {
+          return this._validPointer(item.from) && this._validPointer(item.to)
+            && !this._readonlyPointer(item.from) && !this._readonlyPointer(item.to);
+        }
+        if (!this._validPointer(item.path) || this._readonlyPointer(item.path)) return false;
+        if (item.op === 'remove') return !Object.prototype.hasOwnProperty.call(item, 'value');
+        if (!Object.prototype.hasOwnProperty.call(item, 'value')) return false;
+        return item.op !== 'delta' || (typeof item.value === 'number' && Number.isFinite(item.value));
+      });
+      return valid ? tagged : '';
+    } catch (e) {
+      return '';
+    }
   },
 
   /** 移除原标签后追加新标签，剧情/选项/总结等其他内容保持原顺序。 */

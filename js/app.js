@@ -242,7 +242,7 @@
   }
 
   function formatLedgerNumber(value) {
-    return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(value);
+    return Money.formatCopper(value);
   }
 
   /* ---------- 每日总结模态框 ---------- */

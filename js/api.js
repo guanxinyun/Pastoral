@@ -5,7 +5,9 @@
 const ApiEngine = (function () {
   'use strict';
 
-  const RULE_ENTRY_NAME = '目前待定';
+  const RULE_ENTRY_NAME = '[mvu_update]变量更新规则';
+  const RULE_ENTRY_NAMES = [RULE_ENTRY_NAME, '变量更新指导', '变量更新规则', '目前待定'];
+  const FORMAT_ENTRY_NAMES = ['[mvu_update]变量输出格式', '变量更新输出格式', '变量输出格式'];
   const PREFIX_MAIN = '[Pastoral][MainAPI]';
   const PREFIX_SECOND = '[Pastoral][SecondAPI]';
   const MAX_SOURCE_LENGTH = 60000;
@@ -43,12 +45,13 @@ const ApiEngine = (function () {
     for (const name of names) {
       const entries = await getWorldbook(name);
       (Array.isArray(entries) ? entries : []).forEach((entry) => {
-        if (entry && entry.enabled !== false && entry.name === RULE_ENTRY_NAME && String(entry.content || '').trim()) {
-          parts.push('【' + name + '】\n' + String(entry.content).trim());
+        const entryName = String(entry && entry.name || '').trim();
+        if (entry && entry.enabled !== false && (RULE_ENTRY_NAMES.includes(entryName) || FORMAT_ENTRY_NAMES.includes(entryName)) && String(entry.content || '').trim()) {
+          parts.push('【' + name + ' · ' + entryName + '】\n' + String(entry.content).trim());
         }
       });
     }
-    if (!parts.length) throw new Error('绑定世界书中未找到“' + RULE_ENTRY_NAME + '”条目');
+    if (!parts.length) throw new Error('绑定世界书中未找到变量更新规则或变量输出格式条目');
     return parts.join('\n\n');
   }
 
@@ -84,15 +87,17 @@ const ApiEngine = (function () {
     const calculated = context.calculated
       ? '【脚本已确定事实（不得重算或重复应用）】\n' + JSON.stringify(context.calculated)
       : '';
+    const stage = context.purpose === 'endday' ? '归寝日结' : '日常更新';
     return [
       '你是暮归旅店的变量计算引擎，不续写剧情。',
+      '【当前阶段：' + stage + '】\n只处理本阶段规则允许的变化，排除另一阶段职责。所有金额的基础单位是整数铜币：1金币=100银币=10000铜币。',
       '【任务】\n' + purpose,
       '【最近三层正文】\n' + (history || '（无）'),
       '【变量规则】\n' + context.rules,
       '【主生成前当前变量数据】\n' + JSON.stringify(context.baseline && context.baseline.stat_data || {}),
       calculated,
       extra ? '【附加信息】\n' + extra : '',
-      '【输出格式】\n必须输出且只输出一个完整的 <UpdateVariable>...</UpdateVariable> 标签；归寝日结允许在标签前输出简洁总结。不得使用 Markdown 代码围栏。'
+      '【输出格式】\n必须输出且只输出一个完整的 <UpdateVariable><Analysis>...</Analysis><JSONPatch>[...]</JSONPatch></UpdateVariable> 标签；JSONPatch 必须是合法 JSON 数组，无变化时输出 []。不得输出 lodash 命令或 Markdown 代码围栏。归寝日结不得覆盖脚本已确定事实。'
     ].filter(Boolean).join('\n\n');
   }
 
@@ -130,7 +135,7 @@ const ApiEngine = (function () {
           custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
         }), api.timeout, id));
         const updateTag = Extract.normalizeUpdateVariable(raw);
-        if (!updateTag) throw new Error('第二 API 未返回 UpdateVariable 或有效 MVU 更新命令');
+        if (!updateTag) throw new Error('第二 API 未返回包含 Analysis 与合法 JSONPatch 数组的 UpdateVariable');
         log(PREFIX_SECOND, '完成', { attempt: attempt + 1, elapsedMs: Math.round(now() - started) });
         return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'second' };
       } catch (e) {
@@ -193,8 +198,8 @@ const ApiEngine = (function () {
       max_chat_history: 0,
       ordered_prompts: ['user_input']
     }), 30000, id));
-    const updateTag = Extract.extractUpdateVariable(raw);
-    if (!updateTag) throw new Error('主 API 日结未返回 UpdateVariable');
+    const updateTag = Extract.normalizeUpdateVariable(raw);
+    if (!updateTag) throw new Error('主 API 日结未返回包含 Analysis 与合法 JSONPatch 数组的 UpdateVariable');
     log(PREFIX_MAIN, '日结完成', { elapsedMs: Math.round(now() - started) });
     return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'main' };
   }

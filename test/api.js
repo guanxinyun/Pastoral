@@ -12,13 +12,24 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const dom = new JSDOM('<!doctype html><body><button id="composerSend"></button><textarea id="composerInput"></textarea><div id="toastStack"></div></body>', { runScripts: 'dangerously', url: 'http://localhost/' });
   const win = dom.window;
   win.eval(fs.readFileSync(path.join(__dirname, '..', 'js', 'extract.js'), 'utf8'));
-  const raw = '<maintext>剧情</maintext><UpdateVariable>主更新</UpdateVariable><option>继续</option>';
-  ok(win.Extract.extractUpdateVariable(raw) === '<UpdateVariable>主更新</UpdateVariable>', '提取完整 UpdateVariable 标签');
-  const replaced = win.Extract.replaceUpdateVariable(raw, '<UpdateVariable>副更新</UpdateVariable>');
-  ok(/剧情/.test(replaced) && /<option>继续<\/option>/.test(replaced) && /副更新/.test(replaced) && !/主更新/.test(replaced), '只替换变量标签，保留剧情与选项');
-  const wrapped = win.Extract.normalizeUpdateVariable('结算说明\n_.set("旅店.资金", 88);\n_.add("世界.时间.天数", 1);');
-  ok(/^<UpdateVariable>/.test(wrapped) && /_.set/.test(wrapped) && /_.add/.test(wrapped) && !/结算说明/.test(wrapped), '副 API 裸 MVU 命令自动包装为 UpdateVariable');
-  ok(win.Extract.normalizeUpdateVariable('只有总结，没有更新命令') === '', '无标签且无 MVU 命令时不伪造更新');
+  const mainTag = '<UpdateVariable><Analysis>checked</Analysis><JSONPatch>[{"op":"delta","path":"/旅店/资金","value":100}]</JSONPatch></UpdateVariable>';
+  const secondTag = '<UpdateVariable><Analysis>checked</Analysis><JSONPatch>[]</JSONPatch></UpdateVariable>';
+  const raw = '<maintext>剧情</maintext>' + mainTag + '<option>继续</option>';
+  ok(win.Extract.extractUpdateVariable(raw) === mainTag, '提取完整 JSON Patch UpdateVariable 标签');
+  ok(win.Extract.normalizeUpdateVariable(mainTag) === mainTag, '接受合法 JSON Patch 数组');
+  ok(win.Extract.normalizeUpdateVariable(secondTag) === secondTag, '接受无变化的空 JSON Patch 数组');
+  const replaced = win.Extract.replaceUpdateVariable(raw, secondTag);
+  ok(/剧情/.test(replaced) && /<option>继续<\/option>/.test(replaced) && /\[\]/.test(replaced) && !/"value":100/.test(replaced), '只替换变量标签，保留剧情与选项');
+  ok(win.Extract.normalizeUpdateVariable('<UpdateVariable><Analysis>x</Analysis><JSONPatch>{"op":"replace"}</JSONPatch></UpdateVariable>') === '', '拒绝非数组 JSONPatch');
+  ok(win.Extract.normalizeUpdateVariable('<UpdateVariable><Analysis>x</Analysis><JSONPatch>[invalid]</JSONPatch></UpdateVariable>') === '', '拒绝非法 JSONPatch');
+  ok(win.Extract.normalizeUpdateVariable('<UpdateVariable><Analysis>x</Analysis><JSONPatch>[1,{"op":"unknown","path":"/旅店/资金"}]</JSONPatch></UpdateVariable>') === '', '拒绝非对象和未知操作');
+  ok(win.Extract.normalizeUpdateVariable('<UpdateVariable><Analysis>x</Analysis><JSONPatch>[{"op":"delta","path":"/旅店/资金","value":"100"}]</JSONPatch></UpdateVariable>') === '', '拒绝非数值 delta');
+  ok(win.Extract.normalizeUpdateVariable('<UpdateVariable><Analysis>x</Analysis><JSONPatch>[{"op":"move","from":"/a","path":"/b"}]</JSONPatch></UpdateVariable>') === '', '拒绝缺少 to 的 move');
+  ok(win.Extract.normalizeUpdateVariable('<UpdateVariable><Analysis>x</Analysis><JSONPatch>[{"op":"replace","path":"旅店.资金","value":1}]</JSONPatch></UpdateVariable>') === '', '拒绝非 JSON Pointer 路径');
+  ok(win.Extract.normalizeUpdateVariable('<UpdateVariable><Analysis>x</Analysis><JSONPatch>[{"op":"replace","path":"/_变量","value":1}]</JSONPatch></UpdateVariable>') === '', '拒绝更新只读路径');
+  ok(win.Extract.normalizeUpdateVariable('<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>') === '', '拒绝缺少 Analysis 的更新');
+  ok(win.Extract.normalizeUpdateVariable('_.set("旅店.资金", 88);') === '', '拒绝裸 lodash 更新命令');
+  ok(win.Extract.normalizeUpdateVariable('只有总结，没有更新命令') === '', '无有效 JSON Patch 时不伪造更新');
 
   console.log('\n[2] 设施引力与前端确定性日结');
   {
@@ -43,20 +54,32 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(Object.values(gravity.dimensions).every((v) => v === 7), '六维设施引力分别取建筑对应子引力之和且不除以 6');
     ok(gravity.total === 51, '总引力使用脚本设施引力合计计算');
     const first = calcWin.MVU.settleDay(data, 'message-20');
-    ok(!first.skipped && first.report.salary === 200 && first.report.maintenance === 30, '日结汇总员工薪资和建筑维护费');
-    ok(first.data.stat_data.旅店.资金 === 770, '前端从资金中扣除薪资和维护费');
+    ok(!first.skipped && first.report.salary === 200, '日结汇总所有员工日薪（铜币）');
+    ok(first.report.maintenance === 30, '日结汇总所有建筑维护费（铜币）');
+    ok(first.data.stat_data.旅店.资金 === 770 && first.report.afterFunds === 770, '前端扣费并记录结算后资金');
     ok(first.data.stat_data.农牧.农田网格['0,0'].剩余天数 === 1 && first.data.stat_data.农牧.农田网格['1,0'].剩余天数 === 0, '普通作物剩余天数减一且不低于零');
     ok(first.data.stat_data.农牧.魔法农田网格['0,0'].剩余天数 === 2, '魔法作物剩余天数减一');
-    ok(!first.data.stat_data.农牧.魔法农田网格['0,0'].今日已浇水 && !first.data.stat_data.农牧.魔法农田网格['0,0'].今日已魔力灌溉 && !first.data.stat_data.农牧.魔法农田网格['0,0'].今日已养护, '日结重置魔法农田每日标记');
-    ok(first.data.stat_data.访客生态.设施引力.美食 === 7, '脚本引力写入对应 MVU 位置');
+    ok(first.data.stat_data.农牧.农田网格['0,0'].今日已浇水 === false && first.data.stat_data.农牧.农田网格['1,0'].今日已浇水 === false, '日结重置普通农田每日标记');
+    ok(!first.data.stat_data.农牧.魔法农田网格['0,0'].今日已浇水 && !first.data.stat_data.农牧.魔法农田网格['0,0'].今日已魔力灌溉 && !first.data.stat_data.农牧.魔法农田网格['0,0'].今日已养护, '日结重置魔法农田全部每日标记');
+    ok(Object.values(first.data.stat_data.访客生态.设施引力).every((v) => v === 7), '脚本逐维写入设施引力');
+    ok(first.data.stat_data.访客生态.总引力值 === 51, '脚本写入重算后的总引力');
     const second = calcWin.MVU.settleDay(first.data, 'message-20');
     ok(second.skipped && second.data.stat_data.旅店.资金 === 770 && second.data.stat_data.农牧.农田网格['0,0'].剩余天数 === 1, '同一结算标识不会重复扣费或推进植物');
     const aiOverwritten = calcWin.MVU.clone(first.data);
     aiOverwritten.stat_data.旅店.资金 = 9999;
     aiOverwritten.stat_data.农牧.农田网格['0,0'].剩余天数 = 9;
+    aiOverwritten.stat_data.农牧.农田网格['0,0'].今日已浇水 = true;
+    aiOverwritten.stat_data.农牧.魔法农田网格['0,0'].剩余天数 = 9;
+    aiOverwritten.stat_data.农牧.魔法农田网格['0,0'].今日已浇水 = true;
+    aiOverwritten.stat_data.农牧.魔法农田网格['0,0'].今日已魔力灌溉 = true;
+    aiOverwritten.stat_data.农牧.魔法农田网格['0,0'].今日已养护 = true;
     aiOverwritten.stat_data.访客生态.设施引力.美食 = 999;
+    aiOverwritten.stat_data.访客生态.总引力值 = 999;
     const enforced = calcWin.MVU.enforceSettlementFacts(aiOverwritten, first.data);
-    ok(enforced.stat_data.旅店.资金 === 770 && enforced.stat_data.农牧.农田网格['0,0'].剩余天数 === 1 && enforced.stat_data.访客生态.设施引力.美食 === 7, 'AI 回写后脚本重新锁定资金、植物日期与设施引力');
+    ok(enforced.stat_data.旅店.资金 === 770, 'AI 回写后脚本锁定已结算资金');
+    ok(enforced.stat_data.农牧.农田网格['0,0'].剩余天数 === 1 && enforced.stat_data.农牧.农田网格['0,0'].今日已浇水 === false, 'AI 回写后脚本锁定普通农田确定事实');
+    ok(enforced.stat_data.农牧.魔法农田网格['0,0'].剩余天数 === 2 && !enforced.stat_data.农牧.魔法农田网格['0,0'].今日已浇水 && !enforced.stat_data.农牧.魔法农田网格['0,0'].今日已魔力灌溉 && !enforced.stat_data.农牧.魔法农田网格['0,0'].今日已养护, 'AI 回写后脚本锁定魔法农田确定事实');
+    ok(enforced.stat_data.访客生态.设施引力.美食 === 7 && enforced.stat_data.访客生态.总引力值 === 51, 'AI 回写后脚本重算并锁定设施引力与总引力');
   }
 
   console.log('\n[3] 第二 API 世界书、重试与配置');
@@ -72,12 +95,12 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     };
     win.getCharWorldbookNames = () => ({ primary: '主书', additional: ['附书'] });
     win.getWorldbook = async (name) => name === '主书'
-      ? [{ name: '目前待定', enabled: true, content: '变量规则 A' }]
-      : [{ name: '目前待定', enabled: true, content: '变量规则 B' }];
+      ? [{ name: '[mvu_update]变量更新规则', enabled: true, content: '变量规则 A' }, { name: '[mvu_update]变量输出格式', enabled: true, content: '输出格式 A' }]
+      : [{ name: '变量更新指导', enabled: true, content: '变量规则 B' }];
     win.generateRaw = async (config) => {
       attempts++; configs.push(config);
       if (attempts < 3) throw new Error('temporary');
-      return '计算完成<UpdateVariable>_.set("旅店.资金", 99)</UpdateVariable>';
+      return '计算完成<UpdateVariable><Analysis>资金变化</Analysis><JSONPatch>[{"op":"replace","path":"/旅店/资金","value":99}]</JSONPatch></UpdateVariable>';
     };
     win.stopGenerationById = () => true;
     win.getChatMessages = () => [
@@ -94,14 +117,15 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
     const result = await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
     ok(attempts === 3, '失败后按 maxRetries=2 共尝试 3 次');
-    ok(/变量规则 A/.test(configs[0].user_input) && /变量规则 B/.test(configs[0].user_input), '读取角色卡绑定世界书的“目前待定”条目');
+    ok(/变量规则 A/.test(configs[0].user_input) && /变量规则 B/.test(configs[0].user_input) && /输出格式 A/.test(configs[0].user_input), '读取绑定世界书中的更新规则与输出格式条目');
     ok(/玩家普通变量要求/.test(configs[0].user_input), '普通请求使用玩家保存的自定义提示词');
     const promptWithFacts = win.ApiEngine.buildPrompt({ purpose: 'endday', rules: '规则', baseline: { stat_data: {} }, calculated: { facilityGravity: { 美食: 7 }, salary: 200, maintenance: 30 } });
     ok(/玩家归寝要求/.test(promptWithFacts) && /美食/.test(promptWithFacts) && /200/.test(promptWithFacts) && /30/.test(promptWithFacts), '归寝提示包含自定义要求与脚本确定事实');
+    ok(/当前阶段：归寝日结/.test(promptWithFacts) && /基础单位是整数铜币/.test(promptWithFacts) && /<JSONPatch>/.test(promptWithFacts) && /不得覆盖脚本已确定事实/.test(promptWithFacts), '提示明确阶段、铜币、JSON Patch 与防重复约束');
     ok(configs[0].ordered_prompts.length === 1 && configs[0].ordered_prompts[0] === 'user_input' && configs[0].max_chat_history === 0, 'generateRaw 使用隔离提示词配置');
     ok(configs[0].custom_api.apiurl === 'https://logic.example/v1' && configs[0].custom_api.source === 'openai', '传入 custom_api URL/model/source');
     ok(!/secret/.test(configs[0].user_input), 'API Key 不进入提示词');
-    ok(result.updateTag.includes('旅店.资金'), '返回第二 API 的 UpdateVariable');
+    ok(result.updateTag.includes('/旅店/资金') && result.updateTag.includes('<JSONPatch>'), '返回第二 API 的 JSON Patch UpdateVariable');
   }
 
   console.log('\n[3] 成功替换正文并基于旧快照回写 MVU');
@@ -115,8 +139,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       replaceMvuData: async (data, options) => { replaceCalls.push({ data, options }); }
     };
     win.ApiEngine.callSecondApiForVariable = async () => ({
-      raw: '总结<UpdateVariable>_.set("旅店.资金", 99)</UpdateVariable>',
-      updateTag: '<UpdateVariable>_.set("旅店.资金", 99)</UpdateVariable>',
+      raw: '总结<UpdateVariable><Analysis>资金变化</Analysis><JSONPatch>[{"op":"replace","path":"/旅店/资金","value":99}]</JSONPatch></UpdateVariable>',
+      updateTag: '<UpdateVariable><Analysis>资金变化</Analysis><JSONPatch>[{"op":"replace","path":"/旅店/资金","value":99}]</JSONPatch></UpdateVariable>',
       summary: '总结', source: 'second'
     });
     const baseline = { stat_data: { 旅店: { 资金: 50 } } };
@@ -174,13 +198,24 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     composer.value = '发送后清空我';
     const successfulSend = await win.Chat.handleUnifiedRequest(composer.value);
     ok(successfulSend && composer.value === '', '发送成功后才清空输入框');
+
+    const stages = [];
+    const actualProcessEndday = win.ApiEngine.processEndday;
+    win.Settings.load = () => ({ apiMode: 'multi', secondApi: { url: 'x', key: 'k', model: 'm', timeout: 1000, maxRetries: 0 } });
+    win.ApiEngine.processAfterMain = async (context) => { stages.push(context.purpose); return { ok: true }; };
+    win.MVU.settleAndWrite = async () => { stages.push('settle'); return { data: { stat_data: { settled: true } }, report: { afterFunds: 700 }, calculated: { dimensions: {}, total: 0 } }; };
+    win.ApiEngine.processEndday = async (context) => { stages.push(context.purpose); return { ok: true, summary: '完成', source: 'second' }; };
+    win.MVU.enforceAndWrite = async () => { stages.push('enforce'); };
+    await win.Chat.handleUnifiedRequest('归寝入眠', { kind: 'endday' });
+    ok(stages.join('>') === 'normal>settle>endday>enforce', '多 API 归寝严格执行日常→脚本→归寝→事实锁定');
+    win.ApiEngine.processEndday = actualProcessEndday;
   }
 
   console.log('\n[5] 归寝日结按模式只运行规定次数');
   if (win.ApiEngine) {
     let rawCalls = 0, secondCalls = 0;
     win.Settings.load = () => ({ apiMode: 'single', secondApi: { url: '', key: '', model: '', timeout: 1000, maxRetries: 0 } });
-    win.generateRaw = async (config) => { rawCalls++; return '今日账簿已结清<UpdateVariable>_.add("世界.时间.天数", 1)</UpdateVariable>'; };
+    win.generateRaw = async (config) => { rawCalls++; return '今日账簿已结清<UpdateVariable><Analysis>日期推进</Analysis><JSONPatch>[{"op":"delta","path":"/世界/时间/天数","value":1}]</JSONPatch></UpdateVariable>'; };
     win.getWorldbook = async () => [{ name: '目前待定', enabled: true, content: '规则' }];
     win.getCharWorldbookNames = () => ({ primary: '主书', additional: [] });
     win.getChatMessages = () => [{ message_id: 20, role: 'assistant', message: '归寝剧情' }];
@@ -195,7 +230,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(single.summary === '今日账簿已结清', '日结返回变量标签外的总结文本');
 
     win.Settings.load = () => ({ apiMode: 'multi', secondApi: { url: 'x', key: 'k', model: 'm', timeout: 1000, maxRetries: 0 } });
-    win.ApiEngine.callSecondApiForVariable = async (context) => { secondCalls++; return { raw: '双轨日结<UpdateVariable>x</UpdateVariable>', updateTag: '<UpdateVariable>x</UpdateVariable>', summary: '双轨日结', source: 'second', purpose: context.purpose }; };
+    win.ApiEngine.callSecondApiForVariable = async (context) => { secondCalls++; return { raw: '双轨日结' + secondTag, updateTag: secondTag, summary: '双轨日结', source: 'second', purpose: context.purpose }; };
     const multi = await win.ApiEngine.processEndday({ baseline: win.MVU.getDataSnapshot(), messageId: 20 });
     ok(secondCalls === 1 && multi.ok && multi.source === 'second', '多 API 归寝复用唯一一次副 API 调用');
     ok(rawCalls === 1, '多 API 成功时不再额外调用主 API 日结');
