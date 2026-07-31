@@ -76,18 +76,18 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   cdoc.close();
   await wait(700);
 
-  console.log('\n[1] 首层正常共存');
+  console.log('\n[1] 第 0 层接管其余聊天楼层');
   const style = pdoc.getElementById('pastoral-host-takeover');
   ok(!!style, '父文档已注入仅供全屏的 <style>');
   const css = style ? style.textContent : '';
-  ok(!/#chat > \.mes:not\(\[mesid="0"\]\)/.test(css), '不再隐藏其他楼层');
-  ok(!/#send_form[\s\S]*display:\s*none/.test(css), '不再隐藏原生输入区');
+  ok(/#chat > \.mes:not\(\[mesid="0"\]\)/.test(css), '接管样式隐藏第 1 层及以后聊天楼层');
+  ok(!/#send_form[\s\S]*display:\s*none/.test(css), '接管样式保留原生输入区');
 
   const mes1 = pdoc.querySelector('.mes[mesid="1"]');
   const mes0 = pdoc.querySelector('.mes[mesid="0"]');
   const form = pdoc.getElementById('send_form');
-  ok(pwin.getComputedStyle(mes1).display !== 'none', '1 楼仍显示');
-  ok(pwin.getComputedStyle(mes0).display !== 'none', '0 楼仍显示');
+  ok(pwin.getComputedStyle(mes1).display === 'none', '第 1 层及以后在父页面隐藏');
+  ok(pwin.getComputedStyle(mes0).display !== 'none', '第 0 层宿主仍显示');
   ok(pwin.getComputedStyle(form).display !== 'none', '原生输入区仍显示');
   ok(pwin.getComputedStyle(pdoc.querySelector('.mes[mesid="0"] .ch_name')).display !== 'none', '0 楼原有名字条未被剥除');
 

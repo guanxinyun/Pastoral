@@ -309,11 +309,15 @@
   function renderOverview(container, s) {
     const ec = get(s, '访客生态', {});
     const fc = get(s, '当日预报', {});
-    const inf = get(ec, '设施引力', {});
+    const calculated = window.MVU && typeof MVU.calculateFacilityGravity === 'function'
+      ? MVU.calculateFacilityGravity(s) : null;
+    const inf = calculated ? calculated.dimensions : get(ec, '设施引力', {});
     const axes = DIM_KEYS.map((k) => ({ name: DIM_NAME[k], key: k, color: DIM_COLOR[k] }));
     const vals = DIM_KEYS.map((k) => num(inf[k], 0));
     const maxV = Math.max(10, ...vals, 1);
-    const total = num(get(ec, '总引力值', 0), 0);
+    const total = calculated ? calculated.total : num(get(ec, '总引力值', 0), 0);
+    const funds = get(s, '旅店.资金', null), initialFunds = get(fc, '日初资金', null);
+    const fundsChange = funds == null || initialFunds == null ? null : num(funds, 0) - num(initialFunds, 0);
 
     container.innerHTML =
       panelH('六维引力', `总引力 ${total}`) +
@@ -336,6 +340,7 @@
       panelH('当日预报') +
       `<div class="card">
          <div class="row row--between" style="margin-bottom:6px"><span class="card__sub"><span class="ic" data-i="${weatherIcon(get(fc, '天气', get(s, '世界.时间.天气', '晴')))}" style="--ic:16px;color:var(--color-primary)"></span> 天气 · ${get(fc, '天气', '—')}</span><span class="card__sub">引力 · <span class="num" style="color:var(--color-primary)">${num(get(fc, '引力值', total), 0)}</span></span></div>
+         <div class="forecast-funds"><span>日初资金 · <strong>${initialFunds == null ? '暂无数据' : formatFunds(initialFunds)}</strong></span><span>当前资金 · <strong>${funds == null ? '暂无数据' : formatFunds(funds)}</strong></span><span>今日变化 · <strong>${fundsChange == null ? '暂无数据' : (fundsChange >= 0 ? '+' : '') + formatFunds(fundsChange)}</strong></span></div>
          <div class="card__sub" style="margin-bottom:6px">访客池：${get(fc, '访客池', '—')}</div>
          <div class="list-h"><span>注意事项</span></div>
          ${(get(fc, '注意事项', []) || []).map((x) => `<div class="card__sub" style="margin:3px 0;line-height:1.6">· ${x}</div>`).join('') || '<div class="faint" style="font-size:var(--font-size-xs)">今日无事须记。</div>'}
@@ -686,7 +691,7 @@
   }
 
   /* ---- 农牧 ---- */
-  function farmDetail(key, plot) {
+  function farmDetail(key, plot, farm, magic) {
     const p = plot || {}, state = p.状态 || '荒地', crop = p.作物 || '';
     const days = num(p.剩余天数, 0), ripe = state === '种植中' && days <= 0;
     const pct = state === '种植中' && crop ? clamp(100 - days * 18, 5, 100) : 0;
@@ -698,10 +703,13 @@
         ${p.已施肥 ? '<span class="ic status-icon 已施肥" data-i="fertilize" title="已施肥"></span>' : ''}
       </div>
       ${state === '种植中' && crop ? `<div class="row row--between"><span class="card__sub">${ripe ? '已成熟' : `约 ${days} 日后成熟`}</span><span class="card__sub">品质修正 ${num(p.品质修正, 0)}</span></div><div class="grow-bar"><div class="grow-bar__fill" style="width:${pct}%"></div></div>` : ''}
+      ${magic ? `<div class="farm-magic-meta"><span>稳定度 ${clamp(num(p.魔力稳定度, 100), 0, 100)}</span><span>未养护 ${num(p.连续未养护天数, 0)} 日</span><span>变异 · ${p.变异状态 || '无'}</span></div>${p.环境标签 && p.环境标签.length ? `<div class="row">${pillsFrom(p.环境标签, 'pill--mint')}</div>` : ''}` : ''}
+      <div class="card__sub">已收获 ${num(p.已收获次数, 0)} 次 · 过熟 ${num(p.过熟天数, 0)} 日</div>
       <div class="row farm-detail__actions">
         ${state === '种植中' && crop ? (ripe ? `<button class="btn btn--primary btn--sm" data-harvest="${key}"><span class="ic btn__icon" data-i="bag"></span>收获</button>` : `<button class="btn btn--sm" data-water="${key}"><span class="ic btn__icon" data-i="water"></span>浇水</button>`) : ''}
         ${state === '荒地' ? `<button class="btn btn--sm" data-till="${key}"><span class="ic btn__icon" data-i="hammer"></span>开垦</button>` : ''}
         ${state === '已开垦' ? `<button class="btn btn--sm" data-plant="${key}"><span class="ic btn__icon" data-i="grain"></span>播种</button>` : ''}
+        ${magic && state === '种植中' ? `<button class="btn btn--sm" data-magic-water="${key}">魔力灌溉</button><button class="btn btn--sm" data-tend="${key}">养护</button>` : ''}
       </div>
     </div>`;
   }
@@ -711,35 +719,62 @@
     $$('[data-harvest]', container).forEach((b) => b.addEventListener('click', () => intend(`收获：(${b.dataset.harvest})`)));
     $$('[data-till]', container).forEach((b) => b.addEventListener('click', () => intend(`开垦：(${b.dataset.till})`)));
     $$('[data-plant]', container).forEach((b) => b.addEventListener('click', () => intend(`播种：(${b.dataset.plant})`)));
+    $$('[data-magic-water]', container).forEach((b) => b.addEventListener('click', () => intend(`魔力灌溉：(${b.dataset.magicWater})`)));
+    $$('[data-tend]', container).forEach((b) => b.addEventListener('click', () => intend(`养护魔法农田：(${b.dataset.tend})`)));
+    $$('[data-seed-use]', container).forEach((b) => b.addEventListener('click', () => intend(`准备用${b.dataset.seedUse}播种`)));
+    $$('[data-care-livestock]', container).forEach((b) => b.addEventListener('click', () => intend(`照料畜牧设施：${b.dataset.careLivestock}`)));
   }
 
-  function renderFarm(container, s) {
-    const farm = get(s, '农牧', {}), size = get(farm, '农田大小', {});
-    const height = Math.max(1, Math.floor(num(size.长, 3))), width = Math.max(1, Math.floor(num(size.宽, 3)));
-    const records = get(farm, '农田网格', {}) || {}, inRange = new Set(), cells = [];
+  function farmGrid(farm, magic) {
+    const size = get(farm, magic ? '魔法农田大小' : '农田大小', {});
+    const records = get(farm, magic ? '魔法农田网格' : '农田网格', {}) || {};
+    const height = clamp(Math.floor(num(size.长, magic ? 2 : 3)), 1, 30);
+    const width = clamp(Math.floor(num(size.宽, magic ? 2 : 3)), 1, 30);
+    const inRange = new Set(), cells = [];
     for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
       const key = `${x},${y}`, p = records[key] || { x, y, 状态: '荒地' };
       inRange.add(key);
       const state = p.状态 || '荒地', crop = p.作物 || '', ripe = state === '种植中' && num(p.剩余天数, 0) <= 0;
-      cells.push(`<button class="farm-cell ${state === '种植中' ? 'is-planted' : state === '已开垦' ? 'is-tilled' : 'is-wild'} ${ripe ? 'is-ripe' : ''}" type="button" data-plot="${key}" aria-label="田格${key}，${state}${crop ? '，' + crop : ''}"><span class="farm-cell__coord">${x},${y}</span><span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'garden'}"></span><span class="farm-cell__name">${crop || state}</span></button>`);
+      cells.push(`<button class="farm-cell ${magic ? 'is-magic' : ''} ${state === '种植中' ? 'is-planted' : state === '已开垦' ? 'is-tilled' : 'is-wild'} ${ripe ? 'is-ripe' : ''}" type="button" data-plot="${key}" aria-label="田格${key}，${state}${crop ? '，' + crop : ''}"><span class="farm-cell__coord">${x},${y}</span><span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'garden'}"></span><span class="farm-cell__name">${crop || state}</span></button>`);
     }
     const overflow = entries(records).filter(([key]) => !inRange.has(key));
-    const comp = get(farm, '堆肥箱', {}), live = entries(get(farm, '畜牧', {}));
-    let html = panelH('旅店农田', `${width}×${height}`);
-    html += `<div class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>点击田格查看状态与农事操作；坐标从 (0,0) 开始。</div></div>`;
-    html += `<div class="farm-grid" style="grid-template-columns:repeat(${width},minmax(0,1fr))">${cells.join('')}</div><div id="farmDetail"></div>`;
-    if (overflow.length) html += panelH('范围外田格', `${overflow.length}`) + `<div class="farm-overflow">${overflow.map(([key, p]) => farmDetail(key, p)).join('')}</div>`;
-    html += panelH('堆肥箱') + `<div class="card"><div class="row row--between"><span class="card__sub">状态 · ${(comp && comp.状态) || '空'}</span><span class="card__sub">倒计时 · <span class="num">${num(comp && comp.倒计时, 0)}</span></span></div></div>`;
-    html += panelH('畜牧', `${live.length}`) + (live.length ? live.map(([name, l]) => {
-      const hp = clamp(num(get(l, '健康度', 0), 0), 0, 100), col = hp >= 50 ? 'var(--color-success)' : 'var(--color-danger)';
-      return `<div class="livestock-card"><div class="building__head"><span class="ic building__icon" data-i="garden"></span><span class="building__name">${name}</span></div><div class="row row--between"><span class="card__sub">饲料 · ${num(get(l, '饲料倒计时', 0), 0)} 日</span><span class="card__sub">产出 · ${num(get(l, '产出倒计时', 0), 0)} 日</span></div><div class="stat-line"><span class="stat-line__label">健康 ${hp}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${hp}%;background:${col}"></div></div></div></div>`;
-    }).join('') : emptyState('garden', '无牲畜', '建造畜牧设施后将显示于此。'));
-    container.innerHTML = html; Icon.render(container); bindFarmActions(container);
-    $$('.farm-cell', container).forEach((cell) => cell.addEventListener('click', () => {
-      $$('.farm-cell', container).forEach((x) => x.classList.toggle('is-active', x === cell));
-      const detail = $('#farmDetail', container); detail.innerHTML = farmDetail(cell.dataset.plot, records[cell.dataset.plot]);
-      Icon.render(detail); bindFarmActions(detail);
-    }));
+    return { width, height, records, cells, overflow };
+  }
+
+  function renderFarm(container, s) {
+    const farm = get(s, '农牧', {}), tab = UI.farmTab || 'normal';
+    const tabs = `<div class="seg farm-tabs"><button class="seg__item ${tab === 'normal' ? 'is-active' : ''}" data-farm-tab="normal">普通农田</button><button class="seg__item ${tab === 'magic' ? 'is-active' : ''}" data-farm-tab="magic">魔法农田</button><button class="seg__item ${tab === 'seeds' ? 'is-active' : ''}" data-farm-tab="seeds">种子图鉴</button><button class="seg__item ${tab === 'care' ? 'is-active' : ''}" data-farm-tab="care">畜牧与堆肥</button></div>`;
+    let html = tabs;
+    if (tab === 'normal' || tab === 'magic') {
+      const magic = tab === 'magic';
+      if (magic && !get(farm, '魔法农田已解锁', false)) {
+        html += emptyState('sparkle', '魔法农田尚未解锁', '通过剧情、设施或变量规则解锁后，魔法田格将在这里展开。');
+        container.innerHTML = html; Icon.render(container);
+      } else {
+        const grid = farmGrid(farm, magic);
+        html += panelH(magic ? '魔法农田' : '旅店农田', `${grid.width}×${grid.height}`);
+        html += `<div class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>点击田格查看状态与农事操作；坐标从 (0,0) 开始。</div></div>`;
+        html += `<div class="farm-grid-scroll"><div class="farm-grid" style="grid-template-columns:repeat(${grid.width},minmax(64px,1fr));min-width:${grid.width * 70}px">${grid.cells.join('')}</div></div><div id="farmDetail"></div>`;
+        if (grid.overflow.length) html += panelH('范围外田格', `${grid.overflow.length}`) + `<div class="farm-overflow">${grid.overflow.map(([key, p]) => farmDetail(key, p, farm, magic)).join('')}</div>`;
+        container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+        $$('.farm-cell', container).forEach((cell) => cell.addEventListener('click', () => {
+          $$('.farm-cell', container).forEach((x) => x.classList.toggle('is-active', x === cell));
+          const detail = $('#farmDetail', container); detail.innerHTML = farmDetail(cell.dataset.plot, grid.records[cell.dataset.plot], farm, magic);
+          Icon.render(detail); bindFarmActions(detail);
+        }));
+      }
+    } else if (tab === 'seeds') {
+      const seeds = entries(get(farm, '种子图鉴', {}));
+      html += panelH('种子图鉴', seeds.length);
+      html += seeds.length ? `<div class="seed-catalog">${seeds.map(([name, seed]) => `<article class="seed-card"><div class="building__head"><span class="ic building__icon" data-i="grain"></span><span class="building__name">${name}</span><span class="pill ${seed.类型 === '魔法' ? 'pill--mint' : ''}">${seed.类型 || '普通'}</span></div><div class="card__sub">季节 · ${(seed.可种季节 || []).join('、') || '未限定'}　生长 · ${num(seed.生长天数, 0)} 日　种子价 · ${num(seed.种子价, 0)}</div><div class="quest-card__desc">产出 · ${seed.产出 || '—'}　获取 · ${seed.获取方式 || '—'}</div><div class="card__sub">连续收获 · ${seed.可连续收获 ? `是 / 间隔 ${num(seed.收获间隔天数, 0)} 日 / 上限 ${num(seed.收获次数上限, 1)}${seed.永续 ? ' / 永续' : ''}` : '否'}</div>${seed.特殊条件 ? `<div class="card__sub">条件 · ${seed.特殊条件}</div>` : ''}${seed.产出效果 ? `<div class="card__sub">效果 · ${seed.产出效果}</div>` : ''}${seed.描述 ? `<p class="quest-card__desc">${seed.描述}</p>` : ''}<button class="btn btn--sm" data-seed-use="${name}">用于播种</button></article>`).join('')}</div>` : emptyState('grain', '种子图鉴为空', '获得种子资料后会在这里记录。');
+      container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+    } else {
+      const comp = get(farm, '堆肥箱', {}), live = entries(get(farm, '畜牧', {}));
+      html += panelH('堆肥箱') + `<div class="card"><div class="row row--between"><span class="card__sub">状态 · ${(comp && comp.状态) || '空'}</span><span class="card__sub">倒计时 · <span class="num">${num(comp && comp.倒计时, 0)}</span></span></div></div>`;
+      html += panelH('畜牧', `${live.length}`) + (live.length ? live.map(([name, l]) => { const hp = clamp(num(get(l, '健康度', 0), 0), 0, 100), col = hp >= 50 ? 'var(--color-success)' : 'var(--color-danger)'; return `<div class="livestock-card"><div class="building__head"><span class="ic building__icon" data-i="garden"></span><span class="building__name">${name}</span></div><div class="row row--between"><span class="card__sub">饲料 · ${num(get(l, '饲料倒计时', 0), 0)} 日</span><span class="card__sub">产出 · ${num(get(l, '产出倒计时', 0), 0)} 日</span></div><div class="stat-line"><span class="stat-line__label">健康 ${hp}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${hp}%;background:${col}"></div></div></div><button class="btn btn--sm" data-care-livestock="${name}">照料</button></div>`; }).join('') : emptyState('garden', '无牲畜', '建造畜牧设施后将显示于此。'));
+      container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+    }
+    $$('[data-farm-tab]', container).forEach((button) => button.addEventListener('click', () => { UI.farmTab = button.dataset.farmTab; renderFarm(container, Render.state); }));
   }
 
   /* ============================================================
@@ -765,7 +800,7 @@
     quest: (s) => JSON.stringify(get(s, '叙事引擎')),
     farm: (s) => JSON.stringify(get(s, '农牧')),
   };
-  const UI = { invCat: '全部', invSearch: '', buildTab: 'built', questTab: 'commission' };
+  const UI = { invCat: '全部', invSearch: '', buildTab: 'built', questTab: 'commission', farmTab: 'normal' };
   const panelSig = {};
 
   const Render = {

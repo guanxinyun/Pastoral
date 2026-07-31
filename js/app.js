@@ -44,8 +44,9 @@
     const existing = document.getElementById('settingsPop');
     if (existing) { existing.remove(); return; }
     const cfg = Settings.load();
-    const pop = h('section', { class: 'settings-pop', id: 'settingsPop', role: 'dialog', 'aria-label': '设置' });
-    const close = () => pop.remove();
+    const backdrop = h('div', { class: 'modal-backdrop settings-backdrop', id: 'settingsBackdrop' });
+    const pop = h('section', { class: 'settings-pop', id: 'settingsPop', role: 'dialog', 'aria-modal': 'true', 'aria-label': '设置' });
+    const close = () => backdrop.remove();
 
     pop.appendChild(h('div', { class: 'settings-pop__head' }, [
       h('span', { class: 'ic', html: Icon.get('settings') }),
@@ -54,13 +55,21 @@
         h('span', { class: 'ic', html: Icon.get('close') }))
     ]));
 
+    const tabs = h('div', { class: 'settings-tabs', role: 'tablist', 'aria-label': '设置页面' }, [
+      h('button', { class: 'settings-tab is-active', type: 'button', role: 'tab', 'aria-selected': 'true', 'data-settings-tab': 'api' }, '接口设置'),
+      h('button', { class: 'settings-tab', type: 'button', role: 'tab', 'aria-selected': 'false', 'data-settings-tab': 'prompts' }, '更新提示词')
+    ]);
+    pop.appendChild(tabs);
+    const apiPage = h('div', { class: 'settings-page is-active', 'data-settings-page': 'api' });
+    const promptPage = h('div', { class: 'settings-page', 'data-settings-page': 'prompts', hidden: '' });
+
     const themeBtn = h('button', { class: 'btn btn--ghost btn--sm', type: 'button' },
       document.documentElement.getAttribute('data-theme') === 'night' ? '当前：夜 · 切昼' : '当前：昼 · 切夜');
     themeBtn.addEventListener('click', () => {
       toggleTheme();
       themeBtn.textContent = document.documentElement.getAttribute('data-theme') === 'night' ? '当前：夜 · 切昼' : '当前：昼 · 切夜';
     });
-    pop.appendChild(h('div', { class: 'set-row' }, [
+    apiPage.appendChild(h('div', { class: 'set-row' }, [
       h('div', {}, [h('div', { class: 'set-row__title' }, '昼夜主题'), h('div', { class: 'faint set-help' }, '羊皮纸昼景 / 靛蓝烛夜')]),
       themeBtn
     ]));
@@ -114,19 +123,48 @@
         toast('warn', '设置已保存', '第二 API 配置尚不完整，调用时将自动降级。');
       } else toast('success', '设置已保存', next.apiMode === 'multi' ? '双轨 API 已启用。' : '当前使用单 API。');
     });
-    pop.appendChild(form);
+    apiPage.appendChild(form);
 
-    pop.appendChild(h('div', { class: 'notice notice--info set-notice' }, [
+    apiPage.appendChild(h('div', { class: 'notice notice--info set-notice' }, [
       h('span', { class: 'ic notice__icon', html: Icon.get('info') }),
       h('div', {}, '状态始终读取最新楼层 MVU 快照；第二 API 只负责变量计算，失败时自动保留主模型结果。')
     ]));
 
-    document.body.appendChild(pop);
+    const promptForm = h('form', { class: 'settings-form prompt-settings-form', id: 'promptSettingsForm' });
+    const promptField = (label, name, value, help) => h('label', { class: 'set-field' }, [
+      h('span', { class: 'set-field__label' }, label),
+      h('span', { class: 'faint set-help' }, help),
+      h('textarea', { class: 'set-input set-textarea', name, rows: '8', placeholder: '留空则使用程序内置默认提示词' }, value)
+    ]);
+    promptForm.appendChild(promptField('普通变量更新', 'normalPrompt', cfg.prompts.normal, '普通剧情、农事和其他非归寝请求使用。'));
+    promptForm.appendChild(promptField('归寝日结', 'enddayPrompt', cfg.prompts.endday, '归寝结算使用；脚本已完成的扣费、植物成长和设施引力不会重复执行。'));
+    const promptActions = h('div', { class: 'settings-actions' }, [
+      h('button', { class: 'btn btn--ghost', type: 'button', 'data-reset-prompts': '' }, '恢复内置默认'),
+      h('button', { class: 'btn btn--primary', type: 'submit' }, '保存提示词')
+    ]);
+    promptForm.appendChild(promptActions);
+    promptForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      Settings.save({ prompts: { normal: promptForm.elements.normalPrompt.value, endday: promptForm.elements.enddayPrompt.value } });
+      toast('success', '提示词已保存', '空白栏目会继续使用程序内置默认提示词。');
+    });
+    promptForm.querySelector('[data-reset-prompts]').addEventListener('click', () => {
+      promptForm.elements.normalPrompt.value = '';
+      promptForm.elements.enddayPrompt.value = '';
+      Settings.save({ prompts: { normal: '', endday: '' } });
+      toast('info', '已恢复内置默认', '网页缓存中的自定义提示词已清空。');
+    });
+    promptPage.appendChild(promptForm);
+    pop.appendChild(apiPage); pop.appendChild(promptPage);
+    $$('.settings-tab', pop).forEach((tab) => tab.addEventListener('click', () => {
+      const name = tab.dataset.settingsTab;
+      $$('.settings-tab', pop).forEach((item) => { const on = item === tab; item.classList.toggle('is-active', on); item.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      $$('.settings-page', pop).forEach((page) => { const on = page.dataset.settingsPage === name; page.classList.toggle('is-active', on); page.hidden = !on; });
+    }));
+
+    backdrop.appendChild(pop); document.body.appendChild(backdrop);
     Icon.render(pop);
-    setTimeout(() => {
-      const handler = (e) => { if (!pop.contains(e.target)) { close(); document.removeEventListener('mousedown', handler); } };
-      document.addEventListener('mousedown', handler);
-    }, 0);
+    backdrop.addEventListener('mousedown', (e) => { if (e.target === backdrop) close(); });
   }
 
   function h(tag, attrs = {}, children = []) {
@@ -166,8 +204,45 @@
       case 'cook': openTab('inventory'); toast('info', '灶事', '择一道食谱烹制。'); break;
       case 'water': Chat.compose('浇灌所有农田'); break;
       case 'rest': Chat.compose('小憩片刻，恢复精力'); break;
-      case 'endday': Chat.compose('归寝入眠，结束今天', 'endday'); break;
+      case 'endday': confirmEndday(); break;
     }
+  }
+
+  /* ---------- 归寝确认 ---------- */
+  function confirmEndday() {
+    if (document.getElementById('enddayConfirm') || Chat.busy) return;
+    const previous = document.activeElement;
+    const ta = $('#composerInput');
+    const existing = ta ? String(ta.value || '').trimEnd() : '';
+    const action = '归寝入眠，结束今天';
+    const finalText = existing ? existing + '\n' + action : action;
+    const backdrop = h('div', { class: 'modal-backdrop', id: 'enddayConfirm' });
+    const dialog = h('section', { class: 'daily-modal endday-confirm', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'enddayConfirmTitle' });
+    const close = () => { backdrop.remove(); if (previous && previous.focus) previous.focus(); };
+    dialog.appendChild(h('header', { class: 'daily-modal__head' }, [
+      h('span', { class: 'ic', html: Icon.get('moon') }),
+      h('h2', { id: 'enddayConfirmTitle' }, '归寝入眠')
+    ]));
+    dialog.appendChild(h('div', { class: 'daily-modal__body' }, [
+      h('p', {}, '结束今天后将结算员工薪资、建筑维护费、植物成长与次日预报。'),
+      h('div', { class: 'endday-preview' }, finalText)
+    ]));
+    const cancel = h('button', { class: 'btn btn--ghost', type: 'button', 'data-endday-cancel': '', onclick: close }, '取消');
+    const confirm = h('button', { class: 'btn btn--primary', type: 'button', 'data-endday-confirm': '' }, '结束今天并发送');
+    confirm.addEventListener('click', async () => {
+      confirm.disabled = true; cancel.disabled = true; confirm.textContent = '正在发送归寝行动…';
+      const ok = await Chat.handleUnifiedRequest(finalText, { kind: 'endday' });
+      if (ok) close();
+      else { confirm.disabled = false; cancel.disabled = false; confirm.textContent = '重新发送'; }
+    });
+    dialog.appendChild(h('div', { class: 'daily-modal__foot' }, [cancel, confirm]));
+    backdrop.appendChild(dialog); document.body.appendChild(backdrop); Icon.render(dialog); confirm.focus();
+    backdrop.addEventListener('mousedown', (e) => { if (e.target === backdrop) close(); });
+    backdrop.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  }
+
+  function formatLedgerNumber(value) {
+    return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(value);
   }
 
   /* ---------- 每日总结模态框 ---------- */
@@ -182,7 +257,19 @@
       h('h2', { id: 'dailySummaryTitle' }, '今日账簿'),
       h('button', { class: 'settings-pop__close', type: 'button', 'aria-label': '关闭每日总结', onclick: close }, h('span', { class: 'ic', html: Icon.get('close') }))
     ]));
-    dialog.appendChild(h('div', { class: 'daily-modal__body' }, String(detail && detail.summary || '').trim() || '日结完成，变量已更新。'));
+    const value = (n) => Number.isFinite(Number(n)) ? formatLedgerNumber(Number(n)) : '暂无数据';
+    const report = detail || {};
+    const rows = report.beforeFunds == null ? [] : [
+      ['原日初资金', value(report.initialFunds)],
+      ['归寝前资金', value(report.beforeFunds)],
+      ['员工薪资', '−' + value(report.salary)],
+      ['建筑维护', '−' + value(report.maintenance)],
+      ['日结后资金', value(report.afterFunds)]
+    ];
+    dialog.appendChild(h('div', { class: 'daily-modal__body' }, [
+      rows.length ? h('dl', { class: 'daily-ledger' }, rows.flatMap(([label, amount]) => [h('dt', {}, label), h('dd', {}, amount)])) : null,
+      h('div', { class: 'daily-summary-copy' }, String(report.summary || '').trim() || '日结完成，变量已更新。')
+    ]));
     dialog.appendChild(h('div', { class: 'daily-modal__foot' }, [h('span', { class: 'faint' }, detail && detail.source === 'second' ? '由第二 API 结算' : '由当前主 API 结算'), h('button', { class: 'btn btn--primary', type: 'button', onclick: close }, '合上账簿')]));
     backdrop.appendChild(dialog); document.body.appendChild(backdrop); Icon.render(dialog);
     const focusables = () => Array.from(dialog.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
@@ -257,7 +344,7 @@
 
     // Esc 关设置
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { const p = document.getElementById('settingsPop'); if (p) p.remove(); }
+      if (e.key === 'Escape') { const p = document.getElementById('settingsBackdrop'); if (p) p.remove(); }
     });
 
     // 外部退出全屏（Esc / 系统手势）时同步按钮

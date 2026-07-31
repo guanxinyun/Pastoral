@@ -6,8 +6,16 @@ const Settings = (function () {
   'use strict';
 
   const KEY = 'mrfz_settings';
+  const DEFAULT_PROMPTS = {
+    normal: '根据最新剧情执行常规变量更新。只更新剧情明确影响的变量，不续写剧情，不重复脚本已经确定的设施引力计算。',
+    endday: '完成归寝日结：脚本已结算员工薪资、建筑维护费、作物剩余天数和设施引力；请勿重复这些结算。依据变量规则更新日期、天气、潜在访客池、注意事项及其余未由脚本确定的每日状态。'
+  };
   const DEFAULTS = {
     apiMode: 'single',
+    prompts: {
+      normal: '',
+      endday: ''
+    },
     secondApi: {
       url: '',
       key: '',
@@ -40,6 +48,10 @@ const Settings = (function () {
   function normalize(value) {
     const cfg = merge(DEFAULTS, object(value));
     cfg.apiMode = cfg.apiMode === 'multi' ? 'multi' : 'single';
+    if (!isObject(cfg.prompts)) cfg.prompts = merge(DEFAULTS.prompts, {});
+    if (!isObject(cfg.secondApi)) cfg.secondApi = merge(DEFAULTS.secondApi, {});
+    cfg.prompts.normal = String(cfg.prompts.normal || '');
+    cfg.prompts.endday = String(cfg.prompts.endday || '');
     cfg.secondApi.url = String(cfg.secondApi.url || '').trim();
     cfg.secondApi.key = String(cfg.secondApi.key || '').trim();
     cfg.secondApi.model = String(cfg.secondApi.model || '').trim();
@@ -57,11 +69,17 @@ const Settings = (function () {
     return next;
   }
 
+  function promptFor(kind, config) {
+    const key = kind === 'endday' ? 'endday' : 'normal';
+    const custom = String(object(config && config.prompts)[key] || '').trim();
+    return custom || DEFAULT_PROMPTS[key];
+  }
+
   function isSecondApiComplete(config) {
     const api = object(config && config.secondApi);
     return !!(String(api.url || '').trim() && String(api.key || '').trim() && String(api.model || '').trim());
   }
 
-  return { KEY, DEFAULTS, load, save, normalize, isSecondApiComplete };
+  return { KEY, DEFAULTS, DEFAULT_PROMPTS, load, save, normalize, promptFor, isSecondApiComplete };
 })();
 window.Settings = Settings;

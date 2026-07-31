@@ -6,6 +6,87 @@
    ============================================================ */
 const MVU = {
   ready: false,
+  DIMENSIONS: ['美食', '知识', '舒适', '冒险', '文化', '自然'],
+
+  number(value, fallback = 0) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  },
+
+  calculateFacilityGravity(state) {
+    const root = state && typeof state === 'object' ? state : {};
+    const built = root.建筑 && root.建筑.已建成 && typeof root.建筑.已建成 === 'object'
+      ? root.建筑.已建成 : {};
+    const dimensions = Object.fromEntries(this.DIMENSIONS.map((key) => [key, 0]));
+    Object.values(built).forEach((building) => {
+      const influence = building && building.影响力 && typeof building.影响力 === 'object' ? building.影响力 : {};
+      this.DIMENSIONS.forEach((key) => { dimensions[key] += this.number(influence[key], 0); });
+    });
+    this.DIMENSIONS.forEach((key) => { dimensions[key] = Math.round(dimensions[key] * 1000) / 1000; });
+    const ecology = root.访客生态 && typeof root.访客生态 === 'object' ? root.访客生态 : {};
+    const facility = this.DIMENSIONS.reduce((sum, key) => sum + dimensions[key], 0);
+    const total = this.number(ecology.声望引力, 0) + facility
+      + this.number(ecology.服务引力, 0) + this.number(ecology.环境引力, 0);
+    return { dimensions, facility, total: Math.round(total * 1000) / 1000 };
+  },
+
+  applyFacilityGravity(data) {
+    const next = this.clone(data) || { stat_data: {} };
+    const state = next.stat_data || (next.stat_data = {});
+    const ecology = state.访客生态 && typeof state.访客生态 === 'object'
+      ? state.访客生态 : (state.访客生态 = {});
+    const calculated = this.calculateFacilityGravity(state);
+    ecology.设施引力 = calculated.dimensions;
+    ecology.总引力值 = calculated.total;
+    return { data: next, calculated };
+  },
+
+  settleDay(data, settlementId) {
+    const prepared = this.applyFacilityGravity(data);
+    const next = prepared.data;
+    const state = next.stat_data || (next.stat_data = {});
+    const marker = String(settlementId || '');
+    const meta = next.pastoral || (next.pastoral = {});
+    if (marker && meta.lastSettlementId === marker) {
+      return { data: next, calculated: prepared.calculated, skipped: true, report: meta.lastSettlementReport || {} };
+    }
+
+    const inn = state.旅店 && typeof state.旅店 === 'object' ? state.旅店 : (state.旅店 = {});
+    const employees = inn.员工 && typeof inn.员工 === 'object' ? inn.员工 : {};
+    const built = state.建筑 && state.建筑.已建成 && typeof state.建筑.已建成 === 'object' ? state.建筑.已建成 : {};
+    const beforeFunds = this.number(inn.资金, 0);
+    const salary = Object.values(employees).reduce((sum, employee) => sum + this.number(employee && employee.职业信息 && employee.职业信息.日薪, 0), 0);
+    const maintenance = Object.values(built).reduce((sum, building) => sum + this.number(building && building.维护费用, 0), 0);
+    inn.资金 = beforeFunds - salary - maintenance;
+
+    const farm = state.农牧 && typeof state.农牧 === 'object' ? state.农牧 : {};
+    const advance = (grid, magic) => {
+      Object.values(grid && typeof grid === 'object' ? grid : {}).forEach((plot) => {
+        if (!plot || typeof plot !== 'object') return;
+        if (plot.状态 === '种植中') plot.剩余天数 = Math.max(0, this.number(plot.剩余天数, 0) - 1);
+        plot.今日已浇水 = false;
+        if (magic) { plot.今日已魔力灌溉 = false; plot.今日已养护 = false; }
+      });
+    };
+    advance(farm.农田网格, false);
+    advance(farm.魔法农田网格, true);
+
+    const forecast = state.当日预报 && typeof state.当日预报 === 'object' ? state.当日预报 : (state.当日预报 = {});
+    const report = {
+      settlementId: marker,
+      initialFunds: this.number(forecast.日初资金, beforeFunds),
+      beforeFunds,
+      salary,
+      maintenance,
+      afterFunds: inn.资金,
+      facilityGravity: prepared.calculated.dimensions,
+      totalGravity: prepared.calculated.total
+    };
+    forecast.日初资金 = inn.资金;
+    if (marker) meta.lastSettlementId = marker;
+    meta.lastSettlementReport = report;
+    return { data: next, calculated: prepared.calculated, skipped: false, report };
+  },
 
   async init() {
     if (typeof waitGlobalInitialized === 'function') {
@@ -41,6 +122,24 @@ const MVU = {
       }
     } catch (e) { /* fall through */ }
     return { stat_data: this.clone(window.SAMPLE_STATE) };
+  },
+
+  async writeData(data, messageId) {
+    if (!this.ready || typeof Mvu === 'undefined' || typeof Mvu.replaceMvuData !== 'function') return false;
+    await Mvu.replaceMvuData(data, { type: 'message', message_id: messageId == null ? this.latestMessageId() : messageId });
+    return true;
+  },
+
+  async syncFacilityGravity(messageId) {
+    const applied = this.applyFacilityGravity(this.getDataSnapshot());
+    await this.writeData(applied.data, messageId);
+    return applied;
+  },
+
+  async settleAndWrite(messageId, settlementId) {
+    const settled = this.settleDay(this.getDataSnapshot(), settlementId);
+    if (!settled.skipped) await this.writeData(settled.data, messageId);
+    return settled;
   },
 
   /** 取【最新一楼】stat_data；不可用则回退样例 */

@@ -63,8 +63,12 @@ const Host = (function () {
     if (d.getElementById(STYLE_ID)) return true;
 
     const css = `
-/* ===== 暮归旅店 · 页面级沉浸（由首层卡片注入） ===== */
-/* 非沉浸时没有宿主覆盖规则；楼层、边框和发送区保持酒馆原样。 */
+/* ===== 暮归旅店 · 第 0 层接管与页面级沉浸 ===== */
+/* 仅隐藏父页面其余聊天楼层；保留第 0 层与酒馆原生输入区。 */
+#chat > .mes:not([mesid="0"]),
+#chat > .mes:not([messageid="0"]):not([mesid]) {
+  display: none !important;
+}
 
 /* 沉浸模式：只将当前页面 iframe 钉满视口 */
 iframe.${IMMERSIVE_CLASS} {

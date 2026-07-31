@@ -55,13 +55,20 @@ const ApiEngine = (function () {
   // 等用户补充“最近三层之外”的输入时，只需扩展这里。
   function buildAdditionalContext() { return ''; }
 
-  function buildDailyPurpose() {
-    return [
-      '本轮为归寝日结：在执行常规剧情变量更新的同时，结算所有员工每日薪资与建筑维护费用，',
-      '并更新次日预报的天气、引力值、潜在访客池和注意事项。',
-      '具体算法与限制只能服从变量规则；规则未规定的细节不得臆造。',
-      '除 UpdateVariable 外，可先输出一段简洁的日结总结供界面弹窗展示。'
-    ].join('');
+  function configuredPrompt(kind, config) {
+    if (Settings && typeof Settings.promptFor === 'function') {
+      try { return Settings.promptFor(kind, config); } catch (e) { /* 兼容旧设置桩 */ }
+    }
+    const prompts = config && config.prompts || {};
+    const custom = String(prompts[kind] || '').trim();
+    if (custom) return custom;
+    return kind === 'endday'
+      ? '完成归寝日结；不得重复脚本已经完成的薪资、维护费、植物成长和设施引力结算。'
+      : '根据最新剧情执行常规变量更新。';
+  }
+
+  function buildDailyPurpose(config) {
+    return configuredPrompt('endday', config || Settings.load());
   }
 
   function buildPrompt(context) {
@@ -69,16 +76,21 @@ const ApiEngine = (function () {
       const role = m.role === 'user' ? '玩家' : (m.role === 'assistant' ? '主模型' : '系统');
       return role + ' #' + m.message_id + ':\n' + Extract.stripUpdateVariable(m.message || '');
     }).join('\n\n');
+    const config = Settings.load();
     const purpose = context.purpose === 'endday'
-      ? buildDailyPurpose()
-      : '根据最新剧情执行常规变量更新。';
+      ? buildDailyPurpose(config)
+      : configuredPrompt('normal', config);
     const extra = buildAdditionalContext(context);
+    const calculated = context.calculated
+      ? '【脚本已确定事实（不得重算或重复应用）】\n' + JSON.stringify(context.calculated)
+      : '';
     return [
       '你是暮归旅店的变量计算引擎，不续写剧情。',
       '【任务】\n' + purpose,
       '【最近三层正文】\n' + (history || '（无）'),
       '【变量规则】\n' + context.rules,
       '【主生成前当前变量数据】\n' + JSON.stringify(context.baseline && context.baseline.stat_data || {}),
+      calculated,
       extra ? '【附加信息】\n' + extra : '',
       '【输出格式】\n必须输出且只输出一个完整的 <UpdateVariable>...</UpdateVariable> 标签；归寝日结允许在标签前输出简洁总结。不得使用 Markdown 代码围栏。'
     ].filter(Boolean).join('\n\n');
@@ -117,8 +129,8 @@ const ApiEngine = (function () {
           ordered_prompts: ['user_input'],
           custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
         }), api.timeout, id));
-        const updateTag = Extract.extractUpdateVariable(raw);
-        if (!updateTag) throw new Error('第二 API 未返回 UpdateVariable');
+        const updateTag = Extract.normalizeUpdateVariable(raw);
+        if (!updateTag) throw new Error('第二 API 未返回 UpdateVariable 或有效 MVU 更新命令');
         log(PREFIX_SECOND, '完成', { attempt: attempt + 1, elapsedMs: Math.round(now() - started) });
         return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'second' };
       } catch (e) {
@@ -155,6 +167,7 @@ const ApiEngine = (function () {
     try {
       const generated = await callSecondApiForVariable(Object.assign({}, context, { messageId }));
       await applyUpdate(messageId, message.message || '', context.baseline, generated);
+      if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
       lastFailure = null;
       return { ok: true, source: generated.source, summary: generated.summary, messageId };
     } catch (e) {
@@ -209,6 +222,7 @@ const ApiEngine = (function () {
       try {
         const generated = await ApiEngine.callSecondApiForVariable(Object.assign({}, context, { messageId, purpose: 'endday' }));
         await applyUpdate(messageId, message.message || '', context.baseline, generated);
+        if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
         return { ok: true, source: 'second', summary: generated.summary, messageId };
       } catch (secondError) {
         error(PREFIX_SECOND, '归寝日结降级到主 API', secondError);
@@ -218,8 +232,9 @@ const ApiEngine = (function () {
     try {
       // 主剧情的 MVU 已由酒馆处理，单 API 日结从此刻最新快照继续计算。
       const baseline = MVU.getDataSnapshot ? MVU.getDataSnapshot() : context.baseline;
-      const generated = await callMainApiForDaily({ baseline, messageId, purpose: 'endday' });
+      const generated = await callMainApiForDaily({ baseline, messageId, purpose: 'endday', calculated: context.calculated });
       await appendDailyUpdate(messageId, message.message || '', baseline, generated);
+      if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
       return { ok: true, source: 'main', summary: generated.summary, messageId };
     } catch (e) {
       error(PREFIX_MAIN, '日结失败', e);
@@ -237,6 +252,7 @@ const ApiEngine = (function () {
     RULE_ENTRY_NAME,
     buildAdditionalContext,
     buildDailyPurpose,
+    buildPrompt,
     callSecondApiForVariable,
     processAfterMain,
     processEndday,

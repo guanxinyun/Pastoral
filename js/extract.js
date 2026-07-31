@@ -61,6 +61,16 @@ const Extract = {
     return String(rawText || '').replace(/\s*<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>\s*/gi, '\n').trim();
   },
 
+  /** 接受完整标签，或从无标签响应中提取明确的 MVU 命令后包装。 */
+  normalizeUpdateVariable(rawText) {
+    const tagged = this.extractUpdateVariable(rawText);
+    if (tagged) return tagged;
+    const commands = String(rawText || '').match(/_\.(?:set|add|assign|unset|remove)\s*\([\s\S]*?\)\s*;?/g);
+    return commands && commands.length
+      ? '<UpdateVariable>\n' + commands.join('\n') + '\n</UpdateVariable>'
+      : '';
+  },
+
   /** 移除原标签后追加新标签，剧情/选项/总结等其他内容保持原顺序。 */
   replaceUpdateVariable(rawText, updateTag) {
     const body = this.stripUpdateVariable(rawText);

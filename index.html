@@ -1025,7 +1025,15 @@ body.is-immersive .journal__stream {
 .tile-detail { margin-top: 10px; animation: inkBleed var(--t-slow) var(--ease-ink) both; }
 
 /* ---------- 种植/畜牧 ---------- */
+.farm-tabs { overflow-x: auto; }
+.farm-tabs .seg__item { min-width: max-content; }
+.farm-grid-scroll { overflow-x: auto; padding-bottom: var(--space-2); scrollbar-color: var(--color-border-strong) var(--color-bg-deep); }
 .farm-grid { display: grid; gap: 6px; padding: 8px; border-radius: var(--radius-md); background: var(--color-bg-deep); border: 1px solid var(--color-border); box-shadow: var(--shadow-inset); }
+.farm-cell.is-magic { background: hsl(270 35% 30% / 0.12); border-color: hsl(270 35% 55% / 0.45); }
+.farm-magic-meta { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-2) 0; color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.seed-catalog { display: grid; gap: var(--space-3); }
+.seed-card { padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-surface); border: 1px solid var(--color-border); transition: border-color var(--t-base), transform var(--t-base); }
+.seed-card:hover { border-color: var(--color-primary); transform: translateY(-1px); }
 .farm-cell { position: relative; min-width: 0; min-height: 64px; aspect-ratio: 1; display: grid; place-items: center; gap: 2px; padding: 7px 4px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-muted); transition: border-color var(--t-base), box-shadow var(--t-base), transform var(--t-base), background var(--t-base); }
 .farm-cell:hover, .farm-cell.is-active { border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); transform: translateY(-2px); }
 .farm-cell.is-tilled { color: var(--color-warning); background: hsl(36 45% 45% / 0.1); }
@@ -1115,6 +1123,11 @@ body.is-immersive .journal__stream {
 .notice--info { background: hsl(180 38% 64% / 0.08); border: 1px solid hsl(180 38% 64% / 0.4); border-left: 3px solid var(--color-accent); color: var(--color-magic); }
 .notice--warn { background: hsl(0 42% 38% / 0.08); border: 1px solid hsl(0 42% 38% / 0.4); border-left: 3px solid var(--color-danger); color: var(--color-danger); }
 
+.forecast-funds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); margin: var(--space-3) 0; }
+.forecast-funds span { display: grid; gap: 2px; padding: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs); background: var(--color-bg-deep); border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.forecast-funds strong { color: var(--color-text); font-family: var(--font-mono); font-weight: 600; }
+@media (max-width: 639px) { .forecast-funds { grid-template-columns: 1fr; } }
+
 /* ---------- 吐司 ---------- */
 .toast { pointer-events: auto; display: flex; align-items: flex-start; gap: 8px; padding: 9px 12px; background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border-strong); border-left: 3px solid var(--color-primary); border-radius: var(--radius-md); box-shadow: var(--shadow-raised); animation: toastIn var(--t-slow) var(--ease-page) both; }
 .toast.is-out { animation: toastOut var(--t-base) var(--ease-soft) forwards; }
@@ -1170,7 +1183,15 @@ body.is-immersive .journal__stream {
 .btn__icon { --ic: 16px; }
 
 /* ---------- 设置浮卡 ---------- */
-.settings-pop { position: fixed; top: 12px; right: 12px; z-index: 250; width: min(390px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow-y: auto; padding: 14px; border-radius: var(--radius-lg); background: linear-gradient(165deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border-strong); box-shadow: var(--shadow-float); animation: toastIn var(--t-slow) var(--ease-page) both; }
+.settings-backdrop { z-index: 420; }
+.settings-pop { position: relative; width: min(680px, 100%); max-height: min(760px, calc(100vh - 32px)); overflow-y: auto; padding: var(--space-6); border-radius: var(--radius-xl); background: linear-gradient(165deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border-strong); box-shadow: var(--shadow-float); animation: toastIn var(--t-slow) var(--ease-page) both; }
+.settings-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin-bottom: var(--space-4); }
+.settings-tab { min-height: 44px; padding: var(--space-2) var(--space-3); color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-deep); cursor: pointer; transition: color var(--t-base), border-color var(--t-base), background var(--t-base); }
+.settings-tab:hover, .settings-tab:focus-visible { color: var(--color-primary); border-color: var(--color-primary); }
+.settings-tab.is-active { color: var(--color-text); border-color: var(--color-primary); background: var(--amber-glow); }
+.settings-page[hidden] { display: none; }
+.set-textarea { min-height: 150px; resize: vertical; line-height: 1.6; }
+.settings-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
 .settings-pop__head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border); }
 .settings-pop__title { font-family: var(--font-serif); font-weight: 700; font-size: var(--font-size-md); flex: 1; }
 .settings-pop__close { width: 30px; height: 30px; display: grid; place-items: center; border-radius: var(--radius-sm); color: var(--color-text-muted); transition: all var(--t-base); }
@@ -1187,6 +1208,14 @@ body.is-immersive .journal__stream {
 .set-input { width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-deep); color: var(--color-text); font-family: var(--font-sans); font-size: var(--font-size-sm); transition: border-color var(--t-base), box-shadow var(--t-base); }
 .set-input:focus { outline: none; border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); }
 .set-notice { margin-top: var(--space-3); margin-bottom: 0; }
+
+/* ---------- 归寝确认 / 每日总结模态框 ---------- */
+.endday-preview { margin-top: var(--space-3); padding: var(--space-3); white-space: pre-wrap; font-family: var(--font-kai); color: var(--color-text); background: var(--color-bg-deep); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.endday-confirm .daily-modal__foot { justify-content: flex-end; }
+.daily-ledger { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2) var(--space-4); margin: 0 0 var(--space-4); padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-bg-deep); border: 1px solid var(--color-border); }
+.daily-ledger dt { color: var(--color-text-muted); }
+.daily-ledger dd { margin: 0; font-family: var(--font-mono); color: var(--color-primary); text-align: right; }
+.daily-summary-copy { white-space: pre-wrap; line-height: 1.7; }
 
 /* ---------- 每日总结模态框 ---------- */
 .modal-backdrop { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: var(--space-4); background: hsl(229 35% 8% / 0.72); backdrop-filter: blur(5px); }
@@ -1472,8 +1501,12 @@ const Host = (function () {
     if (d.getElementById(STYLE_ID)) return true;
 
     const css = `
-/* ===== 暮归旅店 · 页面级沉浸（由首层卡片注入） ===== */
-/* 非沉浸时没有宿主覆盖规则；楼层、边框和发送区保持酒馆原样。 */
+/* ===== 暮归旅店 · 第 0 层接管与页面级沉浸 ===== */
+/* 仅隐藏父页面其余聊天楼层；保留第 0 层与酒馆原生输入区。 */
+#chat > .mes:not([mesid="0"]),
+#chat > .mes:not([messageid="0"]):not([mesid]) {
+  display: none !important;
+}
 
 /* 沉浸模式：只将当前页面 iframe 钉满视口 */
 iframe.${IMMERSIVE_CLASS} {
@@ -1831,12 +1864,19 @@ const SAMPLE_STATE = {
     }
   },
   农牧: {
+    种子图鉴: {
+      "春小麦种子": { 类型: "普通", 可种季节: ["春"], 生长天数: 5, 产出: "春小麦×8", 种子价: 5, 获取方式: "商店", 特殊条件: "", 可连续收获: false, 收获间隔天数: 0, 收获次数上限: 1, 永续: false, 产出效果: "", 描述: "适合初春播种的基础谷物。" },
+      "温感薄荷种子": { 类型: "魔法", 可种季节: ["春", "冬"], 生长天数: 7, 产出: "温感薄荷×4", 种子价: 30, 获取方式: "游方术士", 特殊条件: "需要魔力灌溉", 可连续收获: true, 收获间隔天数: 3, 收获次数上限: 3, 永续: false, 产出效果: "用于温热药饮。", 描述: "叶缘会随温度变色。" }
+    },
     农田大小: { 长: 3, 宽: 3 },
     农田网格: {
       "0,1": { x: 0, y: 1, 状态: "种植中", 作物: "春小麦", 剩余天数: 2, 今日已浇水: true, 已施肥: false, 品质修正: 0, 过熟天数: 0 },
       "0,2": { x: 0, y: 2, 状态: "种植中", 作物: "紫胡萝卜", 剩余天数: 1, 今日已浇水: false, 已施肥: true, 品质修正: 0, 过熟天数: 0 },
       "3,-1": { x: 3, y: -1, 状态: "种植中", 作物: "霜叶菜", 剩余天数: 0, 今日已浇水: true, 已施肥: true, 品质修正: 1, 过熟天数: 0 },
     },
+    魔法农田已解锁: false,
+    魔法农田大小: { 长: 2, 宽: 2 },
+    魔法农田网格: {},
     堆肥箱: { 状态: "发酵中", 倒计时: 3 },
     畜牧: {
       "林间鸡舍": { 饲料倒计时: 5, 产出倒计时: 1, 健康度: 85 },
@@ -1846,6 +1886,7 @@ const SAMPLE_STATE = {
     天气: "晴",
     引力值: 46,
     访客池: "流浪旅人×2、游方术士×1、行商×1、未知×1",
+    日初资金: 50000,
     注意事项: ["后院老井净水符文已激活，今日汤水质效提升。", "厨房柴火仅余 3 捆，傍晚前需补充。", "山莓进入成熟期，可前往林缘采集。"]
   }
 };
@@ -1930,6 +1971,16 @@ const Extract = {
     return String(rawText || '').replace(/\s*<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>\s*/gi, '\n').trim();
   },
 
+  /** 接受完整标签，或从无标签响应中提取明确的 MVU 命令后包装。 */
+  normalizeUpdateVariable(rawText) {
+    const tagged = this.extractUpdateVariable(rawText);
+    if (tagged) return tagged;
+    const commands = String(rawText || '').match(/_\.(?:set|add|assign|unset|remove)\s*\([\s\S]*?\)\s*;?/g);
+    return commands && commands.length
+      ? '<UpdateVariable>\n' + commands.join('\n') + '\n</UpdateVariable>'
+      : '';
+  },
+
   /** 移除原标签后追加新标签，剧情/选项/总结等其他内容保持原顺序。 */
   replaceUpdateVariable(rawText, updateTag) {
     const body = this.stripUpdateVariable(rawText);
@@ -2008,8 +2059,16 @@ const Settings = (function () {
   'use strict';
 
   const KEY = 'mrfz_settings';
+  const DEFAULT_PROMPTS = {
+    normal: '根据最新剧情执行常规变量更新。只更新剧情明确影响的变量，不续写剧情，不重复脚本已经确定的设施引力计算。',
+    endday: '完成归寝日结：脚本已结算员工薪资、建筑维护费、作物剩余天数和设施引力；请勿重复这些结算。依据变量规则更新日期、天气、潜在访客池、注意事项及其余未由脚本确定的每日状态。'
+  };
   const DEFAULTS = {
     apiMode: 'single',
+    prompts: {
+      normal: '',
+      endday: ''
+    },
     secondApi: {
       url: '',
       key: '',
@@ -2042,6 +2101,10 @@ const Settings = (function () {
   function normalize(value) {
     const cfg = merge(DEFAULTS, object(value));
     cfg.apiMode = cfg.apiMode === 'multi' ? 'multi' : 'single';
+    if (!isObject(cfg.prompts)) cfg.prompts = merge(DEFAULTS.prompts, {});
+    if (!isObject(cfg.secondApi)) cfg.secondApi = merge(DEFAULTS.secondApi, {});
+    cfg.prompts.normal = String(cfg.prompts.normal || '');
+    cfg.prompts.endday = String(cfg.prompts.endday || '');
     cfg.secondApi.url = String(cfg.secondApi.url || '').trim();
     cfg.secondApi.key = String(cfg.secondApi.key || '').trim();
     cfg.secondApi.model = String(cfg.secondApi.model || '').trim();
@@ -2059,12 +2122,18 @@ const Settings = (function () {
     return next;
   }
 
+  function promptFor(kind, config) {
+    const key = kind === 'endday' ? 'endday' : 'normal';
+    const custom = String(object(config && config.prompts)[key] || '').trim();
+    return custom || DEFAULT_PROMPTS[key];
+  }
+
   function isSecondApiComplete(config) {
     const api = object(config && config.secondApi);
     return !!(String(api.url || '').trim() && String(api.key || '').trim() && String(api.model || '').trim());
   }
 
-  return { KEY, DEFAULTS, load, save, normalize, isSecondApiComplete };
+  return { KEY, DEFAULTS, DEFAULT_PROMPTS, load, save, normalize, promptFor, isSecondApiComplete };
 })();
 window.Settings = Settings;
 
@@ -2173,6 +2242,87 @@ window.Assets = Assets;
    ============================================================ */
 const MVU = {
   ready: false,
+  DIMENSIONS: ['美食', '知识', '舒适', '冒险', '文化', '自然'],
+
+  number(value, fallback = 0) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  },
+
+  calculateFacilityGravity(state) {
+    const root = state && typeof state === 'object' ? state : {};
+    const built = root.建筑 && root.建筑.已建成 && typeof root.建筑.已建成 === 'object'
+      ? root.建筑.已建成 : {};
+    const dimensions = Object.fromEntries(this.DIMENSIONS.map((key) => [key, 0]));
+    Object.values(built).forEach((building) => {
+      const influence = building && building.影响力 && typeof building.影响力 === 'object' ? building.影响力 : {};
+      this.DIMENSIONS.forEach((key) => { dimensions[key] += this.number(influence[key], 0); });
+    });
+    this.DIMENSIONS.forEach((key) => { dimensions[key] = Math.round(dimensions[key] * 1000) / 1000; });
+    const ecology = root.访客生态 && typeof root.访客生态 === 'object' ? root.访客生态 : {};
+    const facility = this.DIMENSIONS.reduce((sum, key) => sum + dimensions[key], 0);
+    const total = this.number(ecology.声望引力, 0) + facility
+      + this.number(ecology.服务引力, 0) + this.number(ecology.环境引力, 0);
+    return { dimensions, facility, total: Math.round(total * 1000) / 1000 };
+  },
+
+  applyFacilityGravity(data) {
+    const next = this.clone(data) || { stat_data: {} };
+    const state = next.stat_data || (next.stat_data = {});
+    const ecology = state.访客生态 && typeof state.访客生态 === 'object'
+      ? state.访客生态 : (state.访客生态 = {});
+    const calculated = this.calculateFacilityGravity(state);
+    ecology.设施引力 = calculated.dimensions;
+    ecology.总引力值 = calculated.total;
+    return { data: next, calculated };
+  },
+
+  settleDay(data, settlementId) {
+    const prepared = this.applyFacilityGravity(data);
+    const next = prepared.data;
+    const state = next.stat_data || (next.stat_data = {});
+    const marker = String(settlementId || '');
+    const meta = next.pastoral || (next.pastoral = {});
+    if (marker && meta.lastSettlementId === marker) {
+      return { data: next, calculated: prepared.calculated, skipped: true, report: meta.lastSettlementReport || {} };
+    }
+
+    const inn = state.旅店 && typeof state.旅店 === 'object' ? state.旅店 : (state.旅店 = {});
+    const employees = inn.员工 && typeof inn.员工 === 'object' ? inn.员工 : {};
+    const built = state.建筑 && state.建筑.已建成 && typeof state.建筑.已建成 === 'object' ? state.建筑.已建成 : {};
+    const beforeFunds = this.number(inn.资金, 0);
+    const salary = Object.values(employees).reduce((sum, employee) => sum + this.number(employee && employee.职业信息 && employee.职业信息.日薪, 0), 0);
+    const maintenance = Object.values(built).reduce((sum, building) => sum + this.number(building && building.维护费用, 0), 0);
+    inn.资金 = beforeFunds - salary - maintenance;
+
+    const farm = state.农牧 && typeof state.农牧 === 'object' ? state.农牧 : {};
+    const advance = (grid, magic) => {
+      Object.values(grid && typeof grid === 'object' ? grid : {}).forEach((plot) => {
+        if (!plot || typeof plot !== 'object') return;
+        if (plot.状态 === '种植中') plot.剩余天数 = Math.max(0, this.number(plot.剩余天数, 0) - 1);
+        plot.今日已浇水 = false;
+        if (magic) { plot.今日已魔力灌溉 = false; plot.今日已养护 = false; }
+      });
+    };
+    advance(farm.农田网格, false);
+    advance(farm.魔法农田网格, true);
+
+    const forecast = state.当日预报 && typeof state.当日预报 === 'object' ? state.当日预报 : (state.当日预报 = {});
+    const report = {
+      settlementId: marker,
+      initialFunds: this.number(forecast.日初资金, beforeFunds),
+      beforeFunds,
+      salary,
+      maintenance,
+      afterFunds: inn.资金,
+      facilityGravity: prepared.calculated.dimensions,
+      totalGravity: prepared.calculated.total
+    };
+    forecast.日初资金 = inn.资金;
+    if (marker) meta.lastSettlementId = marker;
+    meta.lastSettlementReport = report;
+    return { data: next, calculated: prepared.calculated, skipped: false, report };
+  },
 
   async init() {
     if (typeof waitGlobalInitialized === 'function') {
@@ -2208,6 +2358,24 @@ const MVU = {
       }
     } catch (e) { /* fall through */ }
     return { stat_data: this.clone(window.SAMPLE_STATE) };
+  },
+
+  async writeData(data, messageId) {
+    if (!this.ready || typeof Mvu === 'undefined' || typeof Mvu.replaceMvuData !== 'function') return false;
+    await Mvu.replaceMvuData(data, { type: 'message', message_id: messageId == null ? this.latestMessageId() : messageId });
+    return true;
+  },
+
+  async syncFacilityGravity(messageId) {
+    const applied = this.applyFacilityGravity(this.getDataSnapshot());
+    await this.writeData(applied.data, messageId);
+    return applied;
+  },
+
+  async settleAndWrite(messageId, settlementId) {
+    const settled = this.settleDay(this.getDataSnapshot(), settlementId);
+    if (!settled.skipped) await this.writeData(settled.data, messageId);
+    return settled;
   },
 
   /** 取【最新一楼】stat_data；不可用则回退样例 */
@@ -2281,13 +2449,20 @@ const ApiEngine = (function () {
   // 等用户补充“最近三层之外”的输入时，只需扩展这里。
   function buildAdditionalContext() { return ''; }
 
-  function buildDailyPurpose() {
-    return [
-      '本轮为归寝日结：在执行常规剧情变量更新的同时，结算所有员工每日薪资与建筑维护费用，',
-      '并更新次日预报的天气、引力值、潜在访客池和注意事项。',
-      '具体算法与限制只能服从变量规则；规则未规定的细节不得臆造。',
-      '除 UpdateVariable 外，可先输出一段简洁的日结总结供界面弹窗展示。'
-    ].join('');
+  function configuredPrompt(kind, config) {
+    if (Settings && typeof Settings.promptFor === 'function') {
+      try { return Settings.promptFor(kind, config); } catch (e) { /* 兼容旧设置桩 */ }
+    }
+    const prompts = config && config.prompts || {};
+    const custom = String(prompts[kind] || '').trim();
+    if (custom) return custom;
+    return kind === 'endday'
+      ? '完成归寝日结；不得重复脚本已经完成的薪资、维护费、植物成长和设施引力结算。'
+      : '根据最新剧情执行常规变量更新。';
+  }
+
+  function buildDailyPurpose(config) {
+    return configuredPrompt('endday', config || Settings.load());
   }
 
   function buildPrompt(context) {
@@ -2295,16 +2470,21 @@ const ApiEngine = (function () {
       const role = m.role === 'user' ? '玩家' : (m.role === 'assistant' ? '主模型' : '系统');
       return role + ' #' + m.message_id + ':\n' + Extract.stripUpdateVariable(m.message || '');
     }).join('\n\n');
+    const config = Settings.load();
     const purpose = context.purpose === 'endday'
-      ? buildDailyPurpose()
-      : '根据最新剧情执行常规变量更新。';
+      ? buildDailyPurpose(config)
+      : configuredPrompt('normal', config);
     const extra = buildAdditionalContext(context);
+    const calculated = context.calculated
+      ? '【脚本已确定事实（不得重算或重复应用）】\n' + JSON.stringify(context.calculated)
+      : '';
     return [
       '你是暮归旅店的变量计算引擎，不续写剧情。',
       '【任务】\n' + purpose,
       '【最近三层正文】\n' + (history || '（无）'),
       '【变量规则】\n' + context.rules,
       '【主生成前当前变量数据】\n' + JSON.stringify(context.baseline && context.baseline.stat_data || {}),
+      calculated,
       extra ? '【附加信息】\n' + extra : '',
       '【输出格式】\n必须输出且只输出一个完整的 <UpdateVariable>...</UpdateVariable> 标签；归寝日结允许在标签前输出简洁总结。不得使用 Markdown 代码围栏。'
     ].filter(Boolean).join('\n\n');
@@ -2343,8 +2523,8 @@ const ApiEngine = (function () {
           ordered_prompts: ['user_input'],
           custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
         }), api.timeout, id));
-        const updateTag = Extract.extractUpdateVariable(raw);
-        if (!updateTag) throw new Error('第二 API 未返回 UpdateVariable');
+        const updateTag = Extract.normalizeUpdateVariable(raw);
+        if (!updateTag) throw new Error('第二 API 未返回 UpdateVariable 或有效 MVU 更新命令');
         log(PREFIX_SECOND, '完成', { attempt: attempt + 1, elapsedMs: Math.round(now() - started) });
         return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'second' };
       } catch (e) {
@@ -2381,6 +2561,7 @@ const ApiEngine = (function () {
     try {
       const generated = await callSecondApiForVariable(Object.assign({}, context, { messageId }));
       await applyUpdate(messageId, message.message || '', context.baseline, generated);
+      if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
       lastFailure = null;
       return { ok: true, source: generated.source, summary: generated.summary, messageId };
     } catch (e) {
@@ -2435,6 +2616,7 @@ const ApiEngine = (function () {
       try {
         const generated = await ApiEngine.callSecondApiForVariable(Object.assign({}, context, { messageId, purpose: 'endday' }));
         await applyUpdate(messageId, message.message || '', context.baseline, generated);
+        if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
         return { ok: true, source: 'second', summary: generated.summary, messageId };
       } catch (secondError) {
         error(PREFIX_SECOND, '归寝日结降级到主 API', secondError);
@@ -2444,8 +2626,9 @@ const ApiEngine = (function () {
     try {
       // 主剧情的 MVU 已由酒馆处理，单 API 日结从此刻最新快照继续计算。
       const baseline = MVU.getDataSnapshot ? MVU.getDataSnapshot() : context.baseline;
-      const generated = await callMainApiForDaily({ baseline, messageId, purpose: 'endday' });
+      const generated = await callMainApiForDaily({ baseline, messageId, purpose: 'endday', calculated: context.calculated });
       await appendDailyUpdate(messageId, message.message || '', baseline, generated);
+      if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
       return { ok: true, source: 'main', summary: generated.summary, messageId };
     } catch (e) {
       error(PREFIX_MAIN, '日结失败', e);
@@ -2463,6 +2646,7 @@ const ApiEngine = (function () {
     RULE_ENTRY_NAME,
     buildAdditionalContext,
     buildDailyPurpose,
+    buildPrompt,
     callSecondApiForVariable,
     processAfterMain,
     processEndday,
@@ -2779,8 +2963,10 @@ const Chat = (function () {
   function compose(text, kind) {
     const ta = document.getElementById('composerInput');
     if (!ta) return false;
-    ta.value = text;
-    composedKind = kind || 'normal';
+    const current = String(ta.value || '').trimEnd();
+    const addition = String(text || '').trim();
+    ta.value = current && addition ? current + '\n' + addition : (addition || current);
+    composedKind = kind || composedKind || 'normal';
     ta.focus();
     autoGrow(ta);
     return true;
@@ -2847,14 +3033,27 @@ const Chat = (function () {
       await exec('/trigger');
       const messageId = await waitForMainReply(beforeId, token, startCycle);
       console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
-      if (window.ApiEngine) {
-        let outcome = null;
-        if (purpose === 'endday') outcome = await ApiEngine.processEndday({ baseline, messageId, purpose });
-        else if (mode === 'multi') outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose });
-        if (purpose === 'endday' && outcome && outcome.ok) {
-          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: { summary: outcome.summary, source: outcome.source } }));
+      let calculated = null;
+      if (window.MVU) {
+        if (purpose === 'endday' && typeof MVU.settleAndWrite === 'function') {
+          const settled = await MVU.settleAndWrite(messageId, 'endday-message-' + messageId);
+          calculated = Object.assign({}, settled.report, { facilityGravity: settled.calculated && settled.calculated.dimensions });
+          window.dispatchEvent(new CustomEvent('pastoral:request-stage', { detail: { stage: 'settled', calculated } }));
+        } else if (typeof MVU.syncFacilityGravity === 'function') {
+          const synced = await MVU.syncFacilityGravity(messageId);
+          calculated = { facilityGravity: synced.calculated.dimensions, totalGravity: synced.calculated.total };
         }
       }
+      if (window.ApiEngine) {
+        let outcome = null;
+        if (purpose === 'endday') outcome = await ApiEngine.processEndday({ baseline: window.MVU ? MVU.getDataSnapshot() : baseline, messageId, purpose, calculated });
+        else if (mode === 'multi') outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose, calculated });
+        if (purpose === 'endday' && outcome && outcome.ok) {
+          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: outcome.summary, source: outcome.source }, calculated || {}) }));
+        }
+      }
+      const composer = document.getElementById('composerInput');
+      if (composer && String(composer.value || '').trim() === body) { composer.value = ''; autoGrow(composer); }
       return true;
     } catch (e) {
       console.error('[Pastoral][MainAPI]', '发送失败', e);
@@ -2921,14 +3120,14 @@ const Chat = (function () {
       ta.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
-          const v = ta.value; ta.value = ''; autoGrow(ta);
+          const v = ta.value;
           handleUnifiedRequest(v);
         }
       });
     }
     if (btn && ta) {
       btn.addEventListener('click', () => {
-        const v = ta.value; ta.value = ''; autoGrow(ta);
+        const v = ta.value;
         send(v);
       });
     }
@@ -3255,11 +3454,15 @@ window.Chat = Chat;
   function renderOverview(container, s) {
     const ec = get(s, '访客生态', {});
     const fc = get(s, '当日预报', {});
-    const inf = get(ec, '设施引力', {});
+    const calculated = window.MVU && typeof MVU.calculateFacilityGravity === 'function'
+      ? MVU.calculateFacilityGravity(s) : null;
+    const inf = calculated ? calculated.dimensions : get(ec, '设施引力', {});
     const axes = DIM_KEYS.map((k) => ({ name: DIM_NAME[k], key: k, color: DIM_COLOR[k] }));
     const vals = DIM_KEYS.map((k) => num(inf[k], 0));
     const maxV = Math.max(10, ...vals, 1);
-    const total = num(get(ec, '总引力值', 0), 0);
+    const total = calculated ? calculated.total : num(get(ec, '总引力值', 0), 0);
+    const funds = get(s, '旅店.资金', null), initialFunds = get(fc, '日初资金', null);
+    const fundsChange = funds == null || initialFunds == null ? null : num(funds, 0) - num(initialFunds, 0);
 
     container.innerHTML =
       panelH('六维引力', `总引力 ${total}`) +
@@ -3282,6 +3485,7 @@ window.Chat = Chat;
       panelH('当日预报') +
       `<div class="card">
          <div class="row row--between" style="margin-bottom:6px"><span class="card__sub"><span class="ic" data-i="${weatherIcon(get(fc, '天气', get(s, '世界.时间.天气', '晴')))}" style="--ic:16px;color:var(--color-primary)"></span> 天气 · ${get(fc, '天气', '—')}</span><span class="card__sub">引力 · <span class="num" style="color:var(--color-primary)">${num(get(fc, '引力值', total), 0)}</span></span></div>
+         <div class="forecast-funds"><span>日初资金 · <strong>${initialFunds == null ? '暂无数据' : formatFunds(initialFunds)}</strong></span><span>当前资金 · <strong>${funds == null ? '暂无数据' : formatFunds(funds)}</strong></span><span>今日变化 · <strong>${fundsChange == null ? '暂无数据' : (fundsChange >= 0 ? '+' : '') + formatFunds(fundsChange)}</strong></span></div>
          <div class="card__sub" style="margin-bottom:6px">访客池：${get(fc, '访客池', '—')}</div>
          <div class="list-h"><span>注意事项</span></div>
          ${(get(fc, '注意事项', []) || []).map((x) => `<div class="card__sub" style="margin:3px 0;line-height:1.6">· ${x}</div>`).join('') || '<div class="faint" style="font-size:var(--font-size-xs)">今日无事须记。</div>'}
@@ -3632,7 +3836,7 @@ window.Chat = Chat;
   }
 
   /* ---- 农牧 ---- */
-  function farmDetail(key, plot) {
+  function farmDetail(key, plot, farm, magic) {
     const p = plot || {}, state = p.状态 || '荒地', crop = p.作物 || '';
     const days = num(p.剩余天数, 0), ripe = state === '种植中' && days <= 0;
     const pct = state === '种植中' && crop ? clamp(100 - days * 18, 5, 100) : 0;
@@ -3644,10 +3848,13 @@ window.Chat = Chat;
         ${p.已施肥 ? '<span class="ic status-icon 已施肥" data-i="fertilize" title="已施肥"></span>' : ''}
       </div>
       ${state === '种植中' && crop ? `<div class="row row--between"><span class="card__sub">${ripe ? '已成熟' : `约 ${days} 日后成熟`}</span><span class="card__sub">品质修正 ${num(p.品质修正, 0)}</span></div><div class="grow-bar"><div class="grow-bar__fill" style="width:${pct}%"></div></div>` : ''}
+      ${magic ? `<div class="farm-magic-meta"><span>稳定度 ${clamp(num(p.魔力稳定度, 100), 0, 100)}</span><span>未养护 ${num(p.连续未养护天数, 0)} 日</span><span>变异 · ${p.变异状态 || '无'}</span></div>${p.环境标签 && p.环境标签.length ? `<div class="row">${pillsFrom(p.环境标签, 'pill--mint')}</div>` : ''}` : ''}
+      <div class="card__sub">已收获 ${num(p.已收获次数, 0)} 次 · 过熟 ${num(p.过熟天数, 0)} 日</div>
       <div class="row farm-detail__actions">
         ${state === '种植中' && crop ? (ripe ? `<button class="btn btn--primary btn--sm" data-harvest="${key}"><span class="ic btn__icon" data-i="bag"></span>收获</button>` : `<button class="btn btn--sm" data-water="${key}"><span class="ic btn__icon" data-i="water"></span>浇水</button>`) : ''}
         ${state === '荒地' ? `<button class="btn btn--sm" data-till="${key}"><span class="ic btn__icon" data-i="hammer"></span>开垦</button>` : ''}
         ${state === '已开垦' ? `<button class="btn btn--sm" data-plant="${key}"><span class="ic btn__icon" data-i="grain"></span>播种</button>` : ''}
+        ${magic && state === '种植中' ? `<button class="btn btn--sm" data-magic-water="${key}">魔力灌溉</button><button class="btn btn--sm" data-tend="${key}">养护</button>` : ''}
       </div>
     </div>`;
   }
@@ -3657,35 +3864,62 @@ window.Chat = Chat;
     $$('[data-harvest]', container).forEach((b) => b.addEventListener('click', () => intend(`收获：(${b.dataset.harvest})`)));
     $$('[data-till]', container).forEach((b) => b.addEventListener('click', () => intend(`开垦：(${b.dataset.till})`)));
     $$('[data-plant]', container).forEach((b) => b.addEventListener('click', () => intend(`播种：(${b.dataset.plant})`)));
+    $$('[data-magic-water]', container).forEach((b) => b.addEventListener('click', () => intend(`魔力灌溉：(${b.dataset.magicWater})`)));
+    $$('[data-tend]', container).forEach((b) => b.addEventListener('click', () => intend(`养护魔法农田：(${b.dataset.tend})`)));
+    $$('[data-seed-use]', container).forEach((b) => b.addEventListener('click', () => intend(`准备用${b.dataset.seedUse}播种`)));
+    $$('[data-care-livestock]', container).forEach((b) => b.addEventListener('click', () => intend(`照料畜牧设施：${b.dataset.careLivestock}`)));
   }
 
-  function renderFarm(container, s) {
-    const farm = get(s, '农牧', {}), size = get(farm, '农田大小', {});
-    const height = Math.max(1, Math.floor(num(size.长, 3))), width = Math.max(1, Math.floor(num(size.宽, 3)));
-    const records = get(farm, '农田网格', {}) || {}, inRange = new Set(), cells = [];
+  function farmGrid(farm, magic) {
+    const size = get(farm, magic ? '魔法农田大小' : '农田大小', {});
+    const records = get(farm, magic ? '魔法农田网格' : '农田网格', {}) || {};
+    const height = clamp(Math.floor(num(size.长, magic ? 2 : 3)), 1, 30);
+    const width = clamp(Math.floor(num(size.宽, magic ? 2 : 3)), 1, 30);
+    const inRange = new Set(), cells = [];
     for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
       const key = `${x},${y}`, p = records[key] || { x, y, 状态: '荒地' };
       inRange.add(key);
       const state = p.状态 || '荒地', crop = p.作物 || '', ripe = state === '种植中' && num(p.剩余天数, 0) <= 0;
-      cells.push(`<button class="farm-cell ${state === '种植中' ? 'is-planted' : state === '已开垦' ? 'is-tilled' : 'is-wild'} ${ripe ? 'is-ripe' : ''}" type="button" data-plot="${key}" aria-label="田格${key}，${state}${crop ? '，' + crop : ''}"><span class="farm-cell__coord">${x},${y}</span><span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'garden'}"></span><span class="farm-cell__name">${crop || state}</span></button>`);
+      cells.push(`<button class="farm-cell ${magic ? 'is-magic' : ''} ${state === '种植中' ? 'is-planted' : state === '已开垦' ? 'is-tilled' : 'is-wild'} ${ripe ? 'is-ripe' : ''}" type="button" data-plot="${key}" aria-label="田格${key}，${state}${crop ? '，' + crop : ''}"><span class="farm-cell__coord">${x},${y}</span><span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'garden'}"></span><span class="farm-cell__name">${crop || state}</span></button>`);
     }
     const overflow = entries(records).filter(([key]) => !inRange.has(key));
-    const comp = get(farm, '堆肥箱', {}), live = entries(get(farm, '畜牧', {}));
-    let html = panelH('旅店农田', `${width}×${height}`);
-    html += `<div class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>点击田格查看状态与农事操作；坐标从 (0,0) 开始。</div></div>`;
-    html += `<div class="farm-grid" style="grid-template-columns:repeat(${width},minmax(0,1fr))">${cells.join('')}</div><div id="farmDetail"></div>`;
-    if (overflow.length) html += panelH('范围外田格', `${overflow.length}`) + `<div class="farm-overflow">${overflow.map(([key, p]) => farmDetail(key, p)).join('')}</div>`;
-    html += panelH('堆肥箱') + `<div class="card"><div class="row row--between"><span class="card__sub">状态 · ${(comp && comp.状态) || '空'}</span><span class="card__sub">倒计时 · <span class="num">${num(comp && comp.倒计时, 0)}</span></span></div></div>`;
-    html += panelH('畜牧', `${live.length}`) + (live.length ? live.map(([name, l]) => {
-      const hp = clamp(num(get(l, '健康度', 0), 0), 0, 100), col = hp >= 50 ? 'var(--color-success)' : 'var(--color-danger)';
-      return `<div class="livestock-card"><div class="building__head"><span class="ic building__icon" data-i="garden"></span><span class="building__name">${name}</span></div><div class="row row--between"><span class="card__sub">饲料 · ${num(get(l, '饲料倒计时', 0), 0)} 日</span><span class="card__sub">产出 · ${num(get(l, '产出倒计时', 0), 0)} 日</span></div><div class="stat-line"><span class="stat-line__label">健康 ${hp}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${hp}%;background:${col}"></div></div></div></div>`;
-    }).join('') : emptyState('garden', '无牲畜', '建造畜牧设施后将显示于此。'));
-    container.innerHTML = html; Icon.render(container); bindFarmActions(container);
-    $$('.farm-cell', container).forEach((cell) => cell.addEventListener('click', () => {
-      $$('.farm-cell', container).forEach((x) => x.classList.toggle('is-active', x === cell));
-      const detail = $('#farmDetail', container); detail.innerHTML = farmDetail(cell.dataset.plot, records[cell.dataset.plot]);
-      Icon.render(detail); bindFarmActions(detail);
-    }));
+    return { width, height, records, cells, overflow };
+  }
+
+  function renderFarm(container, s) {
+    const farm = get(s, '农牧', {}), tab = UI.farmTab || 'normal';
+    const tabs = `<div class="seg farm-tabs"><button class="seg__item ${tab === 'normal' ? 'is-active' : ''}" data-farm-tab="normal">普通农田</button><button class="seg__item ${tab === 'magic' ? 'is-active' : ''}" data-farm-tab="magic">魔法农田</button><button class="seg__item ${tab === 'seeds' ? 'is-active' : ''}" data-farm-tab="seeds">种子图鉴</button><button class="seg__item ${tab === 'care' ? 'is-active' : ''}" data-farm-tab="care">畜牧与堆肥</button></div>`;
+    let html = tabs;
+    if (tab === 'normal' || tab === 'magic') {
+      const magic = tab === 'magic';
+      if (magic && !get(farm, '魔法农田已解锁', false)) {
+        html += emptyState('sparkle', '魔法农田尚未解锁', '通过剧情、设施或变量规则解锁后，魔法田格将在这里展开。');
+        container.innerHTML = html; Icon.render(container);
+      } else {
+        const grid = farmGrid(farm, magic);
+        html += panelH(magic ? '魔法农田' : '旅店农田', `${grid.width}×${grid.height}`);
+        html += `<div class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>点击田格查看状态与农事操作；坐标从 (0,0) 开始。</div></div>`;
+        html += `<div class="farm-grid-scroll"><div class="farm-grid" style="grid-template-columns:repeat(${grid.width},minmax(64px,1fr));min-width:${grid.width * 70}px">${grid.cells.join('')}</div></div><div id="farmDetail"></div>`;
+        if (grid.overflow.length) html += panelH('范围外田格', `${grid.overflow.length}`) + `<div class="farm-overflow">${grid.overflow.map(([key, p]) => farmDetail(key, p, farm, magic)).join('')}</div>`;
+        container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+        $$('.farm-cell', container).forEach((cell) => cell.addEventListener('click', () => {
+          $$('.farm-cell', container).forEach((x) => x.classList.toggle('is-active', x === cell));
+          const detail = $('#farmDetail', container); detail.innerHTML = farmDetail(cell.dataset.plot, grid.records[cell.dataset.plot], farm, magic);
+          Icon.render(detail); bindFarmActions(detail);
+        }));
+      }
+    } else if (tab === 'seeds') {
+      const seeds = entries(get(farm, '种子图鉴', {}));
+      html += panelH('种子图鉴', seeds.length);
+      html += seeds.length ? `<div class="seed-catalog">${seeds.map(([name, seed]) => `<article class="seed-card"><div class="building__head"><span class="ic building__icon" data-i="grain"></span><span class="building__name">${name}</span><span class="pill ${seed.类型 === '魔法' ? 'pill--mint' : ''}">${seed.类型 || '普通'}</span></div><div class="card__sub">季节 · ${(seed.可种季节 || []).join('、') || '未限定'}　生长 · ${num(seed.生长天数, 0)} 日　种子价 · ${num(seed.种子价, 0)}</div><div class="quest-card__desc">产出 · ${seed.产出 || '—'}　获取 · ${seed.获取方式 || '—'}</div><div class="card__sub">连续收获 · ${seed.可连续收获 ? `是 / 间隔 ${num(seed.收获间隔天数, 0)} 日 / 上限 ${num(seed.收获次数上限, 1)}${seed.永续 ? ' / 永续' : ''}` : '否'}</div>${seed.特殊条件 ? `<div class="card__sub">条件 · ${seed.特殊条件}</div>` : ''}${seed.产出效果 ? `<div class="card__sub">效果 · ${seed.产出效果}</div>` : ''}${seed.描述 ? `<p class="quest-card__desc">${seed.描述}</p>` : ''}<button class="btn btn--sm" data-seed-use="${name}">用于播种</button></article>`).join('')}</div>` : emptyState('grain', '种子图鉴为空', '获得种子资料后会在这里记录。');
+      container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+    } else {
+      const comp = get(farm, '堆肥箱', {}), live = entries(get(farm, '畜牧', {}));
+      html += panelH('堆肥箱') + `<div class="card"><div class="row row--between"><span class="card__sub">状态 · ${(comp && comp.状态) || '空'}</span><span class="card__sub">倒计时 · <span class="num">${num(comp && comp.倒计时, 0)}</span></span></div></div>`;
+      html += panelH('畜牧', `${live.length}`) + (live.length ? live.map(([name, l]) => { const hp = clamp(num(get(l, '健康度', 0), 0), 0, 100), col = hp >= 50 ? 'var(--color-success)' : 'var(--color-danger)'; return `<div class="livestock-card"><div class="building__head"><span class="ic building__icon" data-i="garden"></span><span class="building__name">${name}</span></div><div class="row row--between"><span class="card__sub">饲料 · ${num(get(l, '饲料倒计时', 0), 0)} 日</span><span class="card__sub">产出 · ${num(get(l, '产出倒计时', 0), 0)} 日</span></div><div class="stat-line"><span class="stat-line__label">健康 ${hp}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${hp}%;background:${col}"></div></div></div><button class="btn btn--sm" data-care-livestock="${name}">照料</button></div>`; }).join('') : emptyState('garden', '无牲畜', '建造畜牧设施后将显示于此。'));
+      container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+    }
+    $$('[data-farm-tab]', container).forEach((button) => button.addEventListener('click', () => { UI.farmTab = button.dataset.farmTab; renderFarm(container, Render.state); }));
   }
 
   /* ============================================================
@@ -3711,7 +3945,7 @@ window.Chat = Chat;
     quest: (s) => JSON.stringify(get(s, '叙事引擎')),
     farm: (s) => JSON.stringify(get(s, '农牧')),
   };
-  const UI = { invCat: '全部', invSearch: '', buildTab: 'built', questTab: 'commission' };
+  const UI = { invCat: '全部', invSearch: '', buildTab: 'built', questTab: 'commission', farmTab: 'normal' };
   const panelSig = {};
 
   const Render = {
@@ -3801,8 +4035,9 @@ window.Chat = Chat;
     const existing = document.getElementById('settingsPop');
     if (existing) { existing.remove(); return; }
     const cfg = Settings.load();
-    const pop = h('section', { class: 'settings-pop', id: 'settingsPop', role: 'dialog', 'aria-label': '设置' });
-    const close = () => pop.remove();
+    const backdrop = h('div', { class: 'modal-backdrop settings-backdrop', id: 'settingsBackdrop' });
+    const pop = h('section', { class: 'settings-pop', id: 'settingsPop', role: 'dialog', 'aria-modal': 'true', 'aria-label': '设置' });
+    const close = () => backdrop.remove();
 
     pop.appendChild(h('div', { class: 'settings-pop__head' }, [
       h('span', { class: 'ic', html: Icon.get('settings') }),
@@ -3811,13 +4046,21 @@ window.Chat = Chat;
         h('span', { class: 'ic', html: Icon.get('close') }))
     ]));
 
+    const tabs = h('div', { class: 'settings-tabs', role: 'tablist', 'aria-label': '设置页面' }, [
+      h('button', { class: 'settings-tab is-active', type: 'button', role: 'tab', 'aria-selected': 'true', 'data-settings-tab': 'api' }, '接口设置'),
+      h('button', { class: 'settings-tab', type: 'button', role: 'tab', 'aria-selected': 'false', 'data-settings-tab': 'prompts' }, '更新提示词')
+    ]);
+    pop.appendChild(tabs);
+    const apiPage = h('div', { class: 'settings-page is-active', 'data-settings-page': 'api' });
+    const promptPage = h('div', { class: 'settings-page', 'data-settings-page': 'prompts', hidden: '' });
+
     const themeBtn = h('button', { class: 'btn btn--ghost btn--sm', type: 'button' },
       document.documentElement.getAttribute('data-theme') === 'night' ? '当前：夜 · 切昼' : '当前：昼 · 切夜');
     themeBtn.addEventListener('click', () => {
       toggleTheme();
       themeBtn.textContent = document.documentElement.getAttribute('data-theme') === 'night' ? '当前：夜 · 切昼' : '当前：昼 · 切夜';
     });
-    pop.appendChild(h('div', { class: 'set-row' }, [
+    apiPage.appendChild(h('div', { class: 'set-row' }, [
       h('div', {}, [h('div', { class: 'set-row__title' }, '昼夜主题'), h('div', { class: 'faint set-help' }, '羊皮纸昼景 / 靛蓝烛夜')]),
       themeBtn
     ]));
@@ -3871,19 +4114,48 @@ window.Chat = Chat;
         toast('warn', '设置已保存', '第二 API 配置尚不完整，调用时将自动降级。');
       } else toast('success', '设置已保存', next.apiMode === 'multi' ? '双轨 API 已启用。' : '当前使用单 API。');
     });
-    pop.appendChild(form);
+    apiPage.appendChild(form);
 
-    pop.appendChild(h('div', { class: 'notice notice--info set-notice' }, [
+    apiPage.appendChild(h('div', { class: 'notice notice--info set-notice' }, [
       h('span', { class: 'ic notice__icon', html: Icon.get('info') }),
       h('div', {}, '状态始终读取最新楼层 MVU 快照；第二 API 只负责变量计算，失败时自动保留主模型结果。')
     ]));
 
-    document.body.appendChild(pop);
+    const promptForm = h('form', { class: 'settings-form prompt-settings-form', id: 'promptSettingsForm' });
+    const promptField = (label, name, value, help) => h('label', { class: 'set-field' }, [
+      h('span', { class: 'set-field__label' }, label),
+      h('span', { class: 'faint set-help' }, help),
+      h('textarea', { class: 'set-input set-textarea', name, rows: '8', placeholder: '留空则使用程序内置默认提示词' }, value)
+    ]);
+    promptForm.appendChild(promptField('普通变量更新', 'normalPrompt', cfg.prompts.normal, '普通剧情、农事和其他非归寝请求使用。'));
+    promptForm.appendChild(promptField('归寝日结', 'enddayPrompt', cfg.prompts.endday, '归寝结算使用；脚本已完成的扣费、植物成长和设施引力不会重复执行。'));
+    const promptActions = h('div', { class: 'settings-actions' }, [
+      h('button', { class: 'btn btn--ghost', type: 'button', 'data-reset-prompts': '' }, '恢复内置默认'),
+      h('button', { class: 'btn btn--primary', type: 'submit' }, '保存提示词')
+    ]);
+    promptForm.appendChild(promptActions);
+    promptForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      Settings.save({ prompts: { normal: promptForm.elements.normalPrompt.value, endday: promptForm.elements.enddayPrompt.value } });
+      toast('success', '提示词已保存', '空白栏目会继续使用程序内置默认提示词。');
+    });
+    promptForm.querySelector('[data-reset-prompts]').addEventListener('click', () => {
+      promptForm.elements.normalPrompt.value = '';
+      promptForm.elements.enddayPrompt.value = '';
+      Settings.save({ prompts: { normal: '', endday: '' } });
+      toast('info', '已恢复内置默认', '网页缓存中的自定义提示词已清空。');
+    });
+    promptPage.appendChild(promptForm);
+    pop.appendChild(apiPage); pop.appendChild(promptPage);
+    $$('.settings-tab', pop).forEach((tab) => tab.addEventListener('click', () => {
+      const name = tab.dataset.settingsTab;
+      $$('.settings-tab', pop).forEach((item) => { const on = item === tab; item.classList.toggle('is-active', on); item.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      $$('.settings-page', pop).forEach((page) => { const on = page.dataset.settingsPage === name; page.classList.toggle('is-active', on); page.hidden = !on; });
+    }));
+
+    backdrop.appendChild(pop); document.body.appendChild(backdrop);
     Icon.render(pop);
-    setTimeout(() => {
-      const handler = (e) => { if (!pop.contains(e.target)) { close(); document.removeEventListener('mousedown', handler); } };
-      document.addEventListener('mousedown', handler);
-    }, 0);
+    backdrop.addEventListener('mousedown', (e) => { if (e.target === backdrop) close(); });
   }
 
   function h(tag, attrs = {}, children = []) {
@@ -3923,8 +4195,45 @@ window.Chat = Chat;
       case 'cook': openTab('inventory'); toast('info', '灶事', '择一道食谱烹制。'); break;
       case 'water': Chat.compose('浇灌所有农田'); break;
       case 'rest': Chat.compose('小憩片刻，恢复精力'); break;
-      case 'endday': Chat.compose('归寝入眠，结束今天', 'endday'); break;
+      case 'endday': confirmEndday(); break;
     }
+  }
+
+  /* ---------- 归寝确认 ---------- */
+  function confirmEndday() {
+    if (document.getElementById('enddayConfirm') || Chat.busy) return;
+    const previous = document.activeElement;
+    const ta = $('#composerInput');
+    const existing = ta ? String(ta.value || '').trimEnd() : '';
+    const action = '归寝入眠，结束今天';
+    const finalText = existing ? existing + '\n' + action : action;
+    const backdrop = h('div', { class: 'modal-backdrop', id: 'enddayConfirm' });
+    const dialog = h('section', { class: 'daily-modal endday-confirm', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'enddayConfirmTitle' });
+    const close = () => { backdrop.remove(); if (previous && previous.focus) previous.focus(); };
+    dialog.appendChild(h('header', { class: 'daily-modal__head' }, [
+      h('span', { class: 'ic', html: Icon.get('moon') }),
+      h('h2', { id: 'enddayConfirmTitle' }, '归寝入眠')
+    ]));
+    dialog.appendChild(h('div', { class: 'daily-modal__body' }, [
+      h('p', {}, '结束今天后将结算员工薪资、建筑维护费、植物成长与次日预报。'),
+      h('div', { class: 'endday-preview' }, finalText)
+    ]));
+    const cancel = h('button', { class: 'btn btn--ghost', type: 'button', 'data-endday-cancel': '', onclick: close }, '取消');
+    const confirm = h('button', { class: 'btn btn--primary', type: 'button', 'data-endday-confirm': '' }, '结束今天并发送');
+    confirm.addEventListener('click', async () => {
+      confirm.disabled = true; cancel.disabled = true; confirm.textContent = '正在发送归寝行动…';
+      const ok = await Chat.handleUnifiedRequest(finalText, { kind: 'endday' });
+      if (ok) close();
+      else { confirm.disabled = false; cancel.disabled = false; confirm.textContent = '重新发送'; }
+    });
+    dialog.appendChild(h('div', { class: 'daily-modal__foot' }, [cancel, confirm]));
+    backdrop.appendChild(dialog); document.body.appendChild(backdrop); Icon.render(dialog); confirm.focus();
+    backdrop.addEventListener('mousedown', (e) => { if (e.target === backdrop) close(); });
+    backdrop.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  }
+
+  function formatLedgerNumber(value) {
+    return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(value);
   }
 
   /* ---------- 每日总结模态框 ---------- */
@@ -3939,7 +4248,19 @@ window.Chat = Chat;
       h('h2', { id: 'dailySummaryTitle' }, '今日账簿'),
       h('button', { class: 'settings-pop__close', type: 'button', 'aria-label': '关闭每日总结', onclick: close }, h('span', { class: 'ic', html: Icon.get('close') }))
     ]));
-    dialog.appendChild(h('div', { class: 'daily-modal__body' }, String(detail && detail.summary || '').trim() || '日结完成，变量已更新。'));
+    const value = (n) => Number.isFinite(Number(n)) ? formatLedgerNumber(Number(n)) : '暂无数据';
+    const report = detail || {};
+    const rows = report.beforeFunds == null ? [] : [
+      ['原日初资金', value(report.initialFunds)],
+      ['归寝前资金', value(report.beforeFunds)],
+      ['员工薪资', '−' + value(report.salary)],
+      ['建筑维护', '−' + value(report.maintenance)],
+      ['日结后资金', value(report.afterFunds)]
+    ];
+    dialog.appendChild(h('div', { class: 'daily-modal__body' }, [
+      rows.length ? h('dl', { class: 'daily-ledger' }, rows.flatMap(([label, amount]) => [h('dt', {}, label), h('dd', {}, amount)])) : null,
+      h('div', { class: 'daily-summary-copy' }, String(report.summary || '').trim() || '日结完成，变量已更新。')
+    ]));
     dialog.appendChild(h('div', { class: 'daily-modal__foot' }, [h('span', { class: 'faint' }, detail && detail.source === 'second' ? '由第二 API 结算' : '由当前主 API 结算'), h('button', { class: 'btn btn--primary', type: 'button', onclick: close }, '合上账簿')]));
     backdrop.appendChild(dialog); document.body.appendChild(backdrop); Icon.render(dialog);
     const focusables = () => Array.from(dialog.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
@@ -4014,7 +4335,7 @@ window.Chat = Chat;
 
     // Esc 关设置
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { const p = document.getElementById('settingsPop'); if (p) p.remove(); }
+      if (e.key === 'Escape') { const p = document.getElementById('settingsBackdrop'); if (p) p.remove(); }
     });
 
     // 外部退出全屏（Esc / 系统手势）时同步按钮

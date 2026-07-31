@@ -34,6 +34,7 @@ function load(floor, opts = {}) {
   const dom = new JSDOM(HTML, {
     runScripts: 'dangerously',
     pretendToBeVisual: true,
+    url: 'http://localhost:5501/',
     beforeParse(win) {
       win.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
       // jsdom 未实现 matchMedia（浏览器原生具备），补桩
@@ -87,6 +88,16 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(!!doc.querySelector('[name="apiMode"]') && !!doc.querySelector('[name="secondApiUrl"]'), '设置中包含 API 模式和第二 API 参数');
     ok(doc.querySelector('[name="secondApiKey"]').type === 'password', 'API Key 使用密码输入框');
     ok(!!doc.getElementById('retrySecondApi'), '设置中提供手动重试第二 API 操作');
+    ok(!!doc.querySelector('[data-settings-tab="prompts"]'), '设置提供独立更新提示词页面');
+    doc.querySelector('[data-settings-tab="prompts"]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    const normalPrompt = doc.querySelector('[name="normalPrompt"]');
+    const enddayPrompt = doc.querySelector('[name="enddayPrompt"]');
+    ok(!!normalPrompt && !!enddayPrompt, '设置包含普通更新与归寝日结两个提示词输入框');
+    ok(normalPrompt.value === '' && enddayPrompt.value === '', '提示词输入框默认保持空白');
+    normalPrompt.value = '玩家普通提示'; enddayPrompt.value = '玩家日结提示';
+    doc.getElementById('promptSettingsForm').dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
+    const savedSettings = JSON.parse(win.localStorage.getItem('mrfz_settings'));
+    ok(savedSettings.prompts.normal === '玩家普通提示' && savedSettings.prompts.endday === '玩家日结提示', '提示词可从设置页面保存到网页缓存');
     doc.querySelector('.settings-pop__close').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
 
     const bubs = doc.querySelectorAll('#stream .bub:not(.bub--typing)');
@@ -108,11 +119,30 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     // 图标已渲染
     ok(doc.querySelectorAll('svg.icon-fill').length > 10, '图标已渲染');
 
-    // 面板渲染
+    // 面板渲染与脚本设施引力
+    const overviewText = doc.querySelector('.panel.is-active').textContent;
     ok(doc.querySelector('.panel.is-active').innerHTML.trim().length > 0, '左页首个面板有内容');
+    ok(/日初资金/.test(overviewText) && /今日变化/.test(overviewText), '总览显示日初资金和今日经营变化');
+    ok(/美食\s*11/.test(overviewText) || doc.querySelector('#radarOverview'), '总览使用脚本汇总的六维设施引力');
+
+    // 快捷动作叠加，不覆盖玩家已有输入
+    const ta = doc.getElementById('composerInput');
+    ta.value = '先检查门窗';
+    win.Chat.compose('浇灌所有农田');
+    win.Chat.compose('小憩片刻');
+    ok(ta.value === '先检查门窗\n浇灌所有农田\n小憩片刻', '快捷动作按换行叠加，不覆盖原输入');
+
+    // 归寝先确认，取消不会发送或修改输入
+    const beforeEndday = ta.value;
+    doc.querySelector('[data-act="endday"]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    await wait(30);
+    ok(!!doc.getElementById('enddayConfirm'), '归寝按钮先打开确认框');
+    const cancelEndday = doc.querySelector('#enddayConfirm [data-endday-cancel]');
+    ok(!!cancelEndday, '归寝确认框提供取消操作');
+    cancelEndday.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    ok(ta.value === beforeEndday && calls.slash.length === 0, '取消归寝不修改输入且不发送');
 
     // composer 发送 -> /send + /trigger
-    const ta = doc.getElementById('composerInput');
     ta.value = '推门远望';
     doc.getElementById('composerSend').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
     await wait(300);

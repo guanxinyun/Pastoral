@@ -303,8 +303,10 @@ const Chat = (function () {
   function compose(text, kind) {
     const ta = document.getElementById('composerInput');
     if (!ta) return false;
-    ta.value = text;
-    composedKind = kind || 'normal';
+    const current = String(ta.value || '').trimEnd();
+    const addition = String(text || '').trim();
+    ta.value = current && addition ? current + '\n' + addition : (addition || current);
+    composedKind = kind || composedKind || 'normal';
     ta.focus();
     autoGrow(ta);
     return true;
@@ -371,14 +373,27 @@ const Chat = (function () {
       await exec('/trigger');
       const messageId = await waitForMainReply(beforeId, token, startCycle);
       console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
-      if (window.ApiEngine) {
-        let outcome = null;
-        if (purpose === 'endday') outcome = await ApiEngine.processEndday({ baseline, messageId, purpose });
-        else if (mode === 'multi') outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose });
-        if (purpose === 'endday' && outcome && outcome.ok) {
-          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: { summary: outcome.summary, source: outcome.source } }));
+      let calculated = null;
+      if (window.MVU) {
+        if (purpose === 'endday' && typeof MVU.settleAndWrite === 'function') {
+          const settled = await MVU.settleAndWrite(messageId, 'endday-message-' + messageId);
+          calculated = Object.assign({}, settled.report, { facilityGravity: settled.calculated && settled.calculated.dimensions });
+          window.dispatchEvent(new CustomEvent('pastoral:request-stage', { detail: { stage: 'settled', calculated } }));
+        } else if (typeof MVU.syncFacilityGravity === 'function') {
+          const synced = await MVU.syncFacilityGravity(messageId);
+          calculated = { facilityGravity: synced.calculated.dimensions, totalGravity: synced.calculated.total };
         }
       }
+      if (window.ApiEngine) {
+        let outcome = null;
+        if (purpose === 'endday') outcome = await ApiEngine.processEndday({ baseline: window.MVU ? MVU.getDataSnapshot() : baseline, messageId, purpose, calculated });
+        else if (mode === 'multi') outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose, calculated });
+        if (purpose === 'endday' && outcome && outcome.ok) {
+          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: outcome.summary, source: outcome.source }, calculated || {}) }));
+        }
+      }
+      const composer = document.getElementById('composerInput');
+      if (composer && String(composer.value || '').trim() === body) { composer.value = ''; autoGrow(composer); }
       return true;
     } catch (e) {
       console.error('[Pastoral][MainAPI]', '发送失败', e);
@@ -445,14 +460,14 @@ const Chat = (function () {
       ta.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
-          const v = ta.value; ta.value = ''; autoGrow(ta);
+          const v = ta.value;
           handleUnifiedRequest(v);
         }
       });
     }
     if (btn && ta) {
       btn.addEventListener('click', () => {
-        const v = ta.value; ta.value = ''; autoGrow(ta);
+        const v = ta.value;
         send(v);
       });
     }
