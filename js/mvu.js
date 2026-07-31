@@ -124,6 +124,40 @@ const MVU = {
     return { stat_data: this.clone(window.SAMPLE_STATE) };
   },
 
+  enforceSettlementFacts(data, settledData) {
+    const next = this.clone(data) || { stat_data: {} };
+    const settled = settledData && settledData.stat_data || {};
+    const state = next.stat_data || (next.stat_data = {});
+    const settledInn = settled.旅店 || {};
+    const inn = state.旅店 && typeof state.旅店 === 'object' ? state.旅店 : (state.旅店 = {});
+    if (settledInn.资金 !== undefined) inn.资金 = this.number(settledInn.资金, 0);
+
+    const farm = state.农牧 && typeof state.农牧 === 'object' ? state.农牧 : (state.农牧 = {});
+    const settledFarm = settled.农牧 || {};
+    const copyGridFacts = (key, magic) => {
+      const target = farm[key] && typeof farm[key] === 'object' ? farm[key] : (farm[key] = {});
+      const source = settledFarm[key] && typeof settledFarm[key] === 'object' ? settledFarm[key] : {};
+      Object.entries(source).forEach(([plotKey, sourcePlot]) => {
+        const targetPlot = target[plotKey] && typeof target[plotKey] === 'object' ? target[plotKey] : (target[plotKey] = {});
+        targetPlot.剩余天数 = this.number(sourcePlot.剩余天数, 0);
+        targetPlot.今日已浇水 = false;
+        if (magic) { targetPlot.今日已魔力灌溉 = false; targetPlot.今日已养护 = false; }
+      });
+    };
+    copyGridFacts('农田网格', false);
+    copyGridFacts('魔法农田网格', true);
+
+    const forecast = state.当日预报 && typeof state.当日预报 === 'object' ? state.当日预报 : (state.当日预报 = {});
+    if (settled.当日预报 && settled.当日预报.日初资金 !== undefined) forecast.日初资金 = this.number(settled.当日预报.日初资金, inn.资金);
+    return this.applyFacilityGravity(next).data;
+  },
+
+  async enforceAndWrite(settledData, messageId) {
+    const enforced = this.enforceSettlementFacts(this.getDataSnapshot(), settledData);
+    await this.writeData(enforced, messageId);
+    return enforced;
+  },
+
   async writeData(data, messageId) {
     if (!this.ready || typeof Mvu === 'undefined' || typeof Mvu.replaceMvuData !== 'function') return false;
     await Mvu.replaceMvuData(data, { type: 'message', message_id: messageId == null ? this.latestMessageId() : messageId });

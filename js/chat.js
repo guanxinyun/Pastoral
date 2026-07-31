@@ -373,10 +373,11 @@ const Chat = (function () {
       await exec('/trigger');
       const messageId = await waitForMainReply(beforeId, token, startCycle);
       console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
-      let calculated = null;
+      let calculated = null, settledData = null;
       if (window.MVU) {
         if (purpose === 'endday' && typeof MVU.settleAndWrite === 'function') {
           const settled = await MVU.settleAndWrite(messageId, 'endday-message-' + messageId);
+          settledData = settled.data;
           calculated = Object.assign({}, settled.report, { facilityGravity: settled.calculated && settled.calculated.dimensions });
           window.dispatchEvent(new CustomEvent('pastoral:request-stage', { detail: { stage: 'settled', calculated } }));
         } else if (typeof MVU.syncFacilityGravity === 'function') {
@@ -389,6 +390,7 @@ const Chat = (function () {
         if (purpose === 'endday') outcome = await ApiEngine.processEndday({ baseline: window.MVU ? MVU.getDataSnapshot() : baseline, messageId, purpose, calculated });
         else if (mode === 'multi') outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose, calculated });
         if (purpose === 'endday' && outcome && outcome.ok) {
+          if (settledData && window.MVU && typeof MVU.enforceAndWrite === 'function') await MVU.enforceAndWrite(settledData, messageId);
           window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: outcome.summary, source: outcome.source }, calculated || {}) }));
         }
       }

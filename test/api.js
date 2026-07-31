@@ -51,6 +51,12 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(first.data.stat_data.访客生态.设施引力.美食 === 7, '脚本引力写入对应 MVU 位置');
     const second = calcWin.MVU.settleDay(first.data, 'message-20');
     ok(second.skipped && second.data.stat_data.旅店.资金 === 770 && second.data.stat_data.农牧.农田网格['0,0'].剩余天数 === 1, '同一结算标识不会重复扣费或推进植物');
+    const aiOverwritten = calcWin.MVU.clone(first.data);
+    aiOverwritten.stat_data.旅店.资金 = 9999;
+    aiOverwritten.stat_data.农牧.农田网格['0,0'].剩余天数 = 9;
+    aiOverwritten.stat_data.访客生态.设施引力.美食 = 999;
+    const enforced = calcWin.MVU.enforceSettlementFacts(aiOverwritten, first.data);
+    ok(enforced.stat_data.旅店.资金 === 770 && enforced.stat_data.农牧.农田网格['0,0'].剩余天数 === 1 && enforced.stat_data.访客生态.设施引力.美食 === 7, 'AI 回写后脚本重新锁定资金、植物日期与设施引力');
   }
 
   console.log('\n[3] 第二 API 世界书、重试与配置');
