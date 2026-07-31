@@ -185,7 +185,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       if (cmd === '/trigger await=true') {
         if (generationEvents['generation-started']) generationEvents['generation-started']('main-generation');
         latestId = 12;
-        setTimeout(() => { generationEnded = true; if (generationEvents['generation-ended']) generationEvents['generation-ended'](12); }, 20);
+        await wait(20);
+        generationEnded = true;
+        if (generationEvents['generation-ended']) generationEvents['generation-ended'](12);
       }
     };
     win.ApiEngine.processAfterMain = async () => { processed++; processedAfterEnd = generationEnded; await wait(30); return { ok: true }; };
@@ -209,7 +211,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       if (cmd === '/trigger await=true') {
         latestId += 1;
         const completedId = latestId;
-        setTimeout(() => { if (generationEvents['generation-ended']) generationEvents['generation-ended'](completedId); }, 5);
+        await wait(5);
+        if (generationEvents['generation-ended']) generationEvents['generation-ended'](completedId);
       }
     };
     composer.value = '发送后清空我';
