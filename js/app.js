@@ -146,28 +146,35 @@
     ]));
 
     const promptForm = h('form', { class: 'settings-form prompt-settings-form', id: 'promptSettingsForm' });
+    const builtinGuide = (kind) => (window.Settings && typeof Settings.builtinGuide === 'function' ? Settings.builtinGuide(kind) : '');
     const promptField = (label, name, value, help) => h('label', { class: 'set-field' }, [
       h('span', { class: 'set-field__label' }, label),
       h('span', { class: 'faint set-help' }, help),
-      h('textarea', { class: 'set-input set-textarea', name, rows: '8', placeholder: '留空则使用程序内置默认提示词' }, value)
+      h('textarea', { class: 'set-input set-textarea', name, rows: '14', spellcheck: 'false', placeholder: '留空则使用程序内置默认指导' }, value)
     ]);
-    promptForm.appendChild(promptField('普通变量更新', 'normalPrompt', cfg.prompts.normal, '普通剧情、农事和其他非归寝请求使用。'));
-    promptForm.appendChild(promptField('归寝日结', 'enddayPrompt', cfg.prompts.endday, '归寝结算使用；脚本已完成的扣费、植物成长和设施引力不会重复执行。'));
+    promptForm.appendChild(h('div', { class: 'notice notice--info set-notice' }, '这两份指导就是变量请求实际发送的规则，程序自带默认值，不再读取世界书。输出格式由程序自动合并附加。'));
+    promptForm.appendChild(promptField('日常变量更新指导', 'normalPrompt', cfg.prompts.normal || builtinGuide('normal'), '每次主模型回复后的常规更新使用。'));
+    promptForm.appendChild(promptField('归寝日结指导', 'enddayPrompt', cfg.prompts.endday || builtinGuide('endday'), '点击归寝时的跨日结算使用；脚本已完成的扣费、作物成长和设施引力不会重复执行。'));
     const promptActions = h('div', { class: 'settings-actions' }, [
       h('button', { class: 'btn btn--ghost', type: 'button', 'data-reset-prompts': '' }, '恢复内置默认'),
-      h('button', { class: 'btn btn--primary', type: 'submit' }, '保存提示词')
+      h('button', { class: 'btn btn--primary', type: 'submit' }, '保存指导')
     ]);
     promptForm.appendChild(promptActions);
     promptForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      Settings.save({ prompts: { normal: promptForm.elements.normalPrompt.value, endday: promptForm.elements.enddayPrompt.value } });
-      toast('success', '提示词已保存', '空白栏目会继续使用程序内置默认提示词。');
+      // 与内置默认完全相同时存空串，后续升级默认指导仍能自动生效。
+      const store = (value, kind) => (String(value || '').trim() === String(builtinGuide(kind) || '').trim() ? '' : value);
+      Settings.save({ prompts: {
+        normal: store(promptForm.elements.normalPrompt.value, 'normal'),
+        endday: store(promptForm.elements.enddayPrompt.value, 'endday')
+      } });
+      toast('success', '指导已保存', '下次变量请求即按这两份文本发送。');
     });
     promptForm.querySelector('[data-reset-prompts]').addEventListener('click', () => {
-      promptForm.elements.normalPrompt.value = '';
-      promptForm.elements.enddayPrompt.value = '';
+      promptForm.elements.normalPrompt.value = builtinGuide('normal');
+      promptForm.elements.enddayPrompt.value = builtinGuide('endday');
       Settings.save({ prompts: { normal: '', endday: '' } });
-      toast('info', '已恢复内置默认', '网页缓存中的自定义提示词已清空。');
+      toast('info', '已恢复内置默认', '两份指导已还原为程序自带版本。');
     });
     promptPage.appendChild(promptForm);
 
@@ -183,7 +190,7 @@
       const card = h('fieldset', { class: 'set-api preset-card', 'data-preset-card': kind });
       card.appendChild(h('legend', {}, title));
       const mode = h('select', { class: 'set-input', name: kind + 'PresetMode', 'aria-label': title + '预设模式' }, [
-        h('option', { value: 'none' }, '不带预设'),
+        h('option', { value: 'none' }, '不带预设（只发本项目指导）'),
         h('option', { value: 'current' }, '跟随酒馆当前预设'),
         h('option', { value: 'fixed' }, '固定指定预设')
       ]);
@@ -202,10 +209,10 @@
       fixed.querySelector('select').disabled = !presetNames.length && !missingPreset.length;
       card.appendChild(fixed);
       const context = h('div', { class: 'preset-context', 'data-preset-context': kind }, [
-        h('p', { class: 'faint set-help' }, '不带预设时，选择仍要发送的游戏上下文。本次变量任务提示始终发送。'),
+        h('p', { class: 'faint set-help' }, '不带预设时默认只发送本项目的更新指导与最近正文，酒馆预设完全不参与。如仍需要额外上下文，在下面勾选。'),
         h('div', { class: 'preset-context__grid' }, Object.entries(contextLabels).map(([key, label]) => {
           const input = h('input', { type: 'checkbox', name: kind + 'Context_' + key, value: '1' });
-          input.checked = setting.context[key] !== false;
+          input.checked = setting.context[key] === true;
           return h('label', { class: 'preset-check' }, [input, h('span', {}, label)]);
         }))
       ]);

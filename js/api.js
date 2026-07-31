@@ -5,23 +5,22 @@
 const ApiEngine = (function () {
   'use strict';
 
-  const RULE_ENTRY_NAME = '[mvu_update]变量更新规则';
-  const RULE_ENTRY_NAMES = [RULE_ENTRY_NAME, '变量更新指导', '变量更新规则', '目前待定'];
-  const FORMAT_ENTRY_NAMES = ['[mvu_update]变量输出格式', '变量更新输出格式', '变量输出格式'];
   const PREFIX_MAIN = '[Pastoral][MainAPI]';
   const PREFIX_SECOND = '[Pastoral][SecondAPI]';
   const MAX_SOURCE_LENGTH = 60000;
-  const INTERNAL_PRESET_NAME = '【Pastoral 内部】空白变量更新';
-  const CONTEXT_PROMPTS = {
-    worldInfoBefore: { id: 'worldInfoBefore', name: '世界书（角色定义前）' },
-    personaDescription: { id: 'personaDescription', name: '玩家人格' },
-    charDescription: { id: 'charDescription', name: '角色描述' },
-    charPersonality: { id: 'charPersonality', name: '角色性格' },
-    scenario: { id: 'scenario', name: '场景' },
-    worldInfoAfter: { id: 'worldInfoAfter', name: '世界书（角色定义后）' },
-    dialogueExamples: { id: 'dialogueExamples', name: '示例对话' },
-    chatHistory: { id: 'chatHistory', name: '聊天历史' }
-  };
+  // 旧版本会自建这个空白预设；现在不带预设走 generateRaw，仅用于从列表中过滤掉遗留项。
+  const LEGACY_PRESET_NAME = '【Pastoral 内部】空白变量更新';
+  // 不带预设时可选携带的酒馆内置占位符，顺序与酒馆默认顺序一致。
+  const CONTEXT_PLACEHOLDERS = [
+    ['worldInfoBefore', 'world_info_before'],
+    ['personaDescription', 'persona_description'],
+    ['charDescription', 'char_description'],
+    ['charPersonality', 'char_personality'],
+    ['scenario', 'scenario'],
+    ['worldInfoAfter', 'world_info_after'],
+    ['dialogueExamples', 'dialogue_examples'],
+    ['chatHistory', 'chat_history']
+  ];
   let sequence = 0;
   let lastFailure = null;
 
@@ -49,44 +48,28 @@ const ApiEngine = (function () {
       .slice(-Math.max(1, limit || 3));
   }
 
-  async function readVariableRules() {
-    if (typeof getCharWorldbookNames !== 'function' || typeof getWorldbook !== 'function') {
-      throw new Error('当前环境不支持读取角色卡世界书');
-    }
-    const bound = getCharWorldbookNames('current') || {};
-    const names = [bound.primary].concat(bound.additional || []).filter(Boolean);
-    if (!names.length) throw new Error('当前角色卡没有绑定世界书');
-    const parts = [];
-    for (const name of names) {
-      const entries = await getWorldbook(name);
-      (Array.isArray(entries) ? entries : []).forEach((entry) => {
-        const entryName = String(entry && entry.name || '').trim();
-        if (entry && entry.enabled !== false && (RULE_ENTRY_NAMES.includes(entryName) || FORMAT_ENTRY_NAMES.includes(entryName)) && String(entry.content || '').trim()) {
-          parts.push('【' + name + ' · ' + entryName + '】\n' + String(entry.content).trim());
-        }
-      });
-    }
-    if (!parts.length) throw new Error('绑定世界书中未找到变量更新规则或变量输出格式条目');
-    return parts.join('\n\n');
-  }
-
   // 等用户补充“最近三层之外”的输入时，只需扩展这里。
   function buildAdditionalContext() { return ''; }
 
-  function configuredPrompt(kind, config) {
-    if (Settings && typeof Settings.promptFor === 'function') {
-      try { return Settings.promptFor(kind, config); } catch (e) { /* 兼容旧设置桩 */ }
+  /** 本阶段实际使用的更新指导：玩家在设置里保存的文本优先，留空用内置默认。 */
+  function updateGuide(kind, config) {
+    if (window.Settings && typeof Settings.promptFor === 'function') {
+      const text = String(Settings.promptFor(kind, config) || '').trim();
+      if (text) return text;
     }
-    const prompts = config && config.prompts || {};
-    const custom = String(prompts[kind] || '').trim();
-    if (custom) return custom;
-    return kind === 'endday'
-      ? '完成归寝日结；不得重复脚本已经完成的薪资、维护费、植物成长和设施引力结算。'
-      : '根据最新剧情执行常规变量更新。';
+    const stored = String((config && config.prompts || {})[kind === 'endday' ? 'endday' : 'normal'] || '').trim();
+    if (stored) return stored;
+    if (window.Rules && typeof Rules.defaultGuide === 'function') return Rules.defaultGuide(kind);
+    return '';
+  }
+
+  function outputFormat() {
+    if (window.Rules && typeof Rules.outputFormat === 'function') return String(Rules.outputFormat() || '').trim();
+    return '';
   }
 
   function buildDailyPurpose(config) {
-    return configuredPrompt('endday', config || Settings.load());
+    return updateGuide('endday', config || Settings.load());
   }
 
   function buildPrompt(context) {
@@ -94,25 +77,25 @@ const ApiEngine = (function () {
       const role = m.role === 'user' ? '玩家' : (m.role === 'assistant' ? '主模型' : '系统');
       return role + ' #' + m.message_id + ':\n' + Extract.stripUpdateVariable(m.message || '');
     }).join('\n\n');
-    const config = Settings.load();
-    const purpose = context.purpose === 'endday'
-      ? buildDailyPurpose(config)
-      : configuredPrompt('normal', config);
+    const config = context.config || Settings.load();
+    const kind = context.purpose === 'endday' ? 'endday' : 'normal';
+    const guide = context.rules || updateGuide(kind, config);
+    const format = outputFormat();
     const extra = buildAdditionalContext(context);
     const calculated = context.calculated
       ? '【脚本已确定事实（不得重算或重复应用）】\n' + JSON.stringify(context.calculated)
       : '';
-    const stage = context.purpose === 'endday' ? '归寝日结' : '日常更新';
+    const stage = kind === 'endday' ? '归寝日结' : '日常更新';
     return [
       '你是暮归旅店的变量计算引擎，不续写剧情。',
       '【当前阶段：' + stage + '】\n只处理本阶段规则允许的变化，排除另一阶段职责。所有金额的基础单位是整数铜币：1金币=100银币=10000铜币。',
-      '【任务】\n' + purpose,
+      '【本阶段变量更新指导】\n' + guide,
+      format ? '【变量更新输出格式】\n' + format : '',
       '【最近三层正文】\n' + (history || '（无）'),
-      '【变量规则】\n' + context.rules,
       '【主生成前当前变量数据】\n' + JSON.stringify(context.baseline && context.baseline.stat_data || {}),
       calculated,
       extra ? '【附加信息】\n' + extra : '',
-      '【输出格式】\n必须输出且只输出一个完整的 <UpdateVariable><Analysis>...</Analysis><JSONPatch>[...]</JSONPatch></UpdateVariable> 标签；JSONPatch 必须是合法 JSON 数组，无变化时输出 []。不得输出 lodash 命令或 Markdown 代码围栏。归寝日结不得覆盖脚本已确定事实。'
+      '【输出要求】\n必须输出且只输出一个完整的 <UpdateVariable><Analysis>...</Analysis><JSONPatch>[...]</JSONPatch></UpdateVariable> 标签；JSONPatch 必须是合法 JSON 数组，无变化时输出 []。不得输出 lodash 命令或 Markdown 代码围栏。归寝日结不得覆盖脚本已确定事实。'
     ].filter(Boolean).join('\n\n');
   }
 
@@ -140,61 +123,56 @@ const ApiEngine = (function () {
   }
 
   function availablePresetNames() {
-    try { return typeof getPresetNames === 'function' ? getPresetNames().filter((name) => name !== INTERNAL_PRESET_NAME) : []; }
+    try { return typeof getPresetNames === 'function' ? getPresetNames().filter((name) => name !== LEGACY_PRESET_NAME) : []; }
     catch (e) { return []; }
   }
 
-  function buildBlankPreset(context) {
-    if (typeof default_preset === 'undefined') throw new Error('酒馆未提供默认预设模板');
-    const preset = clone(default_preset);
-    preset.prompts = Object.entries(CONTEXT_PROMPTS)
-      .filter(([key]) => !context || context[key] !== false)
-      .map(([, prompt]) => ({
-        id: prompt.id,
-        name: prompt.name,
-        enabled: true,
-        position: { type: 'relative' },
-        role: 'system'
-      }));
-    preset.prompts_unused = [];
-    preset.extensions = preset.extensions && typeof preset.extensions === 'object' ? preset.extensions : {};
-    delete preset.extensions.regex_scripts;
-    delete preset.extensions.tavern_helper;
-    return preset;
+  /** 不带预设时按勾选拼出 ordered_prompts；未勾选的上下文一律不发送。 */
+  function orderedPrompts(context) {
+    const selected = context && typeof context === 'object' ? context : {};
+    return CONTEXT_PLACEHOLDERS
+      .filter(([key]) => selected[key] === true)
+      .map(([, placeholder]) => placeholder)
+      .concat(['user_input']);
   }
 
-  async function resolvePreset(kind, config) {
+  /**
+   * 解析本次变量请求的预设策略。
+   * - none：完全不使用酒馆预设，走 generateRaw + ordered_prompts
+   * - current：generate + 'in_use'
+   * - fixed：generate + 指定预设名；预设已删除时本次降级为 none
+   */
+  function resolvePreset(kind, config) {
     const selected = variablePresetConfig(kind, config);
     if (selected.mode === 'current') return { mode: 'current', presetName: 'in_use' };
-    if (selected.mode === 'fixed' && availablePresetNames().includes(selected.presetName)) {
-      return { mode: 'fixed', presetName: selected.presetName };
+    if (selected.mode === 'fixed') {
+      if (availablePresetNames().includes(selected.presetName)) return { mode: 'fixed', presetName: selected.presetName };
+      if (typeof toast === 'function') {
+        toast('warn', '变量预设不存在', '“' + selected.presetName + '”已不存在，本次改用不带预设。');
+      }
     }
-    if (selected.mode === 'fixed' && typeof toast === 'function') {
-      toast('warn', '变量预设不存在', '“' + selected.presetName + '”已不存在，本次改用不带预设。');
-    }
-    if (typeof generate === 'function' && typeof createOrReplacePreset === 'function' && typeof default_preset !== 'undefined') {
-      await createOrReplacePreset(INTERNAL_PRESET_NAME, buildBlankPreset(selected.context), { render: 'debounced' });
-      return { mode: 'none', presetName: INTERNAL_PRESET_NAME };
-    }
-    return { mode: 'raw', presetName: '' };
+    return { mode: 'none', presetName: '', context: selected.context || {} };
   }
 
   async function generateVariable(config, kind, settings) {
-    const preset = await resolvePreset(kind, settings);
-    if (preset.mode !== 'raw') {
-      if (typeof generate !== 'function') throw new Error('当前环境不支持按酒馆预设生成');
-      return generate(Object.assign({}, config, { preset_name: preset.presetName }));
+    const preset = resolvePreset(kind, settings);
+    if (preset.mode === 'none') {
+      // generateRaw 才能完全绕开酒馆预设；只发我们指定的占位符和本次任务提示。
+      if (typeof generateRaw !== 'function') throw new Error('当前环境缺少 generateRaw，无法发送不带预设的变量请求');
+      return generateRaw(Object.assign({}, config, {
+        max_chat_history: config.max_chat_history == null ? 0 : config.max_chat_history,
+        ordered_prompts: orderedPrompts(preset.context)
+      }));
     }
-    if (typeof generateRaw !== 'function') throw new Error('当前环境缺少变量生成接口');
-    return generateRaw(Object.assign({}, config, { max_chat_history: 0, ordered_prompts: ['user_input'] }));
+    if (typeof generate !== 'function') throw new Error('当前环境不支持按酒馆预设生成');
+    return generate(Object.assign({}, config, { preset_name: preset.presetName }));
   }
 
   async function callSecondApiForVariable(context) {
     const cfg = Settings.load();
     if (cfg.apiMode !== 'multi') throw new Error('当前未启用多 API 模式');
     if (!Settings.isSecondApiComplete(cfg)) throw new Error('第二 API 配置不完整');
-    const rules = await readVariableRules();
-    const prompt = buildPrompt(Object.assign({}, context, { rules }));
+    const prompt = buildPrompt(Object.assign({}, context, { config: cfg }));
     const api = cfg.secondApi;
     let failure;
     for (let attempt = 0; attempt <= api.maxRetries; attempt++) {
@@ -268,8 +246,7 @@ const ApiEngine = (function () {
 
   async function callMainApiForDaily(context) {
     if (typeof generate !== 'function' && typeof generateRaw !== 'function') throw new Error('当前环境不支持主 API 静默日结');
-    const rules = await readVariableRules();
-    const prompt = buildPrompt(Object.assign({}, context, { purpose: 'endday', rules }));
+    const prompt = buildPrompt(Object.assign({}, context, { purpose: 'endday' }));
     const id = 'pastoral-daily-main-' + (++sequence);
     const started = now();
     log(PREFIX_MAIN, '日结开始', { messageId: context.messageId });
@@ -306,6 +283,7 @@ const ApiEngine = (function () {
     const message = messageById(messageId);
     if (!message) return { ok: false, skipped: true, reason: '找不到归寝剧情楼层' };
     const cfg = Settings.load();
+    // 多 API 模式下归寝也必须由第二 API 完成；失败就报告失败，不静默改用主 API。
     if (cfg.apiMode === 'multi') {
       try {
         const generated = await ApiEngine.callSecondApiForVariable(Object.assign({}, context, { messageId, purpose: 'endday' }));
@@ -313,8 +291,12 @@ const ApiEngine = (function () {
         if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
         return { ok: true, source: 'second', summary: generated.summary, messageId };
       } catch (secondError) {
-        error(PREFIX_SECOND, '归寝日结降级到主 API', secondError);
-        if (typeof toast === 'function') toast('warn', '副 API 日结失败', '正在改用当前主 API 完成日结。');
+        error(PREFIX_SECOND, '归寝日结失败', secondError);
+        if (typeof toast === 'function') {
+          toast('error', '第二 API 日结失败', (secondError && secondError.message || String(secondError)) + '；已保留确定性结算，可在设置中重试。');
+        }
+        lastFailure = Object.assign({}, context, { messageId, purpose: 'endday' });
+        return { ok: false, source: 'second', error: secondError, messageId };
       }
     }
     try {
@@ -361,15 +343,16 @@ const ApiEngine = (function () {
 
   async function retryLastFailure() {
     if (!lastFailure) throw new Error('没有可重试的第二 API 请求');
-    return processAfterMain(lastFailure);
+    return lastFailure.purpose === 'endday' ? processEndday(lastFailure) : processAfterMain(lastFailure);
   }
 
   return {
-    RULE_ENTRY_NAME,
-    INTERNAL_PRESET_NAME,
+    LEGACY_PRESET_NAME,
     availablePresetNames,
-    buildBlankPreset,
+    orderedPrompts,
     resolvePreset,
+    updateGuide,
+    outputFormat,
     buildAdditionalContext,
     buildDailyPurpose,
     buildPrompt,

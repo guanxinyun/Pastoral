@@ -427,7 +427,7 @@ const Chat = (function () {
       if (window.ApiEngine) {
         let outcome = null;
         if (purpose === 'endday') {
-          setRequestStatus('归寝日结', '正在执行跨日变量更新…', true);
+          setRequestStatus('归寝日结', mode === 'multi' ? '正在由第二 API 执行跨日变量更新…' : '正在由当前主 API 执行跨日变量更新…', true);
           outcome = await ApiEngine.processEndday({ baseline: window.MVU ? MVU.getDataSnapshot() : baseline, messageId, purpose, calculated });
         } else if (mode === 'multi') {
           setRequestStatus('第二 API', '正在计算本轮变量更新…', true);

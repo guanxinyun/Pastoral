@@ -29,5 +29,34 @@ ok(/1金币\s*=\s*100银币\s*=\s*10000铜币/.test(format), '输出格式明确
 ok(/错误示例|反例/.test(format) && /非法 JSON/.test(format), '包含常见错误反例');
 ok(/_.*只读/.test(format), '保留只读字段限制');
 
+console.log('\n[Builtin guides in HTML]');
+{
+  const { JSDOM } = require('jsdom');
+  require(path.join(__dirname, '..', 'tools', 'gen-rules.js')).build();
+  const dom = new JSDOM('<!doctype html>', { runScripts: 'dangerously', url: 'http://localhost/' });
+  dom.window.eval(fs.readFileSync(path.join(__dirname, '..', 'js', 'rules.js'), 'utf8'));
+  const R = dom.window.Rules;
+  const normal = R.defaultGuide('normal');
+  const endday = R.defaultGuide('endday');
+  const norm = (text) => text.replace(/\r\n/g, '\n').trim();
+
+  ok(!!normal && !!endday && normal !== endday, '内置日常与归寝指导各自独立存在');
+  ok(normal.includes('## 一、日常更新（每次对话自动调用）') && !normal.includes('## 二、归寝日结'), '日常指导只含日常规则');
+  ok(endday.includes('## 二、归寝日结（点击归寝额外触发）') && !endday.includes('## 一、日常更新'), '归寝指导只含归寝规则');
+  ok(normal.includes('## 全局原则') && endday.includes('## 全局原则'), '两份指导都保留全局原则');
+  ok(normal.includes('# 系统参考') && endday.includes('# 系统参考'), '两份指导都保留系统参考');
+  ok(/1金币\s*=\s*100银币\s*=\s*10000铜币/.test(normal) && /1金币\s*=\s*100银币\s*=\s*10000铜币/.test(endday), '两份指导都明确铜币换算');
+  ok(norm(R.outputFormat()) === norm(format), '内置输出格式与源文件逐字一致');
+
+  // 拼接后必须能完整还原源指导，防止生成脚本漏段
+  const guideNorm = norm(guide);
+  const sections = [normal, endday].join('\n');
+  ['## 全局原则', '### 日常阶段禁止事项', '### 脚本已确定事实：AI不得重复或覆盖', '### 归寝阶段禁止事项', '## 心之宝石与成长', '## 任务种子系统']
+    .forEach((mark) => ok(sections.includes(mark), `生成的指导保留段落：${mark}`));
+  const bodyLines = guideNorm.split('\n').filter((line) => line.trim());
+  const missing = bodyLines.filter((line) => !normal.includes(line) && !endday.includes(line));
+  ok(missing.length === 0, '源指导每一行都出现在两份内置指导之一中' + (missing.length ? `（缺 ${missing.length} 行，例：${missing[0].slice(0, 30)}）` : ''));
+}
+
 console.log(failed ? `\n✗ ${failed} 项失败` : '\n✓ 全部通过');
 process.exit(failed ? 1 : 0);

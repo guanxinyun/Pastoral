@@ -9,13 +9,16 @@ const path = require('path');
 const root = __dirname;
 const CSS = ['tokens', 'base', 'layout', 'components', 'animations'];
 // host 必须最先：唯一宿主判定 + 跨域样式接管
-const JS = ['host', 'icons', 'data', 'extract', 'settings', 'assets', 'money', 'mvu', 'api', 'chat', 'render', 'app'];
+// rules 必须在 settings 之前：settings 的默认更新指导取自 rules
+const JS = ['host', 'icons', 'data', 'extract', 'rules', 'settings', 'assets', 'money', 'mvu', 'api', 'chat', 'render', 'app'];
 
 function read(p) {
   return fs.readFileSync(path.join(root, p), 'utf8');
 }
 
 function build() {
+  // 内置变量更新指导始终与源 txt 保持同步
+  require('./tools/gen-rules').build();
   const style = CSS.map((n) => `/* === ${n}.css === */\n` + read(`css/${n}.css`)).join('\n\n');
   const script = JS.map((n) => `/* === ${n}.js === */\n` + read(`js/${n}.js`)).join('\n\n');
   let tpl = read('src/template.html');

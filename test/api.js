@@ -90,12 +90,16 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(enforced.stat_data.访客生态.设施引力.美食 === 7 && enforced.stat_data.访客生态.总引力值 === 51, 'AI 回写后脚本重算并锁定设施引力与总引力');
   }
 
-  console.log('\n[3] 第二 API 世界书、重试与配置');
+  console.log('\n[3] 第二 API 内置指导、重试与配置');
   const apiPath = path.join(__dirname, '..', 'js', 'api.js');
   ok(fs.existsSync(apiPath), 'api.js 模块存在');
   if (fs.existsSync(apiPath)) {
     let attempts = 0;
-    const configs = [], createdPresets = [];
+    const configs = [], createdPresets = [], rawConfigs = [];
+    const noContext = {
+      worldInfoBefore: false, personaDescription: false, charDescription: false, charPersonality: false,
+      scenario: false, worldInfoAfter: false, dialogueExamples: false, chatHistory: false
+    };
     const allContext = {
       worldInfoBefore: true, personaDescription: true, charDescription: true, charPersonality: true,
       scenario: true, worldInfoAfter: true, dialogueExamples: true, chatHistory: true
@@ -103,10 +107,15 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     let settingsState = {
       apiMode: 'multi', prompts: { normal: '玩家普通变量要求', endday: '玩家归寝要求' },
       variablePresets: {
-        normal: { mode: 'none', presetName: '', context: Object.assign({}, allContext, { chatHistory: false }) },
-        endday: { mode: 'current', presetName: '', context: allContext }
+        normal: { mode: 'none', presetName: '', context: Object.assign({}, noContext) },
+        endday: { mode: 'current', presetName: '', context: Object.assign({}, noContext) }
       },
       secondApi: { url: 'https://logic.example/v1', key: 'secret', model: 'logic-model', timeout: 1000, maxRetries: 2 }
+    };
+    win.Rules = {
+      DEFAULT_GUIDE: { normal: '内置日常指导', endday: '内置归寝指导' },
+      defaultGuide: (kind) => (kind === 'endday' ? '内置归寝指导' : '内置日常指导'),
+      outputFormat: () => '内置输出格式：JSONPatch'
     };
     win.Settings = {
       load: () => settingsState,
@@ -124,16 +133,18 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       prompts_unused: [{ id: 'custom', name: '未用提示', enabled: false, role: 'system', content: '也不应保留' }],
       extensions: { regex_scripts: [{ name: '脚本' }], tavern_helper: { scripts: { x: {} } }, preserved: true }
     };
-    win.getPresetNames = () => ['剧情预设', '变量专用'];
+    win.getPresetNames = () => ['剧情预设', '变量专用', '【Pastoral 内部】空白变量更新'];
     win.createOrReplacePreset = async (name, preset, options) => { createdPresets.push({ name, preset, options }); return true; };
-    win.getCharWorldbookNames = () => ({ primary: '主书', additional: ['附书'] });
-    win.getWorldbook = async (name) => name === '主书'
-      ? [{ name: '[mvu_update]变量更新规则', enabled: true, content: '变量规则 A' }, { name: '[mvu_update]变量输出格式', enabled: true, content: '输出格式 A' }]
-      : [{ name: '变量更新指导', enabled: true, content: '变量规则 B' }];
+    const okReply = '计算完成<UpdateVariable><Analysis>资金变化</Analysis><JSONPatch>[{"op":"replace","path":"/旅店/资金","value":99}]</JSONPatch></UpdateVariable>';
     win.generate = async (config) => {
       attempts++; configs.push(config);
       if (attempts < 3) throw new Error('temporary');
-      return '计算完成<UpdateVariable><Analysis>资金变化</Analysis><JSONPatch>[{"op":"replace","path":"/旅店/资金","value":99}]</JSONPatch></UpdateVariable>';
+      return okReply;
+    };
+    win.generateRaw = async (config) => {
+      attempts++; rawConfigs.push(config);
+      if (attempts < 3) throw new Error('temporary');
+      return okReply;
     };
     win.stopGenerationById = () => true;
     win.getChatMessages = () => [
@@ -150,32 +161,41 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
     const result = await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
     ok(attempts === 3, '失败后按 maxRetries=2 共尝试 3 次');
-    ok(/变量规则 A/.test(configs[0].user_input) && /变量规则 B/.test(configs[0].user_input) && /输出格式 A/.test(configs[0].user_input), '读取绑定世界书中的更新规则与输出格式条目');
-    ok(/玩家普通变量要求/.test(configs[0].user_input), '普通请求使用玩家保存的自定义提示词');
-    const promptWithFacts = win.ApiEngine.buildPrompt({ purpose: 'endday', rules: '规则', baseline: { stat_data: {} }, calculated: { facilityGravity: { 美食: 7 }, salary: 200, maintenance: 30 } });
+    ok(configs.length === 0 && rawConfigs.length === 3, 'none 模式全程只用 generateRaw，不经过任何酒馆预设');
+    ok(typeof win.getWorldbook === 'undefined' && typeof win.getCharWorldbookNames === 'undefined', '变量请求不再依赖世界书接口');
+    ok(/玩家普通变量要求/.test(rawConfigs[0].user_input), '普通请求使用玩家保存的自定义指导');
+    ok(/内置输出格式：JSONPatch/.test(rawConfigs[0].user_input), '提示词自动合并内置变量更新输出格式');
+    ok(JSON.stringify(rawConfigs[0].ordered_prompts) === JSON.stringify(['user_input']), '未勾选上下文时只发送本项目提示');
+    ok(rawConfigs[0].max_chat_history === 0, 'none 模式不额外携带聊天历史');
+    const promptWithFacts = win.ApiEngine.buildPrompt({ purpose: 'endday', baseline: { stat_data: {} }, calculated: { facilityGravity: { 美食: 7 }, salary: 200, maintenance: 30 } });
     ok(/玩家归寝要求/.test(promptWithFacts) && /美食/.test(promptWithFacts) && /200/.test(promptWithFacts) && /30/.test(promptWithFacts), '归寝提示包含自定义要求与脚本确定事实');
     ok(/当前阶段：归寝日结/.test(promptWithFacts) && /基础单位是整数铜币/.test(promptWithFacts) && /<JSONPatch>/.test(promptWithFacts) && /不得覆盖脚本已确定事实/.test(promptWithFacts), '提示明确阶段、铜币、JSON Patch 与防重复约束');
-    ok(configs[0].preset_name === win.ApiEngine.INTERNAL_PRESET_NAME && configs[0].max_chat_history === 0, 'none 模式单次请求使用内部空白预设');
-    ok(createdPresets.length >= 1 && createdPresets[0].name === win.ApiEngine.INTERNAL_PRESET_NAME, '首次 none 请求自动创建内部空白预设');
-    ok(createdPresets[0].options && createdPresets[0].options.render === 'debounced', '创建内部预设时使用酒馆支持的防抖渲染选项');
-    const blankPrompts = createdPresets[0].preset.prompts;
-    ok(!blankPrompts.some((p) => p.content) && blankPrompts.some((p) => p.id === 'worldInfoBefore') && blankPrompts.some((p) => p.id === 'charDescription') && !blankPrompts.some((p) => p.id === 'chatHistory'), '空白预设清除人工提示词且只保留已勾选上下文占位符');
-    ok(createdPresets[0].preset.prompts_unused.length === 0 && !createdPresets[0].preset.extensions.regex_scripts && !createdPresets[0].preset.extensions.tavern_helper && createdPresets[0].preset.extensions.preserved === true, '空白预设清除正则与助手脚本并保留无关扩展');
-    ok(configs[0].custom_api.apiurl === 'https://logic.example/v1' && configs[0].custom_api.source === 'openai', '传入 custom_api URL/model/source');
-    ok(!/secret/.test(configs[0].user_input), 'API Key 不进入提示词');
+    ok(!/内置日常指导/.test(promptWithFacts), '归寝提示不混入日常阶段指导');
+    const builtinPrompt = win.ApiEngine.buildPrompt({ purpose: 'normal', baseline: { stat_data: {} }, config: { prompts: {} } });
+    ok(/内置日常指导/.test(builtinPrompt) && /内置输出格式/.test(builtinPrompt), '未自定义时回退内置日常指导并附输出格式');
+    ok(rawConfigs[0].custom_api.apiurl === 'https://logic.example/v1' && rawConfigs[0].custom_api.source === 'openai', '传入 custom_api URL/model/source');
+    ok(!/secret/.test(rawConfigs[0].user_input), 'API Key 不进入提示词');
     ok(result.updateTag.includes('/旅店/资金') && result.updateTag.includes('<JSONPatch>'), '返回第二 API 的 JSON Patch UpdateVariable');
+    ok(createdPresets.length === 0, '不再向玩家预设列表写入内部空白预设');
+    ok(!win.ApiEngine.availablePresetNames().includes('【Pastoral 内部】空白变量更新'), '遗留内部预设不出现在可选列表中');
+
+    settingsState.variablePresets.normal = { mode: 'none', presetName: '', context: Object.assign({}, noContext, { chatHistory: true, charDescription: true }) };
+    rawConfigs.length = 0; attempts = 2;
+    await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
+    ok(JSON.stringify(rawConfigs[0].ordered_prompts) === JSON.stringify(['char_description', 'chat_history', 'user_input']), '勾选的上下文按酒馆默认顺序追加');
+
     settingsState.variablePresets.endday = { mode: 'current', presetName: '', context: allContext };
-    configs.length = 0; attempts = 2;
+    configs.length = 0; rawConfigs.length = 0; attempts = 2;
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'endday' });
-    ok(configs[0].preset_name === 'in_use', '归寝 current 模式跟随酒馆当前预设');
+    ok(configs[0].preset_name === 'in_use' && rawConfigs.length === 0, '归寝 current 模式跟随酒馆当前预设');
     settingsState.variablePresets.normal = { mode: 'fixed', presetName: '变量专用', context: allContext };
-    configs.length = 0;
+    configs.length = 0; attempts = 2;
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
     ok(configs[0].preset_name === '变量专用', '普通 fixed 模式使用玩家指定预设');
-    settingsState.variablePresets.normal.presetName = '已删除预设';
-    configs.length = 0;
+    settingsState.variablePresets.normal = { mode: 'fixed', presetName: '已删除预设', context: Object.assign({}, noContext) };
+    configs.length = 0; rawConfigs.length = 0; attempts = 2;
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
-    ok(configs[0].preset_name === win.ApiEngine.INTERNAL_PRESET_NAME, '固定预设不存在时本次安全回退内部空白预设');
+    ok(configs.length === 0 && JSON.stringify(rawConfigs[0].ordered_prompts) === JSON.stringify(['user_input']), '固定预设不存在时本次降级为真正的不带预设');
 
     const statusEvents = [];
     win.addEventListener('pastoral:api-status', (e) => statusEvents.push(e.detail));
@@ -186,15 +206,15 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(tested.ok && tested.target === 'probe.example', '第二 API 连接测试返回目标主机与成功结果');
     ok(testConfig && testConfig.preset_name === 'in_use', '连接测试复用普通变量请求的预设策略');
 
-    let rawFallbackConfig = null;
-    settingsState.variablePresets.normal = { mode: 'none', presetName: '', context: allContext };
-    win.generate = undefined;
+    let noPresetConfig = null;
+    settingsState.variablePresets.normal = { mode: 'none', presetName: '', context: Object.assign({}, noContext) };
+    win.generate = async () => { throw new Error('none 模式不得调用 generate'); };
     win.generateRaw = async (config) => {
-      rawFallbackConfig = config;
-      return '<UpdateVariable><Analysis>兼容路径</Analysis><JSONPatch>[]</JSONPatch></UpdateVariable>';
+      noPresetConfig = config;
+      return '<UpdateVariable><Analysis>不带预设</Analysis><JSONPatch>[]</JSONPatch></UpdateVariable>';
     };
-    const rawFallback = await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
-    ok(rawFallback.updateTag && rawFallbackConfig && rawFallbackConfig.ordered_prompts[0] === 'user_input', '旧环境 none 模式缺少 generate 时回退 generateRaw 最小路径');
+    const noPreset = await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
+    ok(noPreset.updateTag && noPresetConfig && JSON.stringify(noPresetConfig.ordered_prompts) === JSON.stringify(['user_input']), 'none 模式即使 generate 可用也只走 generateRaw 最小路径');
 
     ok(statusEvents.some((x) => x.stage === '测试第二 API' && x.loading) && statusEvents.some((x) => x.stage === '第二 API 测试成功' && !x.loading), '连接测试提供请求中与成功状态');
     ok(!statusEvents.some((x) => /probe-secret/.test(JSON.stringify(x))), '连接测试状态不泄露 API Key');
@@ -343,10 +363,11 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   console.log('\n[5] 归寝日结按模式只运行规定次数');
   if (win.ApiEngine) {
     let rawCalls = 0, secondCalls = 0;
-    win.Settings.load = () => ({ apiMode: 'single', variablePresets: { normal: { mode: 'none', context: {} }, endday: { mode: 'none', context: {} } }, secondApi: { url: '', key: '', model: '', timeout: 1000, maxRetries: 0 } });
-    win.generate = async (config) => { rawCalls++; return '今日账簿已结清<UpdateVariable><Analysis>日期推进</Analysis><JSONPatch>[{"op":"delta","path":"/世界/时间/天数","value":1}]</JSONPatch></UpdateVariable>'; };
-    win.getWorldbook = async () => [{ name: '目前待定', enabled: true, content: '规则' }];
-    win.getCharWorldbookNames = () => ({ primary: '主书', additional: [] });
+    const singleConfig = { apiMode: 'single', prompts: { normal: '', endday: '' }, variablePresets: { normal: { mode: 'none', context: {} }, endday: { mode: 'none', context: {} } }, secondApi: { url: '', key: '', model: '', timeout: 1000, maxRetries: 0 } };
+    win.Settings.load = () => singleConfig;
+    const enddayReply = '今日账簿已结清<UpdateVariable><Analysis>日期推进</Analysis><JSONPatch>[{"op":"delta","path":"/世界/时间/天数","value":1}]</JSONPatch></UpdateVariable>';
+    win.generate = async () => { rawCalls++; return enddayReply; };
+    win.generateRaw = async () => { rawCalls++; return enddayReply; };
     win.getChatMessages = () => [{ message_id: 20, role: 'assistant', message: '归寝剧情' }];
     win.getLastMessageId = () => 20;
     win.MVU.latestMessageId = () => 20;
@@ -358,19 +379,24 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(rawCalls === 1 && single.ok && single.source === 'main', '单 API 归寝额外调用当前主 API 一次');
     ok(single.summary === '今日账簿已结清', '日结返回变量标签外的总结文本');
 
-    win.Settings.load = () => ({ apiMode: 'multi', secondApi: { url: 'x', key: 'k', model: 'm', timeout: 1000, maxRetries: 0 } });
+    let singleBaseline = null;
+    win.MVU.getDataSnapshot = () => ({ stat_data: { afterMainStory: true } });
+    win.Mvu.parseMessage = async (message, baseline) => { singleBaseline = baseline; return { stat_data: { afterDaily: true } }; };
+    await win.ApiEngine.processEndday({ baseline: { stat_data: { beforeMainStory: true } }, messageId: 20 });
+    ok(singleBaseline && singleBaseline.stat_data.afterMainStory === true, '单 API 日结从主剧情后的最新快照继续，不覆盖剧情变量');
+
+    rawCalls = 0;
+    win.Settings.load = () => ({ apiMode: 'multi', prompts: { normal: '', endday: '' }, variablePresets: { normal: { mode: 'none', context: {} }, endday: { mode: 'none', context: {} } }, secondApi: { url: 'x', key: 'k', model: 'm', timeout: 1000, maxRetries: 0 } });
     win.ApiEngine.callSecondApiForVariable = async (context) => { secondCalls++; return { raw: '双轨日结' + secondTag, updateTag: secondTag, summary: '双轨日结', source: 'second', purpose: context.purpose }; };
     const multi = await win.ApiEngine.processEndday({ baseline: win.MVU.getDataSnapshot(), messageId: 20 });
     ok(secondCalls === 1 && multi.ok && multi.source === 'second', '多 API 归寝复用唯一一次副 API 调用');
-    ok(rawCalls === 1, '多 API 成功时不再额外调用主 API 日结');
+    ok(rawCalls === 0, '多 API 成功时不再额外调用主 API 日结');
 
-    let fallbackBaseline = null;
     win.ApiEngine.callSecondApiForVariable = async () => { throw new Error('second unavailable'); };
-    win.MVU.getDataSnapshot = () => ({ stat_data: { afterMainStory: true } });
-    win.Mvu.parseMessage = async (message, baseline) => { fallbackBaseline = baseline; return { stat_data: { afterDaily: true } }; };
-    const fallback = await win.ApiEngine.processEndday({ baseline: { stat_data: { beforeMainStory: true } }, messageId: 20 });
-    ok(fallback.ok && fallback.source === 'main' && rawCalls === 2, '副 API 失败时改用当前主 API 日结');
-    ok(fallbackBaseline && fallbackBaseline.stat_data.afterMainStory === true, '主 API 日结降级从主剧情后的最新快照继续，不覆盖剧情变量');
+    const secondFailure = await win.ApiEngine.processEndday({ baseline: { stat_data: { beforeMainStory: true } }, messageId: 20 });
+    ok(!secondFailure.ok && secondFailure.source === 'second' && /second unavailable/.test(String(secondFailure.error && secondFailure.error.message)), '多 API 归寝失败时明确报告第二 API 失败');
+    ok(rawCalls === 0, '多 API 归寝失败时不静默改用主 API');
+    ok(win.ApiEngine.lastFailure && win.ApiEngine.lastFailure.purpose === 'endday', '失败的归寝请求登记为可重试');
   }
 
   await wait(0);

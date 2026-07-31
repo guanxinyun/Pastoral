@@ -6,19 +6,22 @@ const Settings = (function () {
   'use strict';
 
   const KEY = 'mrfz_settings';
-  const DEFAULT_PROMPTS = {
-    normal: '根据最新剧情执行常规变量更新。只更新剧情明确影响的变量，不续写剧情，不重复脚本已经确定的设施引力计算。',
-    endday: '完成归寝日结：脚本已结算员工薪资、建筑维护费、作物剩余天数和设施引力；请勿重复这些结算。依据变量规则更新日期、天气、潜在访客池、注意事项及其余未由脚本确定的每日状态。'
+  // 内置指导来自 js/rules.js（由 tools/gen-rules.js 生成），不再读取世界书。
+  const BUILTIN_GUIDE = {
+    normal: (window.Rules && Rules.DEFAULT_GUIDE && Rules.DEFAULT_GUIDE.normal) || '根据最新剧情执行常规变量更新。',
+    endday: (window.Rules && Rules.DEFAULT_GUIDE && Rules.DEFAULT_GUIDE.endday) || '完成归寝日结，不重复脚本已确定的结算。'
   };
+  const DEFAULT_PROMPTS = BUILTIN_GUIDE;
+  // 不带预设时默认什么都不额外发送：只发本项目的指导与本轮正文。
   const VARIABLE_CONTEXT_DEFAULTS = {
-    worldInfoBefore: true,
-    personaDescription: true,
-    charDescription: true,
-    charPersonality: true,
-    scenario: true,
-    worldInfoAfter: true,
-    dialogueExamples: true,
-    chatHistory: true
+    worldInfoBefore: false,
+    personaDescription: false,
+    charDescription: false,
+    charPersonality: false,
+    scenario: false,
+    worldInfoAfter: false,
+    dialogueExamples: false,
+    chatHistory: false
   };
   const variablePresetDefaults = () => ({
     mode: 'none',
@@ -100,10 +103,18 @@ const Settings = (function () {
     return next;
   }
 
+  /** 本次变量请求真正使用的更新指导：玩家保存的文本优先，留空则用内置默认。 */
   function promptFor(kind, config) {
     const key = kind === 'endday' ? 'endday' : 'normal';
     const custom = String(object(config && config.prompts)[key] || '').trim();
-    return custom || DEFAULT_PROMPTS[key];
+    return custom || builtinGuide(key);
+  }
+
+  /** 内置指导原文，供设置页预填与“恢复内置默认”使用。 */
+  function builtinGuide(kind) {
+    const key = kind === 'endday' ? 'endday' : 'normal';
+    if (window.Rules && typeof Rules.defaultGuide === 'function') return Rules.defaultGuide(key);
+    return BUILTIN_GUIDE[key];
   }
 
   function isSecondApiComplete(config) {
@@ -111,6 +122,6 @@ const Settings = (function () {
     return !!(String(api.url || '').trim() && String(api.key || '').trim() && String(api.model || '').trim());
   }
 
-  return { KEY, DEFAULTS, DEFAULT_PROMPTS, VARIABLE_CONTEXT_DEFAULTS, load, save, normalize, promptFor, isSecondApiComplete };
+  return { KEY, DEFAULTS, DEFAULT_PROMPTS, VARIABLE_CONTEXT_DEFAULTS, load, save, normalize, promptFor, builtinGuide, isSecondApiComplete };
 })();
 window.Settings = Settings;

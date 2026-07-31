@@ -22,11 +22,11 @@ if (fs.existsSync(sourcePath)) {
   ok(cfg.prompts.normal === '' && cfg.prompts.endday === '', '普通更新与归寝提示词默认保持空字符串');
   ok(win.Settings.promptFor('normal', cfg) && win.Settings.promptFor('endday', cfg), '空提示词运行时回退程序内置默认值');
   ok(cfg.variablePresets.normal.mode === 'none' && cfg.variablePresets.endday.mode === 'none', '普通与归寝变量请求默认均不带预设');
-  ok(Object.values(cfg.variablePresets.normal.context).every((value) => value === true), '无预设模式默认保留全部游戏上下文占位符');
+  ok(Object.values(cfg.variablePresets.normal.context).every((value) => value === false), '无预设模式默认不携带任何酒馆上下文');
 
   win.Settings.save({ apiMode: 'multi', prompts: { normal: '玩家普通提示', endday: '玩家日结提示' }, secondApi: { url: 'https://api.example/v1', key: 'secret', model: 'logic' }, variablePresets: {
-    normal: { mode: 'fixed', presetName: '变量专用', context: { chatHistory: false } },
-    endday: { mode: 'current', presetName: '', context: { worldInfoBefore: false } }
+    normal: { mode: 'fixed', presetName: '变量专用', context: { chatHistory: true } },
+    endday: { mode: 'current', presetName: '', context: { worldInfoBefore: true } }
   } });
   const saved = JSON.parse(win.localStorage.getItem('mrfz_settings'));
   ok(saved.legacy === 7 && saved.apiMode === 'multi', '保存时不覆盖未知旧字段');
@@ -35,8 +35,8 @@ if (fs.existsSync(sourcePath)) {
   ok(win.Settings.promptFor('normal', saved) === '玩家普通提示' && win.Settings.promptFor('endday', saved) === '玩家日结提示', '非空提示词覆盖内置默认值');
   ok(saved.variablePresets.normal.mode === 'fixed' && saved.variablePresets.normal.presetName === '变量专用', '普通变量请求固定预设独立保存');
   ok(saved.variablePresets.endday.mode === 'current' && saved.variablePresets.endday.presetName === '', '归寝变量请求跟随当前预设独立保存');
-  ok(saved.variablePresets.normal.context.chatHistory === false && saved.variablePresets.normal.context.worldInfoBefore === true, '普通上下文开关部分保存并补全默认值');
-  ok(saved.variablePresets.endday.context.worldInfoBefore === false && saved.variablePresets.endday.context.chatHistory === true, '归寝上下文开关与普通阶段互不影响');
+  ok(saved.variablePresets.normal.context.chatHistory === true && saved.variablePresets.normal.context.worldInfoBefore === false, '普通上下文开关部分保存并补全默认值');
+  ok(saved.variablePresets.endday.context.worldInfoBefore === true && saved.variablePresets.endday.context.chatHistory === false, '归寝上下文开关与普通阶段互不影响');
   const reset = win.Settings.save({ prompts: { normal: '', endday: '' } });
   ok(reset.prompts.normal === '' && reset.prompts.endday === '', '恢复默认只保存空字符串');
   ok(win.Settings.isSecondApiComplete(saved), '完整第二 API 配置通过校验');
@@ -50,6 +50,19 @@ if (fs.existsSync(sourcePath)) {
   ok(malformed.variablePresets.normal.mode === 'none' && malformed.variablePresets.normal.presetName === '123', '非法预设模式回退 none 并规范化预设名');
   ok(malformed.variablePresets.normal.context.chatHistory === false && malformed.variablePresets.normal.context.scenario === true, '上下文开关规范化为布尔值');
   ok(malformed.variablePresets.endday.mode === 'none', '损坏的归寝预设设置回退默认结构');
+
+  const rulesDom = new JSDOM('<!doctype html>', { runScripts: 'dangerously', url: 'http://localhost/' });
+  rulesDom.window.eval(fs.readFileSync(path.join(__dirname, '..', 'js', 'rules.js'), 'utf8'));
+  rulesDom.window.eval(fs.readFileSync(sourcePath, 'utf8'));
+  const withRules = rulesDom.window.Settings;
+  const emptyCfg = withRules.load();
+  ok(withRules.builtinGuide('normal').includes('日常更新') && withRules.builtinGuide('endday').includes('归寝日结'), '内置指导按阶段提供日常与归寝两份');
+  ok(withRules.builtinGuide('normal') !== withRules.builtinGuide('endday'), '两份内置指导内容互不相同');
+  ok(withRules.promptFor('normal', emptyCfg) === withRules.builtinGuide('normal'), '未保存自定义时日常请求使用内置指导');
+  ok(withRules.promptFor('endday', emptyCfg) === withRules.builtinGuide('endday'), '未保存自定义时归寝请求使用内置指导');
+  const customCfg = withRules.save({ prompts: { normal: '我的日常规则' } });
+  ok(withRules.promptFor('normal', customCfg) === '我的日常规则', '保存后的自定义指导被真正读取');
+  ok(withRules.promptFor('endday', customCfg) === withRules.builtinGuide('endday'), '只改日常不影响归寝内置指导');
 }
 
 
