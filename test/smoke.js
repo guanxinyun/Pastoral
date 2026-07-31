@@ -82,12 +82,14 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(doc.body.innerHTML.length > 0, 'body 未被销毁');
     ok(!!doc.getElementById('pageLeft') && !!doc.getElementById('pageRight'), '双页均在');
     ok(!!doc.getElementById('composerInput'), 'composer 输入框存在');
+    ok(!!doc.getElementById('requestStatus') && doc.getElementById('requestStatus').getAttribute('role') === 'status', '请求阶段状态条存在且可被辅助技术读取');
     ok(!!doc.getElementById('fullscreenToggle'), '全屏按钮存在');
     doc.getElementById('settingsBtn').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
     await wait(30);
     ok(!!doc.querySelector('[name="apiMode"]') && !!doc.querySelector('[name="secondApiUrl"]'), '设置中包含 API 模式和第二 API 参数');
     ok(doc.querySelector('[name="secondApiKey"]').type === 'password', 'API Key 使用密码输入框');
     ok(!!doc.getElementById('retrySecondApi'), '设置中提供手动重试第二 API 操作');
+    ok(!!doc.getElementById('testSecondApi'), '设置中提供第二 API 连接测试');
     ok(!!doc.querySelector('[data-settings-tab="prompts"]'), '设置提供独立更新提示词页面');
     doc.querySelector('[data-settings-tab="prompts"]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
     const normalPrompt = doc.querySelector('[name="normalPrompt"]');
@@ -128,6 +130,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     win.dispatchEvent(new win.CustomEvent('pastoral:daily-summary', { detail: { initialFunds: 50000, beforeFunds: 50123, salary: 100, maintenance: 23, afterFunds: 50000, summary: '结算完成' } }));
     const ledgerText = doc.getElementById('dailySummary').textContent;
     ok(/5金1银23铜/.test(ledgerText) && /1银/.test(ledgerText) && /23铜/.test(ledgerText) && /5金/.test(ledgerText), '归寝账簿统一显示金银铜单位');
+    doc.querySelector('#dailySummary .settings-pop__close').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    win.dispatchEvent(new win.CustomEvent('pastoral:daily-summary', { detail: { beforeFunds: 50000, salary: 100, maintenance: 20, afterFunds: 49880, updateOk: false, updateError: '第二 API 超时' } }));
+    ok(/确定性结算已完成/.test(doc.getElementById('dailySummary').textContent) && /第二 API 超时/.test(doc.getElementById('dailySummary').textContent), '额外 AI 失败仍显示确定性账簿与错误');
     doc.querySelector('#dailySummary .settings-pop__close').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
 
     // 快捷动作叠加，不覆盖玩家已有输入

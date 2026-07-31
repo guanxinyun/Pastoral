@@ -235,6 +235,19 @@
 .forecast-funds strong { color: var(--color-text); font-family: var(--font-mono); font-weight: 600; }
 @media (max-width: 639px) { .forecast-funds { grid-template-columns: 1fr; } }
 
+/* ---------- 请求阶段 ---------- */
+.request-status { display: flex; align-items: center; gap: 9px; min-height: 44px; margin: 0 0 8px; padding: 8px 11px; color: var(--color-text-soft); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); transition: border-color var(--t-base), background var(--t-base), opacity var(--t-base); }
+.request-status[hidden] { display: none; }
+.request-status.is-loading { border-color: var(--color-primary); background: var(--amber-glow); }
+.request-status.is-error { border-color: var(--color-danger); }
+.request-status__spinner { width: 16px; height: 16px; flex: none; border: 2px solid var(--color-border-strong); border-top-color: var(--color-primary); border-radius: 50%; opacity: 0; }
+.request-status.is-loading .request-status__spinner { opacity: 1; animation: requestSpin 800ms linear infinite; }
+.request-status__copy { display: grid; gap: 1px; min-width: 0; }
+.request-status__copy strong { font-size: var(--font-size-xs); color: var(--color-text); }
+.request-status__copy small { overflow: hidden; color: var(--color-text-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes requestSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .request-status.is-loading .request-status__spinner { animation: none; } }
+
 /* ---------- 吐司 ---------- */
 .toast { pointer-events: auto; display: flex; align-items: flex-start; gap: 8px; padding: 9px 12px; background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border-strong); border-left: 3px solid var(--color-primary); border-radius: var(--radius-md); box-shadow: var(--shadow-raised); animation: toastIn var(--t-slow) var(--ease-page) both; }
 .toast.is-out { animation: toastOut var(--t-base) var(--ease-soft) forwards; }

@@ -17,6 +17,10 @@ const ApiEngine = (function () {
   function now() { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); }
   function log(prefix, stage, detail) { console.info(prefix, stage, detail || ''); }
   function error(prefix, stage, value) { console.error(prefix, stage, value && value.message || value); }
+  function hostOf(url) { try { return new URL(url).host || url; } catch (e) { return String(url || '未知地址'); } }
+  function status(stage, message, loading, detail) {
+    window.dispatchEvent(new CustomEvent('pastoral:api-status', { detail: Object.assign({ stage, message, loading: !!loading }, detail || {}) }));
+  }
 
   function textResult(result) {
     if (typeof result === 'string') return result;
@@ -123,7 +127,9 @@ const ApiEngine = (function () {
     for (let attempt = 0; attempt <= api.maxRetries; attempt++) {
       const id = 'pastoral-second-' + (++sequence);
       const started = now();
-      log(PREFIX_SECOND, '开始', { attempt: attempt + 1, messageId: context.messageId });
+      const target = hostOf(api.url);
+      log(PREFIX_SECOND, '开始', { id, purpose: context.purpose, attempt: attempt + 1, messageId: context.messageId, target });
+      status('第二 API', `正在请求 ${target} · 第 ${attempt + 1} 次`, true, { id, attempt: attempt + 1, target, purpose: context.purpose });
       try {
         const raw = textResult(await timeoutCall(() => generateRaw({
           generation_id: id,
@@ -136,11 +142,14 @@ const ApiEngine = (function () {
         }), api.timeout, id));
         const updateTag = Extract.normalizeUpdateVariable(raw);
         if (!updateTag) throw new Error('第二 API 未返回包含 Analysis 与合法 JSONPatch 数组的 UpdateVariable');
-        log(PREFIX_SECOND, '完成', { attempt: attempt + 1, elapsedMs: Math.round(now() - started) });
-        return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'second' };
+        const elapsedMs = Math.round(now() - started);
+        log(PREFIX_SECOND, '完成', { id, attempt: attempt + 1, elapsedMs, target });
+        status('第二 API 已响应', `${target} · ${elapsedMs}ms，正在写回变量…`, true, { id, elapsedMs, target, purpose: context.purpose });
+        return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'second', id, target, elapsedMs };
       } catch (e) {
         failure = e;
         error(PREFIX_SECOND, '失败（尝试 ' + (attempt + 1) + '）', e);
+        status('第二 API 失败', `${target} · ${e && e.message || e}`, attempt < api.maxRetries, { id, target, attempt: attempt + 1, purpose: context.purpose });
       }
     }
     throw failure || new Error('第二 API 调用失败');
@@ -153,14 +162,15 @@ const ApiEngine = (function () {
   }
 
   async function applyUpdate(messageId, original, baseline, generated) {
-    const merged = Extract.replaceUpdateVariable(original, generated.updateTag);
-    if (typeof setChatMessages !== 'function') throw new Error('当前环境无法写回聊天楼层');
-    await setChatMessages([{ message_id: messageId, message: merged }], { refresh: 'none' });
     if (typeof Mvu === 'undefined' || typeof Mvu.parseMessage !== 'function' || typeof Mvu.replaceMvuData !== 'function') {
       throw new Error('MVU 接口未就绪');
     }
-    const parsed = await Mvu.parseMessage(generated.updateTag, baseline);
+    const commands = Extract.patchToMvuCommands(generated.updateTag);
+    const parsed = await Mvu.parseMessage(commands, baseline);
     if (!parsed) throw new Error('MVU 未解析出有效变量更新');
+    const merged = Extract.replaceUpdateVariable(original, generated.updateTag);
+    if (typeof setChatMessages !== 'function') throw new Error('当前环境无法写回聊天楼层');
+    await setChatMessages([{ message_id: messageId, message: merged }], { refresh: 'none' });
     await Mvu.replaceMvuData(parsed, { type: 'message', message_id: messageId });
     return merged;
   }
@@ -174,6 +184,7 @@ const ApiEngine = (function () {
       await applyUpdate(messageId, message.message || '', context.baseline, generated);
       if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
       lastFailure = null;
+      status('变量更新完成', `已写回第 ${messageId} 楼`, false, { id: generated.id, messageId, purpose: context.purpose });
       return { ok: true, source: generated.source, summary: generated.summary, messageId };
     } catch (e) {
       lastFailure = Object.assign({}, context, { messageId });
@@ -205,16 +216,17 @@ const ApiEngine = (function () {
   }
 
   async function appendDailyUpdate(messageId, original, baseline, generated) {
+    if (typeof Mvu === 'undefined' || typeof Mvu.parseMessage !== 'function' || typeof Mvu.replaceMvuData !== 'function') {
+      throw new Error('MVU 接口未就绪');
+    }
+    const commands = Extract.patchToMvuCommands(generated.updateTag);
+    const parsed = await Mvu.parseMessage(commands, baseline);
+    if (!parsed) throw new Error('MVU 未解析出有效日结更新');
     const addition = [generated.summary, generated.updateTag].filter(Boolean).join('\n\n');
     const merged = String(original || '').trim() + (original ? '\n\n' : '') + addition;
     if (typeof setChatMessages === 'function') {
       await setChatMessages([{ message_id: messageId, message: merged }], { refresh: 'none' });
     }
-    if (typeof Mvu === 'undefined' || typeof Mvu.parseMessage !== 'function' || typeof Mvu.replaceMvuData !== 'function') {
-      throw new Error('MVU 接口未就绪');
-    }
-    const parsed = await Mvu.parseMessage(generated.updateTag, baseline);
-    if (!parsed) throw new Error('MVU 未解析出有效日结更新');
     await Mvu.replaceMvuData(parsed, { type: 'message', message_id: messageId });
   }
 
@@ -248,6 +260,35 @@ const ApiEngine = (function () {
     }
   }
 
+  async function testSecondApi(candidate) {
+    if (typeof generateRaw !== 'function') throw new Error('当前环境缺少 generateRaw，未发送请求');
+    const api = Object.assign({}, Settings.load().secondApi, candidate || {});
+    if (!api.url || !api.key || !api.model) throw new Error('请填写 URL、API Key 和模型名');
+    const id = 'pastoral-second-test-' + (++sequence);
+    const target = hostOf(api.url);
+    const started = now();
+    status('测试第二 API', `正在请求 ${target}…`, true, { id, target, purpose: 'test' });
+    log(PREFIX_SECOND, '连接测试开始', { id, target, model: api.model });
+    try {
+      const raw = textResult(await timeoutCall(() => generateRaw({
+        generation_id: id,
+        user_input: '只回复 PASTORAL_API_OK，不要输出其他内容。',
+        should_stream: false,
+        should_silence: true,
+        max_chat_history: 0,
+        ordered_prompts: ['user_input'],
+        custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
+      }), Math.max(1000, Number(api.timeout) || 30000), id));
+      const elapsedMs = Math.round(now() - started);
+      status('第二 API 测试成功', `${target} · ${elapsedMs}ms · ${raw.slice(0, 80) || '收到空文本'}`, false, { id, target, elapsedMs, purpose: 'test' });
+      log(PREFIX_SECOND, '连接测试完成', { id, target, elapsedMs });
+      return { ok: true, id, target, elapsedMs, raw };
+    } catch (e) {
+      status('第二 API 测试失败', `${target} · ${e && e.message || e}`, false, { id, target, purpose: 'test' });
+      throw e;
+    }
+  }
+
   async function retryLastFailure() {
     if (!lastFailure) throw new Error('没有可重试的第二 API 请求');
     return processAfterMain(lastFailure);
@@ -261,6 +302,7 @@ const ApiEngine = (function () {
     callSecondApiForVariable,
     processAfterMain,
     processEndday,
+    testSecondApi,
     retryLastFailure,
     get lastFailure() { return lastFailure; }
   };

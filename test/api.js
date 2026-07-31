@@ -30,6 +30,14 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   ok(win.Extract.normalizeUpdateVariable('<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>') === '', '拒绝缺少 Analysis 的更新');
   ok(win.Extract.normalizeUpdateVariable('_.set("旅店.资金", 88);') === '', '拒绝裸 lodash 更新命令');
   ok(win.Extract.normalizeUpdateVariable('只有总结，没有更新命令') === '', '无有效 JSON Patch 时不伪造更新');
+  const patchTag = '<UpdateVariable><Analysis>checked</Analysis><JSONPatch>[{"op":"replace","path":"/旅店/资金","value":500},{"op":"delta","path":"/大掌柜/精力","value":-8},{"op":"insert","path":"/旅店/库存/星砂","value":{"数量":2}},{"op":"remove","path":"/旅店/库存/干柴"},{"op":"move","from":"/a","to":"/b"}]</JSONPatch></UpdateVariable>';
+  const commands = win.Extract.patchToMvuCommands(patchTag);
+  ok(/_.set\("旅店\.资金",500\)/.test(commands), 'replace 转换为 _.set');
+  ok(/_.add\("大掌柜\.精力",-8\)/.test(commands), 'delta 转换为 _.add');
+  ok(/_.insert\("旅店\.库存","星砂",\{"数量":2\}\)/.test(commands), '对象 insert 转换为父路径、键和值');
+  ok(/_.delete\("旅店\.库存","干柴"\)/.test(commands), 'remove 转换为父路径和键');
+  ok(/_.move\("a","b"\)/.test(commands), 'move 转换为 _.move');
+  ok(win.Extract.patchToMvuCommands('<UpdateVariable><Analysis>x</Analysis><JSONPatch>[{"op":"replace","path":"/旅店/员工/甲/技能/0","value":"新技能"}]</JSONPatch></UpdateVariable>') === '_.set("旅店.员工.甲.技能[0]","新技能")', '数组 JSON Pointer 转换为 MVU 下标路径');
 
   console.log('\n[2] 设施引力与前端确定性日结');
   {
@@ -126,6 +134,13 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(configs[0].custom_api.apiurl === 'https://logic.example/v1' && configs[0].custom_api.source === 'openai', '传入 custom_api URL/model/source');
     ok(!/secret/.test(configs[0].user_input), 'API Key 不进入提示词');
     ok(result.updateTag.includes('/旅店/资金') && result.updateTag.includes('<JSONPatch>'), '返回第二 API 的 JSON Patch UpdateVariable');
+    const statusEvents = [];
+    win.addEventListener('pastoral:api-status', (e) => statusEvents.push(e.detail));
+    win.generateRaw = async () => 'PASTORAL_API_OK';
+    const tested = await win.ApiEngine.testSecondApi({ url: 'https://probe.example/v1', key: 'probe-secret', model: 'probe-model', timeout: 1000 });
+    ok(tested.ok && tested.target === 'probe.example', '第二 API 连接测试返回目标主机与成功结果');
+    ok(statusEvents.some((x) => x.stage === '测试第二 API' && x.loading) && statusEvents.some((x) => x.stage === '第二 API 测试成功' && !x.loading), '连接测试提供请求中与成功状态');
+    ok(!statusEvents.some((x) => /probe-secret/.test(JSON.stringify(x))), '连接测试状态不泄露 API Key');
   }
 
   console.log('\n[3] 成功替换正文并基于旧快照回写 MVU');
@@ -147,6 +162,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const out = await win.ApiEngine.processAfterMain({ baseline, messageId: 10, purpose: 'normal' });
     ok(setCalls.length === 1 && /剧情/.test(setCalls[0][0].message) && /99/.test(setCalls[0][0].message) && !/主更新/.test(setCalls[0][0].message), '最新 AI 楼正文仅替换变量标签');
     ok(parseCalls.length === 1 && parseCalls[0].baseline === baseline, 'Mvu.parseMessage 使用主生成前快照');
+    ok(/_.set\("旅店\.资金",99\)/.test(parseCalls[0].message) && !/<JSONPatch>/.test(parseCalls[0].message), 'JSON Patch 转换为 Mvu 可解析命令');
     ok(replaceCalls.length === 1 && replaceCalls[0].options.message_id === 10, 'Mvu.replaceMvuData 回写目标最新楼层');
     ok(out.ok && out.source === 'second', '后处理返回成功来源');
   }
@@ -156,8 +172,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     let latestId = 10, processed = 0, generationEnded = false, processedAfterEnd = false;
     const slash = [];
     const generationEvents = {};
-    win.iframe_events = { GENERATION_STARTED: 'generation-started', GENERATION_ENDED: 'generation-ended' };
-    win.tavern_events = { GENERATION_STOPPED: 'generation-stopped' };
+    win.iframe_events = { GENERATION_STARTED: 'js-generation-started', GENERATION_ENDED: 'js-generation-ended' };
+    win.tavern_events = { GENERATION_STARTED: 'generation-started', GENERATION_ENDED: 'generation-ended', GENERATION_STOPPED: 'generation-stopped' };
     win.eventOn = (name, handler) => { generationEvents[name] = handler; };
     win.Settings.load = () => ({ apiMode: 'multi', secondApi: { url: 'x', key: 'k', model: 'm', timeout: 1000, maxRetries: 0 } });
     win.MVU.getDataSnapshot = () => ({ stat_data: { before: true } });
@@ -166,10 +182,10 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     win.getChatMessages = (range) => [{ message_id: latestId, role: 'assistant', message: '完成' }];
     win.triggerSlash = async (cmd) => {
       slash.push(cmd);
-      if (cmd === '/trigger') {
-        if (generationEvents['generation-started']) generationEvents['generation-started']();
+      if (cmd === '/trigger await=true') {
+        if (generationEvents['generation-started']) generationEvents['generation-started']('main-generation');
         latestId = 12;
-        setTimeout(() => { generationEnded = true; if (generationEvents['generation-ended']) generationEvents['generation-ended']('完成'); }, 20);
+        setTimeout(() => { generationEnded = true; if (generationEvents['generation-ended']) generationEvents['generation-ended'](12); }, 20);
       }
     };
     win.ApiEngine.processAfterMain = async () => { processed++; processedAfterEnd = generationEnded; await wait(30); return { ok: true }; };
@@ -182,7 +198,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(processed === 1, '多 API 普通发送只后处理一次');
     ok(processedAfterEnd, '变量后处理只在主模型 GENERATION_ENDED 后启动');
     ok(!win.document.getElementById('composerSend').disabled, '后处理结束后发送按钮恢复');
-    ok(slash.filter((x) => x === '/trigger').length === 1, '主模型只触发一次');
+    ok(slash.filter((x) => x === '/trigger await=true').length === 1, '主模型使用 await=true 只触发一次');
 
     win.triggerSlash = async () => { throw new Error('send unavailable'); };
     const composer = win.document.getElementById('composerInput');
@@ -190,9 +206,10 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const failedSend = await win.Chat.handleUnifiedRequest(composer.value);
     ok(!failedSend && composer.value === '失败时保留我', '发送失败时保留输入框完整内容');
     win.triggerSlash = async (cmd) => {
-      if (cmd === '/trigger') {
-        latestId = 13;
-        setTimeout(() => { if (generationEvents['generation-ended']) generationEvents['generation-ended']('完成'); }, 5);
+      if (cmd === '/trigger await=true') {
+        latestId += 1;
+        const completedId = latestId;
+        setTimeout(() => { if (generationEvents['generation-ended']) generationEvents['generation-ended'](completedId); }, 5);
       }
     };
     composer.value = '发送后清空我';
@@ -208,6 +225,12 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     win.MVU.enforceAndWrite = async () => { stages.push('enforce'); };
     await win.Chat.handleUnifiedRequest('归寝入眠', { kind: 'endday' });
     ok(stages.join('>') === 'normal>settle>endday>enforce', '多 API 归寝严格执行日常→脚本→归寝→事实锁定');
+    const summaries = [];
+    win.addEventListener('pastoral:daily-summary', (e) => summaries.push(e.detail));
+    stages.length = 0;
+    win.ApiEngine.processEndday = async () => { stages.push('endday'); return { ok: false, source: 'main', error: new Error('日结模型失败') }; };
+    await win.Chat.handleUnifiedRequest('再次归寝', { kind: 'endday' });
+    ok(stages.includes('settle') && stages.includes('enforce') && summaries.some((x) => x.updateOk === false && /日结模型失败/.test(x.updateError)), '额外 AI 失败时仍保留确定性结算并触发账簿');
     win.ApiEngine.processEndday = actualProcessEndday;
   }
 

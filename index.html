@@ -1128,6 +1128,19 @@ body.is-immersive .journal__stream {
 .forecast-funds strong { color: var(--color-text); font-family: var(--font-mono); font-weight: 600; }
 @media (max-width: 639px) { .forecast-funds { grid-template-columns: 1fr; } }
 
+/* ---------- 请求阶段 ---------- */
+.request-status { display: flex; align-items: center; gap: 9px; min-height: 44px; margin: 0 0 8px; padding: 8px 11px; color: var(--color-text-soft); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); transition: border-color var(--t-base), background var(--t-base), opacity var(--t-base); }
+.request-status[hidden] { display: none; }
+.request-status.is-loading { border-color: var(--color-primary); background: var(--amber-glow); }
+.request-status.is-error { border-color: var(--color-danger); }
+.request-status__spinner { width: 16px; height: 16px; flex: none; border: 2px solid var(--color-border-strong); border-top-color: var(--color-primary); border-radius: 50%; opacity: 0; }
+.request-status.is-loading .request-status__spinner { opacity: 1; animation: requestSpin 800ms linear infinite; }
+.request-status__copy { display: grid; gap: 1px; min-width: 0; }
+.request-status__copy strong { font-size: var(--font-size-xs); color: var(--color-text); }
+.request-status__copy small { overflow: hidden; color: var(--color-text-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes requestSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .request-status.is-loading .request-status__spinner { animation: none; } }
+
 /* ---------- 吐司 ---------- */
 .toast { pointer-events: auto; display: flex; align-items: flex-start; gap: 8px; padding: 9px 12px; background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border-strong); border-left: 3px solid var(--color-primary); border-radius: var(--radius-md); box-shadow: var(--shadow-raised); animation: toastIn var(--t-slow) var(--ease-page) both; }
 .toast.is-out { animation: toastOut var(--t-base) var(--ease-soft) forwards; }
@@ -1392,6 +1405,10 @@ body.is-immersive .journal__stream {
           <p class="muted">正在展卷……</p>
         </div>
         <div class="journal__choices" id="choices"></div>
+        <div class="request-status" id="requestStatus" role="status" aria-live="polite" hidden>
+          <span class="request-status__spinner" aria-hidden="true"></span>
+          <span class="request-status__copy"><strong data-request-status-title>准备就绪</strong><small data-request-status-message></small></span>
+        </div>
         <form class="composer" id="composer" autocomplete="off">
           <textarea class="composer__input" id="composerInput" rows="1"
             placeholder="写下你的行动……（Enter 发送 · Shift+Enter 换行）" aria-label="输入行动"></textarea>
@@ -1980,6 +1997,45 @@ const Extract = {
     return path.split('/').slice(1).some((part) => part.replace(/~1/g, '/').replace(/~0/g, '~').startsWith('_'));
   },
 
+  _pointerParts(path) {
+    if (!this._validPointer(path)) throw new Error('非法 JSON Pointer: ' + path);
+    return path.split('/').slice(1).map((part) => part.replace(/~1/g, '/').replace(/~0/g, '~'));
+  },
+
+  _pointerToMvuPath(path) {
+    return this._pointerParts(path).map((part, index) => {
+      if (/^\d+$/.test(part)) return `[${part}]`;
+      if (!/[.\[\]'"\\]/.test(part)) return (index ? '.' : '') + part;
+      return `[${JSON.stringify(part)}]`;
+    }).join('');
+  },
+
+  patchToMvuCommands(rawText) {
+    const tag = this.normalizeUpdateVariable(rawText) || String(rawText || '');
+    const match = tag.match(/<JSONPatch\b[^>]*>([\s\S]*?)<\/JSONPatch>/i);
+    if (!match) throw new Error('缺少合法 JSONPatch');
+    const operations = JSON.parse(match[1].trim());
+    return operations.map((item) => {
+      if (item.op === 'move') return `_.move(${JSON.stringify(this._pointerToMvuPath(item.from))},${JSON.stringify(this._pointerToMvuPath(item.to))})`;
+      const path = this._pointerToMvuPath(item.path);
+      if (item.op === 'replace') return `_.set(${JSON.stringify(path)},${JSON.stringify(item.value)})`;
+      if (item.op === 'delta') return `_.add(${JSON.stringify(path)},${JSON.stringify(item.value)})`;
+      if (item.op === 'insert' || item.op === 'remove') {
+        const parts = this._pointerParts(item.path);
+        if (!parts.length) throw new Error('不能在变量根执行 ' + item.op);
+        const key = parts.pop();
+        const parentPointer = '/' + parts.map((part) => part.replace(/~/g, '~0').replace(/\//g, '~1')).join('/');
+        const parent = parts.length ? this._pointerToMvuPath(parentPointer) : '';
+        if (item.op === 'insert') {
+          if (key === '-') return `_.insert(${JSON.stringify(parent)},${JSON.stringify(item.value)})`;
+          return `_.insert(${JSON.stringify(parent)},${JSON.stringify(key)},${JSON.stringify(item.value)})`;
+        }
+        return `_.delete(${JSON.stringify(parent)},${JSON.stringify(key)})`;
+      }
+      throw new Error('不支持的更新操作: ' + item.op);
+    }).join(';\n');
+  },
+
   /** 仅接受包含 Analysis 与语义合法 JSON Patch 数组的完整更新标签。 */
   normalizeUpdateVariable(rawText) {
     const tagged = this.extractUpdateVariable(rawText);
@@ -2258,31 +2314,6 @@ const Assets = (function () {
 window.Assets = Assets;
 
 
-/* === money.js === */
-/* ============================================================
-   货币工具 · 所有金额以整数铜币存储
-   1 金 = 100 银 = 10000 铜
-   ============================================================ */
-const Money = {
-  formatCopper(value) {
-    const numeric = Number(value);
-    const copper = Number.isFinite(numeric) ? Math.trunc(numeric) : 0;
-    const sign = copper < 0 ? '−' : '';
-    let rest = Math.abs(copper);
-    const gold = Math.floor(rest / 10000);
-    rest %= 10000;
-    const silver = Math.floor(rest / 100);
-    const coins = rest % 100;
-    const parts = [];
-    if (gold) parts.push(gold + '金');
-    if (silver) parts.push(silver + '银');
-    if (coins || !parts.length) parts.push(coins + '铜');
-    return sign + parts.join('');
-  }
-};
-window.Money = Money;
-
-
 /* === mvu.js === */
 /* ============================================================
    MVU 读取与轮询
@@ -2374,14 +2405,19 @@ const MVU = {
     return { data: next, calculated: prepared.calculated, skipped: false, report };
   },
 
+  api: null,
+  initError: null,
+
   async init() {
-    if (typeof waitGlobalInitialized === 'function') {
-      try {
-        await waitGlobalInitialized('Mvu');
-        this.ready = (typeof Mvu !== 'undefined');
-      } catch (e) {
-        this.ready = false;
-      }
+    if (typeof waitGlobalInitialized !== 'function') return;
+    try {
+      const api = await waitGlobalInitialized('Mvu');
+      this.api = (typeof Mvu !== 'undefined' && Mvu) || api || null;
+      this.ready = !!(this.api && typeof this.api.getMvuData === 'function' && typeof this.api.replaceMvuData === 'function');
+      if (!this.ready) throw new Error('Mvu 未暴露完整读写接口');
+    } catch (e) {
+      this.ready = false;
+      this.initError = e;
     }
   },
 
@@ -2402,8 +2438,8 @@ const MVU = {
   /** 取 lastMessageId 对应的完整 MvuData 独立快照。 */
   getDataSnapshot() {
     try {
-      if (this.ready && typeof Mvu !== 'undefined') {
-        const data = Mvu.getMvuData({ type: 'message', message_id: this.latestMessageId() });
+      if (this.ready && this.api) {
+        const data = this.api.getMvuData({ type: 'message', message_id: this.latestMessageId() });
         if (data) return this.clone(data);
       }
     } catch (e) { /* fall through */ }
@@ -2445,8 +2481,11 @@ const MVU = {
   },
 
   async writeData(data, messageId) {
-    if (!this.ready || typeof Mvu === 'undefined' || typeof Mvu.replaceMvuData !== 'function') return false;
-    await Mvu.replaceMvuData(data, { type: 'message', message_id: messageId == null ? this.latestMessageId() : messageId });
+    if (!this.ready || !this.api || typeof this.api.replaceMvuData !== 'function') {
+      if (typeof getLastMessageId !== 'function') return false;
+      throw new Error('MVU 写回接口未就绪' + (this.initError ? '：' + (this.initError.message || this.initError) : ''));
+    }
+    await this.api.replaceMvuData(data, { type: 'message', message_id: messageId == null ? this.latestMessageId() : messageId });
     return true;
   },
 
@@ -2458,7 +2497,10 @@ const MVU = {
 
   async settleAndWrite(messageId, settlementId) {
     const settled = this.settleDay(this.getDataSnapshot(), settlementId);
-    if (!settled.skipped) await this.writeData(settled.data, messageId);
+    if (!settled.skipped) {
+      const written = await this.writeData(settled.data, messageId);
+      if (!written && typeof getLastMessageId === 'function') throw new Error('确定性日结未能写回 MVU');
+    }
     return settled;
   },
 
@@ -2469,7 +2511,7 @@ const MVU = {
   },
 
   isLive() {
-    return this.ready && typeof Mvu !== 'undefined' && typeof getLastMessageId === 'function';
+    return this.ready && this.api && typeof getLastMessageId === 'function';
   }
 };
 window.MVU = MVU;
@@ -2495,6 +2537,10 @@ const ApiEngine = (function () {
   function now() { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); }
   function log(prefix, stage, detail) { console.info(prefix, stage, detail || ''); }
   function error(prefix, stage, value) { console.error(prefix, stage, value && value.message || value); }
+  function hostOf(url) { try { return new URL(url).host || url; } catch (e) { return String(url || '未知地址'); } }
+  function status(stage, message, loading, detail) {
+    window.dispatchEvent(new CustomEvent('pastoral:api-status', { detail: Object.assign({ stage, message, loading: !!loading }, detail || {}) }));
+  }
 
   function textResult(result) {
     if (typeof result === 'string') return result;
@@ -2601,7 +2647,9 @@ const ApiEngine = (function () {
     for (let attempt = 0; attempt <= api.maxRetries; attempt++) {
       const id = 'pastoral-second-' + (++sequence);
       const started = now();
-      log(PREFIX_SECOND, '开始', { attempt: attempt + 1, messageId: context.messageId });
+      const target = hostOf(api.url);
+      log(PREFIX_SECOND, '开始', { id, purpose: context.purpose, attempt: attempt + 1, messageId: context.messageId, target });
+      status('第二 API', `正在请求 ${target} · 第 ${attempt + 1} 次`, true, { id, attempt: attempt + 1, target, purpose: context.purpose });
       try {
         const raw = textResult(await timeoutCall(() => generateRaw({
           generation_id: id,
@@ -2614,11 +2662,14 @@ const ApiEngine = (function () {
         }), api.timeout, id));
         const updateTag = Extract.normalizeUpdateVariable(raw);
         if (!updateTag) throw new Error('第二 API 未返回包含 Analysis 与合法 JSONPatch 数组的 UpdateVariable');
-        log(PREFIX_SECOND, '完成', { attempt: attempt + 1, elapsedMs: Math.round(now() - started) });
-        return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'second' };
+        const elapsedMs = Math.round(now() - started);
+        log(PREFIX_SECOND, '完成', { id, attempt: attempt + 1, elapsedMs, target });
+        status('第二 API 已响应', `${target} · ${elapsedMs}ms，正在写回变量…`, true, { id, elapsedMs, target, purpose: context.purpose });
+        return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'second', id, target, elapsedMs };
       } catch (e) {
         failure = e;
         error(PREFIX_SECOND, '失败（尝试 ' + (attempt + 1) + '）', e);
+        status('第二 API 失败', `${target} · ${e && e.message || e}`, attempt < api.maxRetries, { id, target, attempt: attempt + 1, purpose: context.purpose });
       }
     }
     throw failure || new Error('第二 API 调用失败');
@@ -2631,14 +2682,15 @@ const ApiEngine = (function () {
   }
 
   async function applyUpdate(messageId, original, baseline, generated) {
-    const merged = Extract.replaceUpdateVariable(original, generated.updateTag);
-    if (typeof setChatMessages !== 'function') throw new Error('当前环境无法写回聊天楼层');
-    await setChatMessages([{ message_id: messageId, message: merged }], { refresh: 'none' });
     if (typeof Mvu === 'undefined' || typeof Mvu.parseMessage !== 'function' || typeof Mvu.replaceMvuData !== 'function') {
       throw new Error('MVU 接口未就绪');
     }
-    const parsed = await Mvu.parseMessage(generated.updateTag, baseline);
+    const commands = Extract.patchToMvuCommands(generated.updateTag);
+    const parsed = await Mvu.parseMessage(commands, baseline);
     if (!parsed) throw new Error('MVU 未解析出有效变量更新');
+    const merged = Extract.replaceUpdateVariable(original, generated.updateTag);
+    if (typeof setChatMessages !== 'function') throw new Error('当前环境无法写回聊天楼层');
+    await setChatMessages([{ message_id: messageId, message: merged }], { refresh: 'none' });
     await Mvu.replaceMvuData(parsed, { type: 'message', message_id: messageId });
     return merged;
   }
@@ -2652,6 +2704,7 @@ const ApiEngine = (function () {
       await applyUpdate(messageId, message.message || '', context.baseline, generated);
       if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
       lastFailure = null;
+      status('变量更新完成', `已写回第 ${messageId} 楼`, false, { id: generated.id, messageId, purpose: context.purpose });
       return { ok: true, source: generated.source, summary: generated.summary, messageId };
     } catch (e) {
       lastFailure = Object.assign({}, context, { messageId });
@@ -2683,16 +2736,17 @@ const ApiEngine = (function () {
   }
 
   async function appendDailyUpdate(messageId, original, baseline, generated) {
+    if (typeof Mvu === 'undefined' || typeof Mvu.parseMessage !== 'function' || typeof Mvu.replaceMvuData !== 'function') {
+      throw new Error('MVU 接口未就绪');
+    }
+    const commands = Extract.patchToMvuCommands(generated.updateTag);
+    const parsed = await Mvu.parseMessage(commands, baseline);
+    if (!parsed) throw new Error('MVU 未解析出有效日结更新');
     const addition = [generated.summary, generated.updateTag].filter(Boolean).join('\n\n');
     const merged = String(original || '').trim() + (original ? '\n\n' : '') + addition;
     if (typeof setChatMessages === 'function') {
       await setChatMessages([{ message_id: messageId, message: merged }], { refresh: 'none' });
     }
-    if (typeof Mvu === 'undefined' || typeof Mvu.parseMessage !== 'function' || typeof Mvu.replaceMvuData !== 'function') {
-      throw new Error('MVU 接口未就绪');
-    }
-    const parsed = await Mvu.parseMessage(generated.updateTag, baseline);
-    if (!parsed) throw new Error('MVU 未解析出有效日结更新');
     await Mvu.replaceMvuData(parsed, { type: 'message', message_id: messageId });
   }
 
@@ -2726,6 +2780,35 @@ const ApiEngine = (function () {
     }
   }
 
+  async function testSecondApi(candidate) {
+    if (typeof generateRaw !== 'function') throw new Error('当前环境缺少 generateRaw，未发送请求');
+    const api = Object.assign({}, Settings.load().secondApi, candidate || {});
+    if (!api.url || !api.key || !api.model) throw new Error('请填写 URL、API Key 和模型名');
+    const id = 'pastoral-second-test-' + (++sequence);
+    const target = hostOf(api.url);
+    const started = now();
+    status('测试第二 API', `正在请求 ${target}…`, true, { id, target, purpose: 'test' });
+    log(PREFIX_SECOND, '连接测试开始', { id, target, model: api.model });
+    try {
+      const raw = textResult(await timeoutCall(() => generateRaw({
+        generation_id: id,
+        user_input: '只回复 PASTORAL_API_OK，不要输出其他内容。',
+        should_stream: false,
+        should_silence: true,
+        max_chat_history: 0,
+        ordered_prompts: ['user_input'],
+        custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
+      }), Math.max(1000, Number(api.timeout) || 30000), id));
+      const elapsedMs = Math.round(now() - started);
+      status('第二 API 测试成功', `${target} · ${elapsedMs}ms · ${raw.slice(0, 80) || '收到空文本'}`, false, { id, target, elapsedMs, purpose: 'test' });
+      log(PREFIX_SECOND, '连接测试完成', { id, target, elapsedMs });
+      return { ok: true, id, target, elapsedMs, raw };
+    } catch (e) {
+      status('第二 API 测试失败', `${target} · ${e && e.message || e}`, false, { id, target, purpose: 'test' });
+      throw e;
+    }
+  }
+
   async function retryLastFailure() {
     if (!lastFailure) throw new Error('没有可重试的第二 API 请求');
     return processAfterMain(lastFailure);
@@ -2739,6 +2822,7 @@ const ApiEngine = (function () {
     callSecondApiForVariable,
     processAfterMain,
     processEndday,
+    testSecondApi,
     retryLastFailure,
     get lastFailure() { return lastFailure; }
   };
@@ -2767,6 +2851,7 @@ const Chat = (function () {
   let composedKind = 'normal';
   let requestSeq = 0;
   let generationCycle = 0;
+  let completedMessageId = null;
   const generationWaiters = [];
   let messages = [];
 
@@ -2784,18 +2869,17 @@ const Chat = (function () {
 
   /* ---------- 生成状态 ---------- */
   function bindGenerationEvents() {
-    if (typeof eventOn !== 'function' || typeof iframe_events === 'undefined') return;
+    if (typeof eventOn !== 'function' || typeof tavern_events === 'undefined') return;
     try {
-      eventOn(iframe_events.GENERATION_STARTED, () => { generating = true; });
-      const finish = () => {
+      eventOn(tavern_events.GENERATION_STARTED, () => { generating = true; });
+      const finish = (messageId) => {
         generating = false;
+        if (Number.isFinite(Number(messageId))) completedMessageId = Number(messageId);
         generationCycle++;
         generationWaiters.splice(0).forEach((resolve) => resolve(generationCycle));
       };
-      eventOn(iframe_events.GENERATION_ENDED, finish);
-      if (typeof tavern_events !== 'undefined') {
-        eventOn(tavern_events.GENERATION_STOPPED, finish);
-      }
+      eventOn(tavern_events.GENERATION_ENDED, finish);
+      eventOn(tavern_events.GENERATION_STOPPED, () => finish(null));
     } catch (e) { /* ignore */ }
   }
 
@@ -3061,6 +3145,18 @@ const Chat = (function () {
     return true;
   }
 
+  function setRequestStatus(title, message, loading) {
+    const status = document.getElementById('requestStatus');
+    if (!status) return;
+    status.hidden = false;
+    status.classList.toggle('is-loading', !!loading);
+    status.classList.toggle('is-error', title.includes('失败'));
+    const titleNode = status.querySelector('[data-request-status-title]');
+    const messageNode = status.querySelector('[data-request-status-message]');
+    if (titleNode) titleNode.textContent = title;
+    if (messageNode) messageNode.textContent = message || '';
+  }
+
   function setBusy(on) {
     busy = !!on;
     const ta = document.getElementById('composerInput');
@@ -3082,19 +3178,18 @@ const Chat = (function () {
     });
   }
 
-  async function waitForMainReply(beforeId, token, startCycle) {
-    const ended = await waitForGenerationEnd(startCycle, 120000);
+  async function waitForMainReply(beforeId, token, startCycle, generationAlreadyAwaited) {
+    const ended = generationAlreadyAwaited ? true : await waitForGenerationEnd(startCycle, 120000);
     const started = Date.now();
     while (token === requestSeq && Date.now() - started < 5000) {
-      const id = lastId();
+      const id = completedMessageId != null ? completedMessageId : lastId();
       if (id > beforeId) {
         const latest = (typeof getChatMessages === 'function' ? getChatMessages(id) : [])[0];
-        if (!latest || latest.role !== 'user') return id;
+        if (latest && latest.role !== 'user') return id;
       }
       await new Promise((resolve) => setTimeout(resolve, 120));
     }
-    if (!ended) console.warn('[Pastoral][MainAPI]', '未收到生成结束事件，按当前最新楼层降级处理');
-    return lastId();
+    throw new Error(ended ? '主模型生成完成，但未找到新的 AI 楼层' : '等待主模型生成结束超时');
   }
 
   /** 唯一发送入口：主剧情完成后按模式执行变量后处理。 */
@@ -3110,6 +3205,7 @@ const Chat = (function () {
     const token = ++requestSeq;
     const beforeId = lastId();
     const startCycle = generationCycle;
+    completedMessageId = null;
     const baseline = window.MVU && MVU.getDataSnapshot ? MVU.getDataSnapshot() : null;
     const mode = window.Settings ? Settings.load().apiMode : 'single';
     setBusy(true);
@@ -3117,10 +3213,14 @@ const Chat = (function () {
     lastHash = null;
     console.info('[Pastoral][MainAPI]', '开始', { beforeId, purpose });
     try {
-      await exec('/send ' + escSlash(body));
+      setRequestStatus('发送主剧情', '正在添加玩家行动…', false);
+      const sent = await exec('/send ' + escSlash(body));
+      if (sent === undefined && typeof triggerSlash !== 'function') throw new Error('酒馆发送接口不可用');
       poll();
-      await exec('/trigger');
-      const messageId = await waitForMainReply(beforeId, token, startCycle);
+      setRequestStatus('等待主模型', '主模型正在生成回复…', true);
+      if (typeof triggerSlash !== 'function') throw new Error('当前酒馆不支持可等待的 triggerSlash');
+      await exec('/trigger await=true');
+      const messageId = await waitForMainReply(beforeId, token, startCycle, true);
       console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
       let calculated = null, settledData = null;
       if (purpose === 'endday' && mode === 'multi' && window.ApiEngine) {
@@ -3128,10 +3228,12 @@ const Chat = (function () {
       }
       if (window.MVU) {
         if (purpose === 'endday' && typeof MVU.settleAndWrite === 'function') {
+          setRequestStatus('执行确定性结算', '正在扣除薪资与维护费、推进作物并重算引力…', true);
           const settled = await MVU.settleAndWrite(messageId, 'endday-message-' + messageId);
           settledData = settled.data;
           calculated = Object.assign({}, settled.report, { facilityGravity: settled.calculated && settled.calculated.dimensions });
           window.dispatchEvent(new CustomEvent('pastoral:request-stage', { detail: { stage: 'settled', calculated } }));
+          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: '确定性结算已完成，正在等待跨日变量更新…', source: 'script', pending: true }, calculated) }));
         } else if (typeof MVU.syncFacilityGravity === 'function') {
           const synced = await MVU.syncFacilityGravity(messageId);
           calculated = { facilityGravity: synced.calculated.dimensions, totalGravity: synced.calculated.total };
@@ -3139,11 +3241,17 @@ const Chat = (function () {
       }
       if (window.ApiEngine) {
         let outcome = null;
-        if (purpose === 'endday') outcome = await ApiEngine.processEndday({ baseline: window.MVU ? MVU.getDataSnapshot() : baseline, messageId, purpose, calculated });
-        else if (mode === 'multi') outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose, calculated });
-        if (purpose === 'endday' && outcome && outcome.ok) {
-          if (settledData && window.MVU && typeof MVU.enforceAndWrite === 'function') await MVU.enforceAndWrite(settledData, messageId);
-          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: outcome.summary, source: outcome.source }, calculated || {}) }));
+        if (purpose === 'endday') {
+          setRequestStatus('归寝日结', '正在执行跨日变量更新…', true);
+          outcome = await ApiEngine.processEndday({ baseline: window.MVU ? MVU.getDataSnapshot() : baseline, messageId, purpose, calculated });
+        } else if (mode === 'multi') {
+          setRequestStatus('第二 API', '正在计算本轮变量更新…', true);
+          outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose, calculated });
+        }
+        if (purpose === 'endday' && settledData) {
+          if (window.MVU && typeof MVU.enforceAndWrite === 'function') await MVU.enforceAndWrite(settledData, messageId);
+          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: outcome && outcome.summary, source: outcome && outcome.source, updateOk: !!(outcome && outcome.ok), updateError: outcome && outcome.error ? String(outcome.error.message || outcome.error) : '' }, calculated || {}) }));
+          setRequestStatus(outcome && outcome.ok ? '归寝完成' : '归寝结算完成，变量更新失败', outcome && outcome.ok ? '账簿已更新。' : '确定性结算已保留，请检查第二 API 或主 API。', false);
         }
       }
       const composer = document.getElementById('composerInput');
@@ -4181,6 +4289,19 @@ window.Chat = Chat;
     mode.addEventListener('change', syncMode); syncMode();
     const save = h('button', { class: 'btn btn--primary btn--block', type: 'submit' }, '保存 API 设置');
     form.appendChild(save);
+    const testApi = h('button', { class: 'btn btn--ghost btn--block', id: 'testSecondApi', type: 'button' }, '测试第二 API 连接');
+    testApi.addEventListener('click', async () => {
+      testApi.disabled = true; testApi.textContent = '正在发送测试请求…';
+      try {
+        const result = await ApiEngine.testSecondApi({
+          url: form.elements.secondApiUrl.value.trim(), key: form.elements.secondApiKey.value.trim(),
+          model: form.elements.secondApiModel.value.trim(), timeout: Number(form.elements.secondApiTimeout.value)
+        });
+        toast('success', '第二 API 可用', `${result.target} · ${result.elapsedMs}ms`);
+      } catch (e) { toast('error', '第二 API 测试失败', e && e.message || String(e)); }
+      finally { testApi.disabled = false; testApi.textContent = '测试第二 API 连接'; }
+    });
+    form.appendChild(testApi);
     const retry = h('button', { class: 'btn btn--ghost btn--block', id: 'retrySecondApi', type: 'button' }, '重新调用上次失败的第二 API');
     retry.disabled = !(window.ApiEngine && ApiEngine.lastFailure);
     retry.addEventListener('click', async () => {
@@ -4330,7 +4451,13 @@ window.Chat = Chat;
 
   /* ---------- 每日总结模态框 ---------- */
   function showDailySummary(detail) {
-    const old = document.getElementById('dailySummary'); if (old) old.remove();
+    const old = document.getElementById('dailySummary');
+    if (old && detail && detail.pending) {
+      const copy = old.querySelector('.daily-summary-copy');
+      if (copy) copy.textContent = String(detail.summary || '确定性结算已完成，正在等待跨日变量更新…');
+      return;
+    }
+    if (old) old.remove();
     const previous = document.activeElement;
     const backdrop = h('div', { class: 'modal-backdrop', id: 'dailySummary' });
     const dialog = h('section', { class: 'daily-modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'dailySummaryTitle' });
@@ -4351,7 +4478,8 @@ window.Chat = Chat;
     ];
     dialog.appendChild(h('div', { class: 'daily-modal__body' }, [
       rows.length ? h('dl', { class: 'daily-ledger' }, rows.flatMap(([label, amount]) => [h('dt', {}, label), h('dd', {}, amount)])) : null,
-      h('div', { class: 'daily-summary-copy' }, String(report.summary || '').trim() || '日结完成，变量已更新。')
+      h('div', { class: 'daily-summary-copy' }, String(report.summary || '').trim() || (report.updateOk === false ? '确定性结算已完成；额外变量更新失败。' : '日结完成，变量已更新。')),
+      report.updateError ? h('div', { class: 'notice notice--warn' }, '额外更新错误：' + report.updateError) : null
     ]));
     dialog.appendChild(h('div', { class: 'daily-modal__foot' }, [h('span', { class: 'faint' }, detail && detail.source === 'second' ? '由第二 API 结算' : '由当前主 API 结算'), h('button', { class: 'btn btn--primary', type: 'button', onclick: close }, '合上账簿')]));
     backdrop.appendChild(dialog); document.body.appendChild(backdrop); Icon.render(dialog);
@@ -4412,6 +4540,18 @@ window.Chat = Chat;
     // 对话流有变化时立刻重算选项，不等下一次状态轮询
     window.addEventListener('pastoral:chat', () => refresh(false));
     window.addEventListener('pastoral:daily-summary', (e) => showDailySummary(e.detail || {}));
+    window.addEventListener('pastoral:api-status', (e) => {
+      const detail = e.detail || {};
+      const status = document.getElementById('requestStatus');
+      if (!status) return;
+      status.hidden = false;
+      status.classList.toggle('is-loading', !!detail.loading);
+      status.classList.toggle('is-error', /失败/.test(detail.stage || ''));
+      const title = status.querySelector('[data-request-status-title]');
+      const message = status.querySelector('[data-request-status-message]');
+      if (title) title.textContent = detail.stage || '请求状态';
+      if (message) message.textContent = detail.message || '';
+    });
 
     // 翻页标签
     $$('.tab').forEach((t) => t.addEventListener('click', () => openTab(t.dataset.tab)));

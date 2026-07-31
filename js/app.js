@@ -98,6 +98,19 @@
     mode.addEventListener('change', syncMode); syncMode();
     const save = h('button', { class: 'btn btn--primary btn--block', type: 'submit' }, '保存 API 设置');
     form.appendChild(save);
+    const testApi = h('button', { class: 'btn btn--ghost btn--block', id: 'testSecondApi', type: 'button' }, '测试第二 API 连接');
+    testApi.addEventListener('click', async () => {
+      testApi.disabled = true; testApi.textContent = '正在发送测试请求…';
+      try {
+        const result = await ApiEngine.testSecondApi({
+          url: form.elements.secondApiUrl.value.trim(), key: form.elements.secondApiKey.value.trim(),
+          model: form.elements.secondApiModel.value.trim(), timeout: Number(form.elements.secondApiTimeout.value)
+        });
+        toast('success', '第二 API 可用', `${result.target} · ${result.elapsedMs}ms`);
+      } catch (e) { toast('error', '第二 API 测试失败', e && e.message || String(e)); }
+      finally { testApi.disabled = false; testApi.textContent = '测试第二 API 连接'; }
+    });
+    form.appendChild(testApi);
     const retry = h('button', { class: 'btn btn--ghost btn--block', id: 'retrySecondApi', type: 'button' }, '重新调用上次失败的第二 API');
     retry.disabled = !(window.ApiEngine && ApiEngine.lastFailure);
     retry.addEventListener('click', async () => {
@@ -247,7 +260,13 @@
 
   /* ---------- 每日总结模态框 ---------- */
   function showDailySummary(detail) {
-    const old = document.getElementById('dailySummary'); if (old) old.remove();
+    const old = document.getElementById('dailySummary');
+    if (old && detail && detail.pending) {
+      const copy = old.querySelector('.daily-summary-copy');
+      if (copy) copy.textContent = String(detail.summary || '确定性结算已完成，正在等待跨日变量更新…');
+      return;
+    }
+    if (old) old.remove();
     const previous = document.activeElement;
     const backdrop = h('div', { class: 'modal-backdrop', id: 'dailySummary' });
     const dialog = h('section', { class: 'daily-modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'dailySummaryTitle' });
@@ -268,7 +287,8 @@
     ];
     dialog.appendChild(h('div', { class: 'daily-modal__body' }, [
       rows.length ? h('dl', { class: 'daily-ledger' }, rows.flatMap(([label, amount]) => [h('dt', {}, label), h('dd', {}, amount)])) : null,
-      h('div', { class: 'daily-summary-copy' }, String(report.summary || '').trim() || '日结完成，变量已更新。')
+      h('div', { class: 'daily-summary-copy' }, String(report.summary || '').trim() || (report.updateOk === false ? '确定性结算已完成；额外变量更新失败。' : '日结完成，变量已更新。')),
+      report.updateError ? h('div', { class: 'notice notice--warn' }, '额外更新错误：' + report.updateError) : null
     ]));
     dialog.appendChild(h('div', { class: 'daily-modal__foot' }, [h('span', { class: 'faint' }, detail && detail.source === 'second' ? '由第二 API 结算' : '由当前主 API 结算'), h('button', { class: 'btn btn--primary', type: 'button', onclick: close }, '合上账簿')]));
     backdrop.appendChild(dialog); document.body.appendChild(backdrop); Icon.render(dialog);
@@ -329,6 +349,18 @@
     // 对话流有变化时立刻重算选项，不等下一次状态轮询
     window.addEventListener('pastoral:chat', () => refresh(false));
     window.addEventListener('pastoral:daily-summary', (e) => showDailySummary(e.detail || {}));
+    window.addEventListener('pastoral:api-status', (e) => {
+      const detail = e.detail || {};
+      const status = document.getElementById('requestStatus');
+      if (!status) return;
+      status.hidden = false;
+      status.classList.toggle('is-loading', !!detail.loading);
+      status.classList.toggle('is-error', /失败/.test(detail.stage || ''));
+      const title = status.querySelector('[data-request-status-title]');
+      const message = status.querySelector('[data-request-status-message]');
+      if (title) title.textContent = detail.stage || '请求状态';
+      if (message) message.textContent = detail.message || '';
+    });
 
     // 翻页标签
     $$('.tab').forEach((t) => t.addEventListener('click', () => openTab(t.dataset.tab)));

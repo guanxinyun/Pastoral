@@ -1,10 +1,10 @@
-# Progress Log: 铜币货币制与双阶段变量更新
+# Progress Log: 酒馆真实调用链与归寝结算修复
 
 **Last Updated:** 2026-07-31 20:55
 
 ## Current Status
-**Active Task:** None
-**Completed:** 7 of 7 tasks
+**Active Task:** Task 39 — 全量验证提交推送
+**Completed:** 6 of 7 tasks
 
 ## Session Log
 
@@ -72,6 +72,14 @@
 - 子代理审查因 Claude 账户 `403 insufficient balance` 未执行；改为本地差异审查，并补修 MVU move 的 `from/to` 格式及 JSON Patch 语义校验。
 - JSON Patch 现拒绝未知操作、非对象项、非数字delta、无to的move、非法JSON Pointer和只读路径。
 - 项目第二 API 配置仍为空默认值，独立预览没有酒馆 `generateRaw`，因此未向用户的第二 API 端口发送真实请求；仅通过桩测试验证调用参数与重试逻辑。
+
+### 2026-08-01 — 真实酒馆调用链修复
+- 重新读取 `_types_split/06-generate.txt`、`14-events.txt`、`15-ejs-mvu.txt` 与 `slash_command_split/03-q-z.txt`。
+- 主生成改用 `/trigger await=true`，并监听 `tavern_events.GENERATION_ENDED(message_id)`；不再把 `iframe_events` 的静默生成事件当主回复完成。
+- JSON Patch 在交给 Mvu 前转换为 `_.set/_.add/_.insert/_.delete/_.move`，消息仍保留原始 JSON Patch 供审计。
+- 增加持久请求状态条、第二 API generation_id/目标主机/重试/耗时状态与设置页连接测试。
+- 确定性归寝完成后立即弹账簿；额外 AI 失败仍保留结算结果并显示错误。
+- MVU 初始化接受 `waitGlobalInitialized('Mvu')` 返回接口；真实酒馆写回失败不再静默成功。
 
 ## Decisions Made
 - 2026-07-31 所有金额变量以整数铜币存储；`1金=100银=10000铜`；现有数值不迁移，`50000=5金`。

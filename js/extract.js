@@ -70,6 +70,45 @@ const Extract = {
     return path.split('/').slice(1).some((part) => part.replace(/~1/g, '/').replace(/~0/g, '~').startsWith('_'));
   },
 
+  _pointerParts(path) {
+    if (!this._validPointer(path)) throw new Error('非法 JSON Pointer: ' + path);
+    return path.split('/').slice(1).map((part) => part.replace(/~1/g, '/').replace(/~0/g, '~'));
+  },
+
+  _pointerToMvuPath(path) {
+    return this._pointerParts(path).map((part, index) => {
+      if (/^\d+$/.test(part)) return `[${part}]`;
+      if (!/[.\[\]'"\\]/.test(part)) return (index ? '.' : '') + part;
+      return `[${JSON.stringify(part)}]`;
+    }).join('');
+  },
+
+  patchToMvuCommands(rawText) {
+    const tag = this.normalizeUpdateVariable(rawText) || String(rawText || '');
+    const match = tag.match(/<JSONPatch\b[^>]*>([\s\S]*?)<\/JSONPatch>/i);
+    if (!match) throw new Error('缺少合法 JSONPatch');
+    const operations = JSON.parse(match[1].trim());
+    return operations.map((item) => {
+      if (item.op === 'move') return `_.move(${JSON.stringify(this._pointerToMvuPath(item.from))},${JSON.stringify(this._pointerToMvuPath(item.to))})`;
+      const path = this._pointerToMvuPath(item.path);
+      if (item.op === 'replace') return `_.set(${JSON.stringify(path)},${JSON.stringify(item.value)})`;
+      if (item.op === 'delta') return `_.add(${JSON.stringify(path)},${JSON.stringify(item.value)})`;
+      if (item.op === 'insert' || item.op === 'remove') {
+        const parts = this._pointerParts(item.path);
+        if (!parts.length) throw new Error('不能在变量根执行 ' + item.op);
+        const key = parts.pop();
+        const parentPointer = '/' + parts.map((part) => part.replace(/~/g, '~0').replace(/\//g, '~1')).join('/');
+        const parent = parts.length ? this._pointerToMvuPath(parentPointer) : '';
+        if (item.op === 'insert') {
+          if (key === '-') return `_.insert(${JSON.stringify(parent)},${JSON.stringify(item.value)})`;
+          return `_.insert(${JSON.stringify(parent)},${JSON.stringify(key)},${JSON.stringify(item.value)})`;
+        }
+        return `_.delete(${JSON.stringify(parent)},${JSON.stringify(key)})`;
+      }
+      throw new Error('不支持的更新操作: ' + item.op);
+    }).join(';\n');
+  },
+
   /** 仅接受包含 Analysis 与语义合法 JSON Patch 数组的完整更新标签。 */
   normalizeUpdateVariable(rawText) {
     const tagged = this.extractUpdateVariable(rawText);

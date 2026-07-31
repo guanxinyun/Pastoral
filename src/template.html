@@ -86,6 +86,10 @@
           <p class="muted">正在展卷……</p>
         </div>
         <div class="journal__choices" id="choices"></div>
+        <div class="request-status" id="requestStatus" role="status" aria-live="polite" hidden>
+          <span class="request-status__spinner" aria-hidden="true"></span>
+          <span class="request-status__copy"><strong data-request-status-title>准备就绪</strong><small data-request-status-message></small></span>
+        </div>
         <form class="composer" id="composer" autocomplete="off">
           <textarea class="composer__input" id="composerInput" rows="1"
             placeholder="写下你的行动……（Enter 发送 · Shift+Enter 换行）" aria-label="输入行动"></textarea>

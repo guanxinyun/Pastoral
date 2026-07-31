@@ -18,6 +18,7 @@ const Chat = (function () {
   let composedKind = 'normal';
   let requestSeq = 0;
   let generationCycle = 0;
+  let completedMessageId = null;
   const generationWaiters = [];
   let messages = [];
 
@@ -35,18 +36,17 @@ const Chat = (function () {
 
   /* ---------- 生成状态 ---------- */
   function bindGenerationEvents() {
-    if (typeof eventOn !== 'function' || typeof iframe_events === 'undefined') return;
+    if (typeof eventOn !== 'function' || typeof tavern_events === 'undefined') return;
     try {
-      eventOn(iframe_events.GENERATION_STARTED, () => { generating = true; });
-      const finish = () => {
+      eventOn(tavern_events.GENERATION_STARTED, () => { generating = true; });
+      const finish = (messageId) => {
         generating = false;
+        if (Number.isFinite(Number(messageId))) completedMessageId = Number(messageId);
         generationCycle++;
         generationWaiters.splice(0).forEach((resolve) => resolve(generationCycle));
       };
-      eventOn(iframe_events.GENERATION_ENDED, finish);
-      if (typeof tavern_events !== 'undefined') {
-        eventOn(tavern_events.GENERATION_STOPPED, finish);
-      }
+      eventOn(tavern_events.GENERATION_ENDED, finish);
+      eventOn(tavern_events.GENERATION_STOPPED, () => finish(null));
     } catch (e) { /* ignore */ }
   }
 
@@ -312,6 +312,18 @@ const Chat = (function () {
     return true;
   }
 
+  function setRequestStatus(title, message, loading) {
+    const status = document.getElementById('requestStatus');
+    if (!status) return;
+    status.hidden = false;
+    status.classList.toggle('is-loading', !!loading);
+    status.classList.toggle('is-error', title.includes('失败'));
+    const titleNode = status.querySelector('[data-request-status-title]');
+    const messageNode = status.querySelector('[data-request-status-message]');
+    if (titleNode) titleNode.textContent = title;
+    if (messageNode) messageNode.textContent = message || '';
+  }
+
   function setBusy(on) {
     busy = !!on;
     const ta = document.getElementById('composerInput');
@@ -333,19 +345,18 @@ const Chat = (function () {
     });
   }
 
-  async function waitForMainReply(beforeId, token, startCycle) {
-    const ended = await waitForGenerationEnd(startCycle, 120000);
+  async function waitForMainReply(beforeId, token, startCycle, generationAlreadyAwaited) {
+    const ended = generationAlreadyAwaited ? true : await waitForGenerationEnd(startCycle, 120000);
     const started = Date.now();
     while (token === requestSeq && Date.now() - started < 5000) {
-      const id = lastId();
+      const id = completedMessageId != null ? completedMessageId : lastId();
       if (id > beforeId) {
         const latest = (typeof getChatMessages === 'function' ? getChatMessages(id) : [])[0];
-        if (!latest || latest.role !== 'user') return id;
+        if (latest && latest.role !== 'user') return id;
       }
       await new Promise((resolve) => setTimeout(resolve, 120));
     }
-    if (!ended) console.warn('[Pastoral][MainAPI]', '未收到生成结束事件，按当前最新楼层降级处理');
-    return lastId();
+    throw new Error(ended ? '主模型生成完成，但未找到新的 AI 楼层' : '等待主模型生成结束超时');
   }
 
   /** 唯一发送入口：主剧情完成后按模式执行变量后处理。 */
@@ -361,6 +372,7 @@ const Chat = (function () {
     const token = ++requestSeq;
     const beforeId = lastId();
     const startCycle = generationCycle;
+    completedMessageId = null;
     const baseline = window.MVU && MVU.getDataSnapshot ? MVU.getDataSnapshot() : null;
     const mode = window.Settings ? Settings.load().apiMode : 'single';
     setBusy(true);
@@ -368,10 +380,14 @@ const Chat = (function () {
     lastHash = null;
     console.info('[Pastoral][MainAPI]', '开始', { beforeId, purpose });
     try {
-      await exec('/send ' + escSlash(body));
+      setRequestStatus('发送主剧情', '正在添加玩家行动…', false);
+      const sent = await exec('/send ' + escSlash(body));
+      if (sent === undefined && typeof triggerSlash !== 'function') throw new Error('酒馆发送接口不可用');
       poll();
-      await exec('/trigger');
-      const messageId = await waitForMainReply(beforeId, token, startCycle);
+      setRequestStatus('等待主模型', '主模型正在生成回复…', true);
+      if (typeof triggerSlash !== 'function') throw new Error('当前酒馆不支持可等待的 triggerSlash');
+      await exec('/trigger await=true');
+      const messageId = await waitForMainReply(beforeId, token, startCycle, true);
       console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
       let calculated = null, settledData = null;
       if (purpose === 'endday' && mode === 'multi' && window.ApiEngine) {
@@ -379,10 +395,12 @@ const Chat = (function () {
       }
       if (window.MVU) {
         if (purpose === 'endday' && typeof MVU.settleAndWrite === 'function') {
+          setRequestStatus('执行确定性结算', '正在扣除薪资与维护费、推进作物并重算引力…', true);
           const settled = await MVU.settleAndWrite(messageId, 'endday-message-' + messageId);
           settledData = settled.data;
           calculated = Object.assign({}, settled.report, { facilityGravity: settled.calculated && settled.calculated.dimensions });
           window.dispatchEvent(new CustomEvent('pastoral:request-stage', { detail: { stage: 'settled', calculated } }));
+          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: '确定性结算已完成，正在等待跨日变量更新…', source: 'script', pending: true }, calculated) }));
         } else if (typeof MVU.syncFacilityGravity === 'function') {
           const synced = await MVU.syncFacilityGravity(messageId);
           calculated = { facilityGravity: synced.calculated.dimensions, totalGravity: synced.calculated.total };
@@ -390,11 +408,17 @@ const Chat = (function () {
       }
       if (window.ApiEngine) {
         let outcome = null;
-        if (purpose === 'endday') outcome = await ApiEngine.processEndday({ baseline: window.MVU ? MVU.getDataSnapshot() : baseline, messageId, purpose, calculated });
-        else if (mode === 'multi') outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose, calculated });
-        if (purpose === 'endday' && outcome && outcome.ok) {
-          if (settledData && window.MVU && typeof MVU.enforceAndWrite === 'function') await MVU.enforceAndWrite(settledData, messageId);
-          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: outcome.summary, source: outcome.source }, calculated || {}) }));
+        if (purpose === 'endday') {
+          setRequestStatus('归寝日结', '正在执行跨日变量更新…', true);
+          outcome = await ApiEngine.processEndday({ baseline: window.MVU ? MVU.getDataSnapshot() : baseline, messageId, purpose, calculated });
+        } else if (mode === 'multi') {
+          setRequestStatus('第二 API', '正在计算本轮变量更新…', true);
+          outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose, calculated });
+        }
+        if (purpose === 'endday' && settledData) {
+          if (window.MVU && typeof MVU.enforceAndWrite === 'function') await MVU.enforceAndWrite(settledData, messageId);
+          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: outcome && outcome.summary, source: outcome && outcome.source, updateOk: !!(outcome && outcome.ok), updateError: outcome && outcome.error ? String(outcome.error.message || outcome.error) : '' }, calculated || {}) }));
+          setRequestStatus(outcome && outcome.ok ? '归寝完成' : '归寝结算完成，变量更新失败', outcome && outcome.ok ? '账簿已更新。' : '确定性结算已保留，请检查第二 API 或主 API。', false);
         }
       }
       const composer = document.getElementById('composerInput');

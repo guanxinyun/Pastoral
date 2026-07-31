@@ -88,14 +88,19 @@ const MVU = {
     return { data: next, calculated: prepared.calculated, skipped: false, report };
   },
 
+  api: null,
+  initError: null,
+
   async init() {
-    if (typeof waitGlobalInitialized === 'function') {
-      try {
-        await waitGlobalInitialized('Mvu');
-        this.ready = (typeof Mvu !== 'undefined');
-      } catch (e) {
-        this.ready = false;
-      }
+    if (typeof waitGlobalInitialized !== 'function') return;
+    try {
+      const api = await waitGlobalInitialized('Mvu');
+      this.api = (typeof Mvu !== 'undefined' && Mvu) || api || null;
+      this.ready = !!(this.api && typeof this.api.getMvuData === 'function' && typeof this.api.replaceMvuData === 'function');
+      if (!this.ready) throw new Error('Mvu 未暴露完整读写接口');
+    } catch (e) {
+      this.ready = false;
+      this.initError = e;
     }
   },
 
@@ -116,8 +121,8 @@ const MVU = {
   /** 取 lastMessageId 对应的完整 MvuData 独立快照。 */
   getDataSnapshot() {
     try {
-      if (this.ready && typeof Mvu !== 'undefined') {
-        const data = Mvu.getMvuData({ type: 'message', message_id: this.latestMessageId() });
+      if (this.ready && this.api) {
+        const data = this.api.getMvuData({ type: 'message', message_id: this.latestMessageId() });
         if (data) return this.clone(data);
       }
     } catch (e) { /* fall through */ }
@@ -159,8 +164,11 @@ const MVU = {
   },
 
   async writeData(data, messageId) {
-    if (!this.ready || typeof Mvu === 'undefined' || typeof Mvu.replaceMvuData !== 'function') return false;
-    await Mvu.replaceMvuData(data, { type: 'message', message_id: messageId == null ? this.latestMessageId() : messageId });
+    if (!this.ready || !this.api || typeof this.api.replaceMvuData !== 'function') {
+      if (typeof getLastMessageId !== 'function') return false;
+      throw new Error('MVU 写回接口未就绪' + (this.initError ? '：' + (this.initError.message || this.initError) : ''));
+    }
+    await this.api.replaceMvuData(data, { type: 'message', message_id: messageId == null ? this.latestMessageId() : messageId });
     return true;
   },
 
@@ -172,7 +180,10 @@ const MVU = {
 
   async settleAndWrite(messageId, settlementId) {
     const settled = this.settleDay(this.getDataSnapshot(), settlementId);
-    if (!settled.skipped) await this.writeData(settled.data, messageId);
+    if (!settled.skipped) {
+      const written = await this.writeData(settled.data, messageId);
+      if (!written && typeof getLastMessageId === 'function') throw new Error('确定性日结未能写回 MVU');
+    }
     return settled;
   },
 
@@ -183,7 +194,7 @@ const MVU = {
   },
 
   isLive() {
-    return this.ready && typeof Mvu !== 'undefined' && typeof getLastMessageId === 'function';
+    return this.ready && this.api && typeof getLastMessageId === 'function';
   }
 };
 window.MVU = MVU;
