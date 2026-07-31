@@ -46,6 +46,11 @@ const Chat = (function () {
         generationWaiters.splice(0).forEach((resolve) => resolve(generationCycle));
       };
       eventOn(tavern_events.GENERATION_ENDED, finish);
+      if (tavern_events.MESSAGE_RECEIVED) {
+        eventOn(tavern_events.MESSAGE_RECEIVED, (messageId) => {
+          if (Number.isFinite(Number(messageId))) completedMessageId = Number(messageId);
+        });
+      }
       eventOn(tavern_events.GENERATION_STOPPED, () => finish(null));
     } catch (e) { /* ignore */ }
   }
@@ -349,8 +354,11 @@ const Chat = (function () {
     const ended = generationAlreadyAwaited ? true : await waitForGenerationEnd(startCycle, 120000);
     const started = Date.now();
     while (token === requestSeq && Date.now() - started < 5000) {
-      const id = completedMessageId != null ? completedMessageId : lastId();
-      if (id > beforeId) {
+      const ids = [completedMessageId, lastId()]
+        .map(Number)
+        .filter((id, index, list) => Number.isFinite(id) && id > beforeId && list.indexOf(id) === index)
+        .sort((a, b) => b - a);
+      for (const id of ids) {
         const latest = (typeof getChatMessages === 'function' ? getChatMessages(id) : [])[0];
         if (latest && latest.role !== 'user') return id;
       }
@@ -389,18 +397,28 @@ const Chat = (function () {
       await exec('/trigger await=true');
       const messageId = await waitForMainReply(beforeId, token, startCycle, true);
       console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
-      let calculated = null, settledData = null;
+      let calculated = null, settledData = null, pendingFirstWrite = null;
       if (purpose === 'endday' && mode === 'multi' && window.ApiEngine) {
         await ApiEngine.processAfterMain({ baseline, messageId, purpose: 'normal', calculated: null });
       }
       if (window.MVU) {
-        if (purpose === 'endday' && typeof MVU.settleAndWrite === 'function') {
+        if (purpose === 'endday' && typeof MVU.settleForWrite === 'function') {
           setRequestStatus('执行确定性结算', '正在扣除薪资与维护费、推进作物并重算引力…', true);
-          const settled = await MVU.settleAndWrite(messageId, 'endday-message-' + messageId);
+          const settled = MVU.settleForWrite(messageId, 'endday-message-' + messageId);
           settledData = settled.data;
           calculated = Object.assign({}, settled.report, { facilityGravity: settled.calculated && settled.calculated.dimensions });
           window.dispatchEvent(new CustomEvent('pastoral:request-stage', { detail: { stage: 'settled', calculated } }));
           window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: '确定性结算已完成，正在等待跨日变量更新…', source: 'script', pending: true }, calculated) }));
+          if (!settled.skipped && typeof MVU.writeWithTimeout === 'function') {
+            setRequestStatus('写回确定性结算', '正在保存今日账簿…', true);
+            const firstWrite = await MVU.writeWithTimeout(settled.data, messageId, 3000);
+            if (!firstWrite.ok) {
+              if (firstWrite.timedOut && firstWrite.pending) pendingFirstWrite = firstWrite.pending;
+              const reason = firstWrite.error && firstWrite.error.message || '未知错误';
+              console.warn('[Pastoral][MVU]', '首次日结写回未完成，继续跨日变量更新', reason);
+              setRequestStatus('写回暂未完成', '将继续跨日变量更新，并在结束时再次写回。', true);
+            }
+          }
         } else if (typeof MVU.syncFacilityGravity === 'function') {
           const synced = await MVU.syncFacilityGravity(messageId);
           calculated = { facilityGravity: synced.calculated.dimensions, totalGravity: synced.calculated.total };
@@ -416,16 +434,35 @@ const Chat = (function () {
           outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose, calculated });
         }
         if (purpose === 'endday' && settledData) {
-          if (window.MVU && typeof MVU.enforceAndWrite === 'function') await MVU.enforceAndWrite(settledData, messageId);
-          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: outcome && outcome.summary, source: outcome && outcome.source, updateOk: !!(outcome && outcome.ok), updateError: outcome && outcome.error ? String(outcome.error.message || outcome.error) : '' }, calculated || {}) }));
-          setRequestStatus(outcome && outcome.ok ? '归寝完成' : '归寝结算完成，变量更新失败', outcome && outcome.ok ? '账簿已更新。' : '确定性结算已保留，请检查第二 API 或主 API。', false);
+          let writeError = null;
+          if (window.MVU && typeof MVU.enforceAndWrite === 'function') {
+            setRequestStatus('锁定确定性事实', '正在执行最终 MVU 写回…', true);
+            try { await MVU.enforceAndWrite(settledData, messageId); }
+            catch (error) { writeError = error; }
+          }
+          const updateError = writeError
+            ? '最终 MVU 写回失败：' + (writeError.message || writeError)
+            : (outcome && outcome.error ? String(outcome.error.message || outcome.error) : '');
+          const complete = !!(outcome && outcome.ok) && !writeError;
+          if (pendingFirstWrite && window.MVU && typeof MVU.enforceAndWrite === 'function') {
+            pendingFirstWrite.then(
+              () => MVU.enforceAndWrite(settledData, messageId),
+              (error) => console.warn('[Pastoral][MVU]', '迟到的首次日结写回失败', error && error.message || error)
+            ).catch((error) => console.error('[Pastoral][MVU]', '迟到写回后的事实锁定失败', error && error.message || error));
+          }
+          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: outcome && outcome.summary, source: outcome && outcome.source, updateOk: complete, updateError }, calculated || {}) }));
+          setRequestStatus(complete ? '归寝完成' : '归寝部分完成', complete ? '账簿已更新。' : updateError || '确定性结算已保留，但变量更新未完整完成。', false);
         }
+      }
+      if (purpose !== 'endday' && mode !== 'multi') {
+        setRequestStatus('主剧情完成', '回复与变量已由酒馆处理。', false);
       }
       const composer = document.getElementById('composerInput');
       if (composer && String(composer.value || '').trim() === body) { composer.value = ''; autoGrow(composer); }
       return true;
     } catch (e) {
       console.error('[Pastoral][MainAPI]', '发送失败', e);
+      setRequestStatus('主剧情失败', String(e && e.message || e), false);
       toast('error', '发送失败', String(e && e.message || e));
       return false;
     } finally {

@@ -172,6 +172,27 @@ const MVU = {
     return true;
   },
 
+  async writeWithTimeout(data, messageId, timeout = 3000) {
+    let timer;
+    const pending = this.writeData(data, messageId);
+    try {
+      const written = await Promise.race([
+        pending,
+        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('MVU 写回超时（' + timeout + 'ms）')), timeout); })
+      ]);
+      return { ok: !!written, timedOut: false };
+    } catch (error) {
+      const timedOut = /超时/.test(String(error && error.message || error));
+      return { ok: false, timedOut, error, pending: timedOut ? pending : null };
+    } finally {
+      clearTimeout(timer);
+    }
+  },
+
+  settleForWrite(messageId, settlementId) {
+    return this.settleDay(this.getDataSnapshot(), settlementId || ('endday-message-' + messageId));
+  },
+
   async syncFacilityGravity(messageId) {
     const applied = this.applyFacilityGravity(this.getDataSnapshot());
     await this.writeData(applied.data, messageId);

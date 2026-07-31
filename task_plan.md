@@ -1,67 +1,59 @@
-# Task Plan: 铜币货币制与双阶段变量更新
+# Task Plan: 主模型生命周期、归寝流水线与变量预设
 
-**Created:** 2026-07-31 19:20
+**Created:** 2026-08-01 01:30
 **Status:** completed
-**Goal:** 修复真实酒馆的主生成等待、第二 API 可见请求、MVU 写回和归寝确定性账簿链路，确保失败也有明确反馈。
+**Goal:** 修复主回复完成状态与归寝写回阻塞，并为普通/归寝变量更新增加可持久化的三态酒馆预设控制。
 
 ## Architecture
 
-新增独立货币工具模块，所有页面统一把整数铜币格式化为金/银/铜。变量规则维持两个阶段：主模型每次回复后执行日常更新；归寝时先保留/完成该日常更新，再由 `MVU.settleDay()` 执行确定性日结，最后额外调用归寝规则并由 `enforceSettlementFacts()` 锁回确定事实。AI 统一使用带 `Analysis` 与合法 `JSONPatch` 的 `UpdateVariable`，不再以 lodash 命令作为正式协议。
+主剧情继续使用酒馆原生 `/send` 与 `/trigger await=true`，通过消息事件和楼层轮询组合确认新 AI 回复。变量请求统一经过预设策略解析器：默认使用自动维护的 Pastoral 空白预设，或按玩家设置跟随/固定酒馆预设。归寝将内存结算和 MVU 写回拆开，首次写回使用有限等待且不阻断变量 API，最终再锁定并写回确定性事实。
 
 ## Task Breakdown
 
-### Task 1: 建立共享铜币格式化工具
-- **Description:** 先写边界失败测试，再新增共享 Money 模块，将 HUD、预报、今日变化和归寝账簿统一改为铜币格式。
-- **Files to touch:** `js/money.js`, `build.js`, `js/render.js`, `js/app.js`, `test/money.js`, `package.json`
-- **Tests:** `0/99/100/9999/10000/50123/-10123`；`50000 → 5金`；账簿不再显示裸数。
+### Task 1: 持久化变量预设设置
+- **Description:** 先扩充设置测试，再添加普通/归寝独立的 mode、presetName 与八项上下文开关，保持未知字段兼容。
+- **Files to touch:** `test/settings.js`, `js/settings.js`
+- **Tests:** 默认 none；非法模式归一化；两阶段独立保存；上下文布尔化；旧字段保留。
 - **Dependencies:** 无
-- **Acceptance:** `node test/money.js` 与相关 smoke 测试通过。
+- **Acceptance:** `node test/settings.js` 通过。
 - **Status:** [X] done
 
-### Task 2: 补强确定性日结契约
-- **Description:** 先增加逐项断言，确认并按需修复日薪、维护费、普通/魔法作物天数、所有每日标记、六维设施引力、总引力、结算资金、防重和 AI 回写锁定。
-- **Files to touch:** `test/api.js`, `js/mvu.js`
-- **Tests:** 设计规格中八项确定性契约分别有明确断言；含普通农田标记和总引力锁定。
+### Task 2: 构建空白预设与请求策略
+- **Description:** 先写失败测试，再实现空白预设生成、none/current/fixed 解析、固定预设缺失回退，以及变量/连接测试统一使用 generate + preset_name。
+- **Files to touch:** `test/api.js`, `js/api.js`
+- **Tests:** 三种模式；占位符开关；人工提示词/扩展清除；不切换 in_use；连接测试复用 normal 策略；旧环境 none 回退 generateRaw。
 - **Dependencies:** Task 1
-- **Acceptance:** 每个脚本确定事实都有通过的自动化测试，且同一结算 ID 不重复应用。
+- **Acceptance:** API 单元测试确认请求参数和预设内容正确。
 - **Status:** [X] done
 
-### Task 3: 修正日常→脚本→归寝编排
-- **Description:** 先写失败流程测试；普通回复维持一次日常更新，归寝在多 API 模式先执行日常变量后处理，再确定性结算，再额外执行归寝后处理；单 API 模式复用主剧情已有日常更新后执行脚本和额外归寝更新。
-- **Files to touch:** `js/chat.js`, `js/api.js`, `test/api.js`
-- **Tests:** 普通多 API 一次后处理；归寝多 API 两次且 purpose 顺序为 normal/endday；确定性结算位于两者之间；单 API 只额外调用一次归寝；失败降级不覆盖最新快照。
+### Task 3: 修复主模型组合结束检测与状态收尾
+- **Description:** 先增加事件缺失和普通单 API 状态测试，再组合 MESSAGE_RECEIVED、GENERATION_ENDED 与楼层轮询，并确保所有完成/失败路径停止加载。
+- **Files to touch:** `test/api.js`, `js/chat.js`
+- **Tests:** awaited trigger；无结束事件有新楼层；拒绝旧/用户楼层；普通单 API 显示完成；多 API 失败显示明确状态。
 - **Dependencies:** Task 2
-- **Acceptance:** 流程顺序被自动化测试锁定，不再以归寝更新替代本轮日常更新。
+- **Acceptance:** 主回复结束后不再停留“等待主模型”，且只处理本次新 AI 楼层。
 - **Status:** [X] done
 
-### Task 4: 统一并验证 JSON Patch 输出协议
-- **Description:** 先写失败测试，再让提取器验证 `UpdateVariable` 中的 `JSONPatch` 为合法数组，拒绝裸 lodash 命令和非法 JSON；更新第二 API 提示、错误信息、世界书规则/格式条目读取及测试样例。
-- **Files to touch:** `js/extract.js`, `js/api.js`, `test/api.js`
-- **Tests:** 合法 patch 接受；空数组接受；非法 JSON、非数组、裸 lodash 拒绝；提示包含阶段、铜币和防重复约束；规则与输出格式均进入第二 API 上下文。
+### Task 4: 使归寝写回不阻断后续 API
+- **Description:** 先写悬挂 Promise 流程测试，再将内存结算、首次限时写回、归寝 API、最终事实锁定与最终写回拆分。
+- **Files to touch:** `test/api.js`, `js/mvu.js`, `js/chat.js`
+- **Tests:** 首次写回悬挂后仍调用 endday API；首次超时仅警告；最终失败不报成功；结算 ID 防重复。
 - **Dependencies:** Task 3
-- **Acceptance:** 主/副 API 正式协议均为 MVU JSON Patch，解析器和提示不再宣称支持 lodash 命令。
+- **Acceptance:** 归寝不会卡在确定性结算且会发起对应 API；最终落盘结果可核验。
 - **Status:** [X] done
 
-### Task 5: 整理日常与归寝更新指导
-- **Description:** 将重复初稿合并为唯一日常规则与唯一归寝规则；保留心之宝石、成长、任务种子等有用参考，并明确货币、触发阶段与脚本禁止重复项。
-- **Files to touch:** `变量更新指导.txt`
-- **Tests:** 文档结构检查：各阶段标题仅一次；铜币换算存在；八项脚本事实存在；日常/归寝职责和禁区明确。
-- **Dependencies:** Tasks 2-4
-- **Acceptance:** 文件无重复整章、无互相冲突规则，细节足以约束 AI。
+### Task 5: 增加变量预设设置界面
+- **Description:** 在设置对话框增加第三页，渲染两类请求的模式、固定预设下拉和 none 模式上下文开关，并保存/恢复状态。
+- **Files to touch:** `js/app.js`, `css/components.css`, `test/smoke.js`
+- **Tests:** UI 结构与标签；三种模式；两阶段控件；上下文开关；持久化调用；内部预设不出现在固定列表。
+- **Dependencies:** Tasks 1-2
+- **Acceptance:** 键盘和触控可操作，模式切换显隐正确，重新打开恢复设置。
 - **Status:** [X] done
 
-### Task 6: 扩充变量更新输出格式护栏
-- **Description:** 在现有内容基础上保留分析结构和操作定义，补全阶段判断、证据约束、路径/父级选择、delta 计算、去重、铜币换算、正确示例与反例。
-- **Files to touch:** `变量更新输出格式.txt`
-- **Tests:** 文档结构检查：Analysis/JSONPatch、五类操作、只读限制、六类示例、反例和无变化规则齐全。
-- **Dependencies:** Task 4
-- **Acceptance:** 文件不是精简骨架，AI 即使只依赖此格式条目也能避免常见乱更新。
-- **Status:** [X] done
-
-### Task 7: 全量构建、运行与审查
-- **Description:** 重建内联页面，运行完整测试和静态检查，实际启动项目验证资金显示与归寝流程，审查变更后仅提交本任务文件并推送 `origin/main`。
-- **Files to touch:** `index.html`（构建产物）及必要测试修正
-- **Tests:** `npm test`, `node --check`, `git diff --check`，实际页面检查 `50000 → 5金` 和归寝账簿单位。
-- **Dependencies:** Tasks 1-6
-- **Acceptance:** 全套测试通过、运行验证成功、代码审查无阻断问题、提交推送完成；不纳入用户无关改动。
+### Task 6: 全量构建与回归验证
+- **Description:** 重建自包含页面，运行完整测试、静态检查和差异检查，修复回归后仅提交本任务文件并推送。
+- **Files to touch:** `index.html`, `progress.md`, `task_plan.md` 及必要回归文件
+- **Tests:** `npm test`; `node --check` 修改脚本；`git diff --check`；必要的实际运行检查。
+- **Dependencies:** Tasks 1-5
+- **Acceptance:** 全套验证通过；不纳入用户已有未提交文档/拆分文件；提交推送到 `origin/main`。
 - **Status:** [X] done

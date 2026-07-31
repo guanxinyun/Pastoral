@@ -55,10 +55,22 @@ function load(floor, opts = {}) {
       };
       win.setChatMessages = async (arr) => { calls.set.push(arr); arr.forEach((u) => { const m = chat.find((c) => c.message_id === u.message_id); if (m && u.message !== undefined) m.message = u.message; }); };
       win.deleteChatMessages = async (ids) => { calls.del.push(ids); ids.forEach((id) => { const i = chat.findIndex((c) => c.message_id === id); if (i >= 0) chat.splice(i, 1); }); };
-      win.triggerSlash = async (cmd) => { calls.slash.push(cmd); };
+      win.triggerSlash = async (cmd) => {
+        calls.slash.push(cmd);
+        if (cmd === '/trigger await=true') {
+          const nextId = chat[chat.length - 1].message_id + 1;
+          chat.push({ message_id: nextId, role: 'assistant', name: '暮归旅店', is_hidden: false, message: '<p>新的回复。</p>' });
+        }
+      };
       win.waitGlobalInitialized = async () => {};
       win.formatAsTavernRegexedString = (t) => t;
-      win.Mvu = { getMvuData: (options) => { calls.mvuGet.push(options); return { stat_data: null, marker: 'latest-snapshot' }; } };
+      win.Mvu = {
+        getMvuData: (options) => { calls.mvuGet.push(options); return { stat_data: null, marker: 'latest-snapshot' }; },
+        replaceMvuData: async () => true
+      };
+      win.getPresetNames = () => ['剧情预设', '变量专用'];
+      win.default_preset = { settings: {}, prompts: [], prompts_unused: [], extensions: {} };
+      win.createOrReplacePreset = async () => true;
       win.eventOn = () => {};
       win.iframe_events = { GENERATION_STARTED: 'a', GENERATION_ENDED: 'b' };
       win.tavern_events = { GENERATION_STOPPED: 'c' };
@@ -91,6 +103,19 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(!!doc.getElementById('retrySecondApi'), '设置中提供手动重试第二 API 操作');
     ok(!!doc.getElementById('testSecondApi'), '设置中提供第二 API 连接测试');
     ok(!!doc.querySelector('[data-settings-tab="prompts"]'), '设置提供独立更新提示词页面');
+    ok(!!doc.querySelector('[data-settings-tab="presets"]'), '设置提供独立变量请求预设页面');
+    doc.querySelector('[data-settings-tab="presets"]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    const normalMode = doc.querySelector('[name="normalPresetMode"]');
+    const enddayMode = doc.querySelector('[name="enddayPresetMode"]');
+    ok(normalMode && enddayMode && normalMode.value === 'none' && enddayMode.value === 'none', '普通与归寝变量请求默认均为不带预设');
+    ok(doc.querySelectorAll('[data-preset-context="normal"] input[type="checkbox"]').length === 8, '普通变量请求提供八项无预设上下文开关');
+    normalMode.value = 'fixed'; normalMode.dispatchEvent(new win.Event('change', { bubbles: true }));
+    const normalFixed = doc.querySelector('[name="normalPresetName"]');
+    ok(!normalFixed.closest('[data-preset-fixed]').hidden && normalFixed.options.length === 2, '固定模式显示酒馆预设列表且排除内部预设');
+    normalFixed.value = '变量专用';
+    doc.getElementById('presetSettingsForm').dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
+    let savedSettings = JSON.parse(win.localStorage.getItem('mrfz_settings'));
+    ok(savedSettings.variablePresets.normal.mode === 'fixed' && savedSettings.variablePresets.normal.presetName === '变量专用', '变量预设设置保存到网页缓存');
     doc.querySelector('[data-settings-tab="prompts"]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
     const normalPrompt = doc.querySelector('[name="normalPrompt"]');
     const enddayPrompt = doc.querySelector('[name="enddayPrompt"]');
@@ -98,8 +123,15 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(normalPrompt.value === '' && enddayPrompt.value === '', '提示词输入框默认保持空白');
     normalPrompt.value = '玩家普通提示'; enddayPrompt.value = '玩家日结提示';
     doc.getElementById('promptSettingsForm').dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
-    const savedSettings = JSON.parse(win.localStorage.getItem('mrfz_settings'));
+    savedSettings = JSON.parse(win.localStorage.getItem('mrfz_settings'));
     ok(savedSettings.prompts.normal === '玩家普通提示' && savedSettings.prompts.endday === '玩家日结提示', '提示词可从设置页面保存到网页缓存');
+    doc.querySelector('.settings-pop__close').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+
+    win.Settings.save({ variablePresets: { normal: { mode: 'fixed', presetName: '已删除预设' } } });
+    doc.getElementById('settingsBtn').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    doc.querySelector('[data-settings-tab="presets"]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    const missingPreset = doc.querySelector('[name="normalPresetName"]');
+    ok(missingPreset.value === '已删除预设' && /已不存在/.test(missingPreset.selectedOptions[0].textContent), '已删除的固定预设保持原设置并明确提示修正');
     doc.querySelector('.settings-pop__close').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
 
     const bubs = doc.querySelectorAll('#stream .bub:not(.bub--typing)');

@@ -1198,7 +1198,7 @@ body.is-immersive .journal__stream {
 /* ---------- 设置浮卡 ---------- */
 .settings-backdrop { z-index: 420; }
 .settings-pop { position: relative; width: min(680px, 100%); max-height: min(760px, calc(100vh - 32px)); overflow-y: auto; padding: var(--space-6); border-radius: var(--radius-xl); background: linear-gradient(165deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border-strong); box-shadow: var(--shadow-float); animation: toastIn var(--t-slow) var(--ease-page) both; }
-.settings-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin-bottom: var(--space-4); }
+.settings-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); margin-bottom: var(--space-4); }
 .settings-tab { min-height: 44px; padding: var(--space-2) var(--space-3); color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-deep); cursor: pointer; transition: color var(--t-base), border-color var(--t-base), background var(--t-base); }
 .settings-tab:hover, .settings-tab:focus-visible { color: var(--color-primary); border-color: var(--color-primary); }
 .settings-tab.is-active { color: var(--color-text); border-color: var(--color-primary); background: var(--amber-glow); }
@@ -1221,6 +1221,15 @@ body.is-immersive .journal__stream {
 .set-input { width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-deep); color: var(--color-text); font-family: var(--font-sans); font-size: var(--font-size-sm); transition: border-color var(--t-base), box-shadow var(--t-base); }
 .set-input:focus { outline: none; border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); }
 .set-notice { margin-top: var(--space-3); margin-bottom: 0; }
+.preset-card { gap: var(--space-3); }
+.preset-context[hidden], [data-preset-fixed][hidden] { display: none; }
+.preset-context { display: grid; gap: var(--space-2); }
+.preset-context__grid { display: grid; grid-template-columns: 1fr; gap: var(--space-2); }
+.preset-check { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: var(--space-2) var(--space-3); color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-deep); cursor: pointer; transition: color var(--t-base), border-color var(--t-base), background var(--t-base); }
+.preset-check:hover, .preset-check:focus-within { color: var(--color-text); border-color: var(--color-primary); background: var(--amber-glow); }
+.preset-check input { width: 18px; height: 18px; accent-color: var(--color-primary); }
+@media (min-width: 640px) { .preset-context__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 639px) { .settings-tabs { grid-template-columns: 1fr; } }
 
 /* ---------- 归寝确认 / 每日总结模态框 ---------- */
 .endday-preview { margin-top: var(--space-3); padding: var(--space-3); white-space: pre-wrap; font-family: var(--font-kai); color: var(--color-text); background: var(--color-bg-deep); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
@@ -2144,11 +2153,30 @@ const Settings = (function () {
     normal: '根据最新剧情执行常规变量更新。只更新剧情明确影响的变量，不续写剧情，不重复脚本已经确定的设施引力计算。',
     endday: '完成归寝日结：脚本已结算员工薪资、建筑维护费、作物剩余天数和设施引力；请勿重复这些结算。依据变量规则更新日期、天气、潜在访客池、注意事项及其余未由脚本确定的每日状态。'
   };
+  const VARIABLE_CONTEXT_DEFAULTS = {
+    worldInfoBefore: true,
+    personaDescription: true,
+    charDescription: true,
+    charPersonality: true,
+    scenario: true,
+    worldInfoAfter: true,
+    dialogueExamples: true,
+    chatHistory: true
+  };
+  const variablePresetDefaults = () => ({
+    mode: 'none',
+    presetName: '',
+    context: Object.assign({}, VARIABLE_CONTEXT_DEFAULTS)
+  });
   const DEFAULTS = {
     apiMode: 'single',
     prompts: {
       normal: '',
       endday: ''
+    },
+    variablePresets: {
+      normal: variablePresetDefaults(),
+      endday: variablePresetDefaults()
     },
     secondApi: {
       url: '',
@@ -2179,13 +2207,25 @@ const Settings = (function () {
     catch (e) { return {}; }
   }
 
+  function normalizeVariablePreset(value) {
+    const preset = merge(variablePresetDefaults(), object(value));
+    preset.mode = ['none', 'current', 'fixed'].includes(preset.mode) ? preset.mode : 'none';
+    preset.presetName = String(preset.presetName == null ? '' : preset.presetName).trim();
+    preset.context = merge(VARIABLE_CONTEXT_DEFAULTS, object(preset.context));
+    Object.keys(VARIABLE_CONTEXT_DEFAULTS).forEach((key) => { preset.context[key] = !!preset.context[key]; });
+    return preset;
+  }
+
   function normalize(value) {
     const cfg = merge(DEFAULTS, object(value));
     cfg.apiMode = cfg.apiMode === 'multi' ? 'multi' : 'single';
     if (!isObject(cfg.prompts)) cfg.prompts = merge(DEFAULTS.prompts, {});
+    if (!isObject(cfg.variablePresets)) cfg.variablePresets = {};
     if (!isObject(cfg.secondApi)) cfg.secondApi = merge(DEFAULTS.secondApi, {});
     cfg.prompts.normal = String(cfg.prompts.normal || '');
     cfg.prompts.endday = String(cfg.prompts.endday || '');
+    cfg.variablePresets.normal = normalizeVariablePreset(cfg.variablePresets.normal);
+    cfg.variablePresets.endday = normalizeVariablePreset(cfg.variablePresets.endday);
     cfg.secondApi.url = String(cfg.secondApi.url || '').trim();
     cfg.secondApi.key = String(cfg.secondApi.key || '').trim();
     cfg.secondApi.model = String(cfg.secondApi.model || '').trim();
@@ -2214,7 +2254,7 @@ const Settings = (function () {
     return !!(String(api.url || '').trim() && String(api.key || '').trim() && String(api.model || '').trim());
   }
 
-  return { KEY, DEFAULTS, DEFAULT_PROMPTS, load, save, normalize, promptFor, isSecondApiComplete };
+  return { KEY, DEFAULTS, DEFAULT_PROMPTS, VARIABLE_CONTEXT_DEFAULTS, load, save, normalize, promptFor, isSecondApiComplete };
 })();
 window.Settings = Settings;
 
@@ -2312,6 +2352,31 @@ const Assets = (function () {
   return { available, staffKey, putStaffAvatar, getStaffAvatar, removeStaffAvatar, avatarUrl, cleanup };
 })();
 window.Assets = Assets;
+
+
+/* === money.js === */
+/* ============================================================
+   货币工具 · 所有金额以整数铜币存储
+   1 金 = 100 银 = 10000 铜
+   ============================================================ */
+const Money = {
+  formatCopper(value) {
+    const numeric = Number(value);
+    const copper = Number.isFinite(numeric) ? Math.trunc(numeric) : 0;
+    const sign = copper < 0 ? '−' : '';
+    let rest = Math.abs(copper);
+    const gold = Math.floor(rest / 10000);
+    rest %= 10000;
+    const silver = Math.floor(rest / 100);
+    const coins = rest % 100;
+    const parts = [];
+    if (gold) parts.push(gold + '金');
+    if (silver) parts.push(silver + '银');
+    if (coins || !parts.length) parts.push(coins + '铜');
+    return sign + parts.join('');
+  }
+};
+window.Money = Money;
 
 
 /* === mvu.js === */
@@ -2489,6 +2554,27 @@ const MVU = {
     return true;
   },
 
+  async writeWithTimeout(data, messageId, timeout = 3000) {
+    let timer;
+    const pending = this.writeData(data, messageId);
+    try {
+      const written = await Promise.race([
+        pending,
+        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('MVU 写回超时（' + timeout + 'ms）')), timeout); })
+      ]);
+      return { ok: !!written, timedOut: false };
+    } catch (error) {
+      const timedOut = /超时/.test(String(error && error.message || error));
+      return { ok: false, timedOut, error, pending: timedOut ? pending : null };
+    } finally {
+      clearTimeout(timer);
+    }
+  },
+
+  settleForWrite(messageId, settlementId) {
+    return this.settleDay(this.getDataSnapshot(), settlementId || ('endday-message-' + messageId));
+  },
+
   async syncFacilityGravity(messageId) {
     const applied = this.applyFacilityGravity(this.getDataSnapshot());
     await this.writeData(applied.data, messageId);
@@ -2531,6 +2617,17 @@ const ApiEngine = (function () {
   const PREFIX_MAIN = '[Pastoral][MainAPI]';
   const PREFIX_SECOND = '[Pastoral][SecondAPI]';
   const MAX_SOURCE_LENGTH = 60000;
+  const INTERNAL_PRESET_NAME = '【Pastoral 内部】空白变量更新';
+  const CONTEXT_PROMPTS = {
+    worldInfoBefore: { id: 'worldInfoBefore', name: '世界书（角色定义前）' },
+    personaDescription: { id: 'personaDescription', name: '玩家人格' },
+    charDescription: { id: 'charDescription', name: '角色描述' },
+    charPersonality: { id: 'charPersonality', name: '角色性格' },
+    scenario: { id: 'scenario', name: '场景' },
+    worldInfoAfter: { id: 'worldInfoAfter', name: '世界书（角色定义后）' },
+    dialogueExamples: { id: 'dialogueExamples', name: '示例对话' },
+    chatHistory: { id: 'chatHistory', name: '聊天历史' }
+  };
   let sequence = 0;
   let lastFailure = null;
 
@@ -2636,6 +2733,68 @@ const ApiEngine = (function () {
     return Promise.race([Promise.resolve().then(factory), timeoutPromise]).finally(() => clearTimeout(timer));
   }
 
+  function clone(value) {
+    if (value == null) return value;
+    try { if (typeof structuredClone === 'function') return structuredClone(value); } catch (e) { /* JSON fallback */ }
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function variablePresetConfig(kind, config) {
+    const key = kind === 'endday' ? 'endday' : 'normal';
+    const value = config && config.variablePresets && config.variablePresets[key];
+    return value && typeof value === 'object' ? value : { mode: 'none', presetName: '', context: {} };
+  }
+
+  function availablePresetNames() {
+    try { return typeof getPresetNames === 'function' ? getPresetNames().filter((name) => name !== INTERNAL_PRESET_NAME) : []; }
+    catch (e) { return []; }
+  }
+
+  function buildBlankPreset(context) {
+    if (typeof default_preset === 'undefined') throw new Error('酒馆未提供默认预设模板');
+    const preset = clone(default_preset);
+    preset.prompts = Object.entries(CONTEXT_PROMPTS)
+      .filter(([key]) => !context || context[key] !== false)
+      .map(([, prompt]) => ({
+        id: prompt.id,
+        name: prompt.name,
+        enabled: true,
+        position: { type: 'relative' },
+        role: 'system'
+      }));
+    preset.prompts_unused = [];
+    preset.extensions = preset.extensions && typeof preset.extensions === 'object' ? preset.extensions : {};
+    delete preset.extensions.regex_scripts;
+    delete preset.extensions.tavern_helper;
+    return preset;
+  }
+
+  async function resolvePreset(kind, config) {
+    const selected = variablePresetConfig(kind, config);
+    if (selected.mode === 'current') return { mode: 'current', presetName: 'in_use' };
+    if (selected.mode === 'fixed' && availablePresetNames().includes(selected.presetName)) {
+      return { mode: 'fixed', presetName: selected.presetName };
+    }
+    if (selected.mode === 'fixed' && typeof toast === 'function') {
+      toast('warn', '变量预设不存在', '“' + selected.presetName + '”已不存在，本次改用不带预设。');
+    }
+    if (typeof generate === 'function' && typeof createOrReplacePreset === 'function' && typeof default_preset !== 'undefined') {
+      await createOrReplacePreset(INTERNAL_PRESET_NAME, buildBlankPreset(selected.context), { render: 'debounced' });
+      return { mode: 'none', presetName: INTERNAL_PRESET_NAME };
+    }
+    return { mode: 'raw', presetName: '' };
+  }
+
+  async function generateVariable(config, kind, settings) {
+    const preset = await resolvePreset(kind, settings);
+    if (preset.mode !== 'raw') {
+      if (typeof generate !== 'function') throw new Error('当前环境不支持按酒馆预设生成');
+      return generate(Object.assign({}, config, { preset_name: preset.presetName }));
+    }
+    if (typeof generateRaw !== 'function') throw new Error('当前环境缺少变量生成接口');
+    return generateRaw(Object.assign({}, config, { max_chat_history: 0, ordered_prompts: ['user_input'] }));
+  }
+
   async function callSecondApiForVariable(context) {
     const cfg = Settings.load();
     if (cfg.apiMode !== 'multi') throw new Error('当前未启用多 API 模式');
@@ -2651,15 +2810,14 @@ const ApiEngine = (function () {
       log(PREFIX_SECOND, '开始', { id, purpose: context.purpose, attempt: attempt + 1, messageId: context.messageId, target });
       status('第二 API', `正在请求 ${target} · 第 ${attempt + 1} 次`, true, { id, attempt: attempt + 1, target, purpose: context.purpose });
       try {
-        const raw = textResult(await timeoutCall(() => generateRaw({
+        const raw = textResult(await timeoutCall(() => generateVariable({
           generation_id: id,
           user_input: prompt,
           should_stream: false,
           should_silence: true,
           max_chat_history: 0,
-          ordered_prompts: ['user_input'],
           custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
-        }), api.timeout, id));
+        }, context.purpose, cfg), api.timeout, id));
         const updateTag = Extract.normalizeUpdateVariable(raw);
         if (!updateTag) throw new Error('第二 API 未返回包含 Analysis 与合法 JSONPatch 数组的 UpdateVariable');
         const elapsedMs = Math.round(now() - started);
@@ -2700,7 +2858,7 @@ const ApiEngine = (function () {
     const message = messageById(messageId);
     if (!message) return { ok: false, skipped: true, reason: '找不到主模型最新楼层' };
     try {
-      const generated = await callSecondApiForVariable(Object.assign({}, context, { messageId }));
+      const generated = await ApiEngine.callSecondApiForVariable(Object.assign({}, context, { messageId }));
       await applyUpdate(messageId, message.message || '', context.baseline, generated);
       if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
       lastFailure = null;
@@ -2715,20 +2873,19 @@ const ApiEngine = (function () {
   }
 
   async function callMainApiForDaily(context) {
-    if (typeof generateRaw !== 'function') throw new Error('当前环境不支持主 API 静默日结');
+    if (typeof generate !== 'function' && typeof generateRaw !== 'function') throw new Error('当前环境不支持主 API 静默日结');
     const rules = await readVariableRules();
     const prompt = buildPrompt(Object.assign({}, context, { purpose: 'endday', rules }));
     const id = 'pastoral-daily-main-' + (++sequence);
     const started = now();
     log(PREFIX_MAIN, '日结开始', { messageId: context.messageId });
-    const raw = textResult(await timeoutCall(() => generateRaw({
+    const raw = textResult(await timeoutCall(() => generateVariable({
       generation_id: id,
       user_input: prompt,
       should_stream: false,
       should_silence: true,
-      max_chat_history: 0,
-      ordered_prompts: ['user_input']
-    }), 30000, id));
+      max_chat_history: 0
+    }, 'endday', Settings.load()), 30000, id));
     const updateTag = Extract.normalizeUpdateVariable(raw);
     if (!updateTag) throw new Error('主 API 日结未返回包含 Analysis 与合法 JSONPatch 数组的 UpdateVariable');
     log(PREFIX_MAIN, '日结完成', { elapsedMs: Math.round(now() - started) });
@@ -2781,7 +2938,7 @@ const ApiEngine = (function () {
   }
 
   async function testSecondApi(candidate) {
-    if (typeof generateRaw !== 'function') throw new Error('当前环境缺少 generateRaw，未发送请求');
+    if (typeof generate !== 'function' && typeof generateRaw !== 'function') throw new Error('当前环境缺少变量生成接口，未发送请求');
     const api = Object.assign({}, Settings.load().secondApi, candidate || {});
     if (!api.url || !api.key || !api.model) throw new Error('请填写 URL、API Key 和模型名');
     const id = 'pastoral-second-test-' + (++sequence);
@@ -2790,15 +2947,14 @@ const ApiEngine = (function () {
     status('测试第二 API', `正在请求 ${target}…`, true, { id, target, purpose: 'test' });
     log(PREFIX_SECOND, '连接测试开始', { id, target, model: api.model });
     try {
-      const raw = textResult(await timeoutCall(() => generateRaw({
+      const raw = textResult(await timeoutCall(() => generateVariable({
         generation_id: id,
         user_input: '只回复 PASTORAL_API_OK，不要输出其他内容。',
         should_stream: false,
         should_silence: true,
         max_chat_history: 0,
-        ordered_prompts: ['user_input'],
         custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
-      }), Math.max(1000, Number(api.timeout) || 30000), id));
+      }, 'normal', Settings.load()), Math.max(1000, Number(api.timeout) || 30000), id));
       const elapsedMs = Math.round(now() - started);
       status('第二 API 测试成功', `${target} · ${elapsedMs}ms · ${raw.slice(0, 80) || '收到空文本'}`, false, { id, target, elapsedMs, purpose: 'test' });
       log(PREFIX_SECOND, '连接测试完成', { id, target, elapsedMs });
@@ -2816,6 +2972,10 @@ const ApiEngine = (function () {
 
   return {
     RULE_ENTRY_NAME,
+    INTERNAL_PRESET_NAME,
+    availablePresetNames,
+    buildBlankPreset,
+    resolvePreset,
     buildAdditionalContext,
     buildDailyPurpose,
     buildPrompt,
@@ -2879,6 +3039,11 @@ const Chat = (function () {
         generationWaiters.splice(0).forEach((resolve) => resolve(generationCycle));
       };
       eventOn(tavern_events.GENERATION_ENDED, finish);
+      if (tavern_events.MESSAGE_RECEIVED) {
+        eventOn(tavern_events.MESSAGE_RECEIVED, (messageId) => {
+          if (Number.isFinite(Number(messageId))) completedMessageId = Number(messageId);
+        });
+      }
       eventOn(tavern_events.GENERATION_STOPPED, () => finish(null));
     } catch (e) { /* ignore */ }
   }
@@ -3182,8 +3347,11 @@ const Chat = (function () {
     const ended = generationAlreadyAwaited ? true : await waitForGenerationEnd(startCycle, 120000);
     const started = Date.now();
     while (token === requestSeq && Date.now() - started < 5000) {
-      const id = completedMessageId != null ? completedMessageId : lastId();
-      if (id > beforeId) {
+      const ids = [completedMessageId, lastId()]
+        .map(Number)
+        .filter((id, index, list) => Number.isFinite(id) && id > beforeId && list.indexOf(id) === index)
+        .sort((a, b) => b - a);
+      for (const id of ids) {
         const latest = (typeof getChatMessages === 'function' ? getChatMessages(id) : [])[0];
         if (latest && latest.role !== 'user') return id;
       }
@@ -3222,18 +3390,28 @@ const Chat = (function () {
       await exec('/trigger await=true');
       const messageId = await waitForMainReply(beforeId, token, startCycle, true);
       console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
-      let calculated = null, settledData = null;
+      let calculated = null, settledData = null, pendingFirstWrite = null;
       if (purpose === 'endday' && mode === 'multi' && window.ApiEngine) {
         await ApiEngine.processAfterMain({ baseline, messageId, purpose: 'normal', calculated: null });
       }
       if (window.MVU) {
-        if (purpose === 'endday' && typeof MVU.settleAndWrite === 'function') {
+        if (purpose === 'endday' && typeof MVU.settleForWrite === 'function') {
           setRequestStatus('执行确定性结算', '正在扣除薪资与维护费、推进作物并重算引力…', true);
-          const settled = await MVU.settleAndWrite(messageId, 'endday-message-' + messageId);
+          const settled = MVU.settleForWrite(messageId, 'endday-message-' + messageId);
           settledData = settled.data;
           calculated = Object.assign({}, settled.report, { facilityGravity: settled.calculated && settled.calculated.dimensions });
           window.dispatchEvent(new CustomEvent('pastoral:request-stage', { detail: { stage: 'settled', calculated } }));
           window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: '确定性结算已完成，正在等待跨日变量更新…', source: 'script', pending: true }, calculated) }));
+          if (!settled.skipped && typeof MVU.writeWithTimeout === 'function') {
+            setRequestStatus('写回确定性结算', '正在保存今日账簿…', true);
+            const firstWrite = await MVU.writeWithTimeout(settled.data, messageId, 3000);
+            if (!firstWrite.ok) {
+              if (firstWrite.timedOut && firstWrite.pending) pendingFirstWrite = firstWrite.pending;
+              const reason = firstWrite.error && firstWrite.error.message || '未知错误';
+              console.warn('[Pastoral][MVU]', '首次日结写回未完成，继续跨日变量更新', reason);
+              setRequestStatus('写回暂未完成', '将继续跨日变量更新，并在结束时再次写回。', true);
+            }
+          }
         } else if (typeof MVU.syncFacilityGravity === 'function') {
           const synced = await MVU.syncFacilityGravity(messageId);
           calculated = { facilityGravity: synced.calculated.dimensions, totalGravity: synced.calculated.total };
@@ -3249,16 +3427,35 @@ const Chat = (function () {
           outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose, calculated });
         }
         if (purpose === 'endday' && settledData) {
-          if (window.MVU && typeof MVU.enforceAndWrite === 'function') await MVU.enforceAndWrite(settledData, messageId);
-          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: outcome && outcome.summary, source: outcome && outcome.source, updateOk: !!(outcome && outcome.ok), updateError: outcome && outcome.error ? String(outcome.error.message || outcome.error) : '' }, calculated || {}) }));
-          setRequestStatus(outcome && outcome.ok ? '归寝完成' : '归寝结算完成，变量更新失败', outcome && outcome.ok ? '账簿已更新。' : '确定性结算已保留，请检查第二 API 或主 API。', false);
+          let writeError = null;
+          if (window.MVU && typeof MVU.enforceAndWrite === 'function') {
+            setRequestStatus('锁定确定性事实', '正在执行最终 MVU 写回…', true);
+            try { await MVU.enforceAndWrite(settledData, messageId); }
+            catch (error) { writeError = error; }
+          }
+          const updateError = writeError
+            ? '最终 MVU 写回失败：' + (writeError.message || writeError)
+            : (outcome && outcome.error ? String(outcome.error.message || outcome.error) : '');
+          const complete = !!(outcome && outcome.ok) && !writeError;
+          if (pendingFirstWrite && window.MVU && typeof MVU.enforceAndWrite === 'function') {
+            pendingFirstWrite.then(
+              () => MVU.enforceAndWrite(settledData, messageId),
+              (error) => console.warn('[Pastoral][MVU]', '迟到的首次日结写回失败', error && error.message || error)
+            ).catch((error) => console.error('[Pastoral][MVU]', '迟到写回后的事实锁定失败', error && error.message || error));
+          }
+          window.dispatchEvent(new CustomEvent('pastoral:daily-summary', { detail: Object.assign({ summary: outcome && outcome.summary, source: outcome && outcome.source, updateOk: complete, updateError }, calculated || {}) }));
+          setRequestStatus(complete ? '归寝完成' : '归寝部分完成', complete ? '账簿已更新。' : updateError || '确定性结算已保留，但变量更新未完整完成。', false);
         }
+      }
+      if (purpose !== 'endday' && mode !== 'multi') {
+        setRequestStatus('主剧情完成', '回复与变量已由酒馆处理。', false);
       }
       const composer = document.getElementById('composerInput');
       if (composer && String(composer.value || '').trim() === body) { composer.value = ''; autoGrow(composer); }
       return true;
     } catch (e) {
       console.error('[Pastoral][MainAPI]', '发送失败', e);
+      setRequestStatus('主剧情失败', String(e && e.message || e), false);
       toast('error', '发送失败', String(e && e.message || e));
       return false;
     } finally {
@@ -4248,11 +4445,13 @@ window.Chat = Chat;
 
     const tabs = h('div', { class: 'settings-tabs', role: 'tablist', 'aria-label': '设置页面' }, [
       h('button', { class: 'settings-tab is-active', type: 'button', role: 'tab', 'aria-selected': 'true', 'data-settings-tab': 'api' }, '接口设置'),
-      h('button', { class: 'settings-tab', type: 'button', role: 'tab', 'aria-selected': 'false', 'data-settings-tab': 'prompts' }, '更新提示词')
+      h('button', { class: 'settings-tab', type: 'button', role: 'tab', 'aria-selected': 'false', 'data-settings-tab': 'prompts' }, '更新提示词'),
+      h('button', { class: 'settings-tab', type: 'button', role: 'tab', 'aria-selected': 'false', 'data-settings-tab': 'presets' }, '变量请求预设')
     ]);
     pop.appendChild(tabs);
     const apiPage = h('div', { class: 'settings-page is-active', 'data-settings-page': 'api' });
     const promptPage = h('div', { class: 'settings-page', 'data-settings-page': 'prompts', hidden: '' });
+    const presetPage = h('div', { class: 'settings-page', 'data-settings-page': 'presets', hidden: '' });
 
     const themeBtn = h('button', { class: 'btn btn--ghost btn--sm', type: 'button' },
       document.documentElement.getAttribute('data-theme') === 'night' ? '当前：夜 · 切昼' : '当前：昼 · 切夜');
@@ -4359,7 +4558,71 @@ window.Chat = Chat;
       toast('info', '已恢复内置默认', '网页缓存中的自定义提示词已清空。');
     });
     promptPage.appendChild(promptForm);
-    pop.appendChild(apiPage); pop.appendChild(promptPage);
+
+    const presetForm = h('form', { class: 'settings-form preset-settings-form', id: 'presetSettingsForm' });
+    const presetNames = window.ApiEngine && typeof ApiEngine.availablePresetNames === 'function' ? ApiEngine.availablePresetNames() : [];
+    const contextLabels = {
+      worldInfoBefore: '世界书（角色定义前）', personaDescription: '玩家人格', charDescription: '角色描述',
+      charPersonality: '角色性格', scenario: '场景', worldInfoAfter: '世界书（角色定义后）',
+      dialogueExamples: '示例对话', chatHistory: '聊天历史'
+    };
+    const presetCard = (kind, title) => {
+      const setting = cfg.variablePresets[kind];
+      const card = h('fieldset', { class: 'set-api preset-card', 'data-preset-card': kind });
+      card.appendChild(h('legend', {}, title));
+      const mode = h('select', { class: 'set-input', name: kind + 'PresetMode', 'aria-label': title + '预设模式' }, [
+        h('option', { value: 'none' }, '不带预设'),
+        h('option', { value: 'current' }, '跟随酒馆当前预设'),
+        h('option', { value: 'fixed' }, '固定指定预设')
+      ]);
+      mode.value = setting.mode;
+      card.appendChild(h('label', { class: 'set-field' }, [h('span', { class: 'set-field__label' }, '预设模式'), mode]));
+      const missingPreset = setting.presetName && !presetNames.includes(setting.presetName)
+        ? [h('option', { value: setting.presetName }, setting.presetName + '（已不存在，请重新选择）')]
+        : [];
+      const fixed = h('label', { class: 'set-field', 'data-preset-fixed': kind }, [
+        h('span', { class: 'set-field__label' }, '固定预设'),
+        h('select', { class: 'set-input', name: kind + 'PresetName', 'aria-label': title + '固定预设' }, missingPreset.concat(presetNames.length
+          ? presetNames.map((name) => h('option', { value: name }, name))
+          : [h('option', { value: '' }, '未找到可用酒馆预设')]))
+      ]);
+      fixed.querySelector('select').value = missingPreset.length ? setting.presetName : (presetNames.includes(setting.presetName) ? setting.presetName : (presetNames[0] || ''));
+      fixed.querySelector('select').disabled = !presetNames.length && !missingPreset.length;
+      card.appendChild(fixed);
+      const context = h('div', { class: 'preset-context', 'data-preset-context': kind }, [
+        h('p', { class: 'faint set-help' }, '不带预设时，选择仍要发送的游戏上下文。本次变量任务提示始终发送。'),
+        h('div', { class: 'preset-context__grid' }, Object.entries(contextLabels).map(([key, label]) => {
+          const input = h('input', { type: 'checkbox', name: kind + 'Context_' + key, value: '1' });
+          input.checked = setting.context[key] !== false;
+          return h('label', { class: 'preset-check' }, [input, h('span', {}, label)]);
+        }))
+      ]);
+      card.appendChild(context);
+      const sync = () => { fixed.hidden = mode.value !== 'fixed'; context.hidden = mode.value !== 'none'; };
+      mode.addEventListener('change', sync); sync();
+      return card;
+    };
+    presetForm.appendChild(presetCard('normal', '普通变量更新'));
+    presetForm.appendChild(presetCard('endday', '归寝变量更新'));
+    presetForm.appendChild(h('div', { class: 'notice notice--info set-notice' }, '主剧情仍使用酒馆正常发送和当前预设；这里仅控制主剧情后的变量请求。'));
+    presetForm.appendChild(h('div', { class: 'settings-actions' }, h('button', { class: 'btn btn--primary', type: 'submit' }, '保存变量预设')));
+    presetForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const stage = (kind) => {
+        const context = {};
+        Object.keys(contextLabels).forEach((key) => { context[key] = !!presetForm.elements[kind + 'Context_' + key].checked; });
+        return {
+          mode: presetForm.elements[kind + 'PresetMode'].value,
+          presetName: presetForm.elements[kind + 'PresetName'].value,
+          context
+        };
+      };
+      Settings.save({ variablePresets: { normal: stage('normal'), endday: stage('endday') } });
+      toast('success', '变量预设已保存', '普通更新与归寝更新将分别使用所选策略。');
+    });
+    presetPage.appendChild(presetForm);
+
+    pop.appendChild(apiPage); pop.appendChild(promptPage); pop.appendChild(presetPage);
     $$('.settings-tab', pop).forEach((tab) => tab.addEventListener('click', () => {
       const name = tab.dataset.settingsTab;
       $$('.settings-tab', pop).forEach((item) => { const on = item === tab; item.classList.toggle('is-active', on); item.setAttribute('aria-selected', on ? 'true' : 'false'); });

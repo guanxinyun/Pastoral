@@ -11,6 +11,17 @@ const ApiEngine = (function () {
   const PREFIX_MAIN = '[Pastoral][MainAPI]';
   const PREFIX_SECOND = '[Pastoral][SecondAPI]';
   const MAX_SOURCE_LENGTH = 60000;
+  const INTERNAL_PRESET_NAME = '【Pastoral 内部】空白变量更新';
+  const CONTEXT_PROMPTS = {
+    worldInfoBefore: { id: 'worldInfoBefore', name: '世界书（角色定义前）' },
+    personaDescription: { id: 'personaDescription', name: '玩家人格' },
+    charDescription: { id: 'charDescription', name: '角色描述' },
+    charPersonality: { id: 'charPersonality', name: '角色性格' },
+    scenario: { id: 'scenario', name: '场景' },
+    worldInfoAfter: { id: 'worldInfoAfter', name: '世界书（角色定义后）' },
+    dialogueExamples: { id: 'dialogueExamples', name: '示例对话' },
+    chatHistory: { id: 'chatHistory', name: '聊天历史' }
+  };
   let sequence = 0;
   let lastFailure = null;
 
@@ -116,6 +127,68 @@ const ApiEngine = (function () {
     return Promise.race([Promise.resolve().then(factory), timeoutPromise]).finally(() => clearTimeout(timer));
   }
 
+  function clone(value) {
+    if (value == null) return value;
+    try { if (typeof structuredClone === 'function') return structuredClone(value); } catch (e) { /* JSON fallback */ }
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function variablePresetConfig(kind, config) {
+    const key = kind === 'endday' ? 'endday' : 'normal';
+    const value = config && config.variablePresets && config.variablePresets[key];
+    return value && typeof value === 'object' ? value : { mode: 'none', presetName: '', context: {} };
+  }
+
+  function availablePresetNames() {
+    try { return typeof getPresetNames === 'function' ? getPresetNames().filter((name) => name !== INTERNAL_PRESET_NAME) : []; }
+    catch (e) { return []; }
+  }
+
+  function buildBlankPreset(context) {
+    if (typeof default_preset === 'undefined') throw new Error('酒馆未提供默认预设模板');
+    const preset = clone(default_preset);
+    preset.prompts = Object.entries(CONTEXT_PROMPTS)
+      .filter(([key]) => !context || context[key] !== false)
+      .map(([, prompt]) => ({
+        id: prompt.id,
+        name: prompt.name,
+        enabled: true,
+        position: { type: 'relative' },
+        role: 'system'
+      }));
+    preset.prompts_unused = [];
+    preset.extensions = preset.extensions && typeof preset.extensions === 'object' ? preset.extensions : {};
+    delete preset.extensions.regex_scripts;
+    delete preset.extensions.tavern_helper;
+    return preset;
+  }
+
+  async function resolvePreset(kind, config) {
+    const selected = variablePresetConfig(kind, config);
+    if (selected.mode === 'current') return { mode: 'current', presetName: 'in_use' };
+    if (selected.mode === 'fixed' && availablePresetNames().includes(selected.presetName)) {
+      return { mode: 'fixed', presetName: selected.presetName };
+    }
+    if (selected.mode === 'fixed' && typeof toast === 'function') {
+      toast('warn', '变量预设不存在', '“' + selected.presetName + '”已不存在，本次改用不带预设。');
+    }
+    if (typeof generate === 'function' && typeof createOrReplacePreset === 'function' && typeof default_preset !== 'undefined') {
+      await createOrReplacePreset(INTERNAL_PRESET_NAME, buildBlankPreset(selected.context), { render: 'debounced' });
+      return { mode: 'none', presetName: INTERNAL_PRESET_NAME };
+    }
+    return { mode: 'raw', presetName: '' };
+  }
+
+  async function generateVariable(config, kind, settings) {
+    const preset = await resolvePreset(kind, settings);
+    if (preset.mode !== 'raw') {
+      if (typeof generate !== 'function') throw new Error('当前环境不支持按酒馆预设生成');
+      return generate(Object.assign({}, config, { preset_name: preset.presetName }));
+    }
+    if (typeof generateRaw !== 'function') throw new Error('当前环境缺少变量生成接口');
+    return generateRaw(Object.assign({}, config, { max_chat_history: 0, ordered_prompts: ['user_input'] }));
+  }
+
   async function callSecondApiForVariable(context) {
     const cfg = Settings.load();
     if (cfg.apiMode !== 'multi') throw new Error('当前未启用多 API 模式');
@@ -131,15 +204,14 @@ const ApiEngine = (function () {
       log(PREFIX_SECOND, '开始', { id, purpose: context.purpose, attempt: attempt + 1, messageId: context.messageId, target });
       status('第二 API', `正在请求 ${target} · 第 ${attempt + 1} 次`, true, { id, attempt: attempt + 1, target, purpose: context.purpose });
       try {
-        const raw = textResult(await timeoutCall(() => generateRaw({
+        const raw = textResult(await timeoutCall(() => generateVariable({
           generation_id: id,
           user_input: prompt,
           should_stream: false,
           should_silence: true,
           max_chat_history: 0,
-          ordered_prompts: ['user_input'],
           custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
-        }), api.timeout, id));
+        }, context.purpose, cfg), api.timeout, id));
         const updateTag = Extract.normalizeUpdateVariable(raw);
         if (!updateTag) throw new Error('第二 API 未返回包含 Analysis 与合法 JSONPatch 数组的 UpdateVariable');
         const elapsedMs = Math.round(now() - started);
@@ -180,7 +252,7 @@ const ApiEngine = (function () {
     const message = messageById(messageId);
     if (!message) return { ok: false, skipped: true, reason: '找不到主模型最新楼层' };
     try {
-      const generated = await callSecondApiForVariable(Object.assign({}, context, { messageId }));
+      const generated = await ApiEngine.callSecondApiForVariable(Object.assign({}, context, { messageId }));
       await applyUpdate(messageId, message.message || '', context.baseline, generated);
       if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
       lastFailure = null;
@@ -195,20 +267,19 @@ const ApiEngine = (function () {
   }
 
   async function callMainApiForDaily(context) {
-    if (typeof generateRaw !== 'function') throw new Error('当前环境不支持主 API 静默日结');
+    if (typeof generate !== 'function' && typeof generateRaw !== 'function') throw new Error('当前环境不支持主 API 静默日结');
     const rules = await readVariableRules();
     const prompt = buildPrompt(Object.assign({}, context, { purpose: 'endday', rules }));
     const id = 'pastoral-daily-main-' + (++sequence);
     const started = now();
     log(PREFIX_MAIN, '日结开始', { messageId: context.messageId });
-    const raw = textResult(await timeoutCall(() => generateRaw({
+    const raw = textResult(await timeoutCall(() => generateVariable({
       generation_id: id,
       user_input: prompt,
       should_stream: false,
       should_silence: true,
-      max_chat_history: 0,
-      ordered_prompts: ['user_input']
-    }), 30000, id));
+      max_chat_history: 0
+    }, 'endday', Settings.load()), 30000, id));
     const updateTag = Extract.normalizeUpdateVariable(raw);
     if (!updateTag) throw new Error('主 API 日结未返回包含 Analysis 与合法 JSONPatch 数组的 UpdateVariable');
     log(PREFIX_MAIN, '日结完成', { elapsedMs: Math.round(now() - started) });
@@ -261,7 +332,7 @@ const ApiEngine = (function () {
   }
 
   async function testSecondApi(candidate) {
-    if (typeof generateRaw !== 'function') throw new Error('当前环境缺少 generateRaw，未发送请求');
+    if (typeof generate !== 'function' && typeof generateRaw !== 'function') throw new Error('当前环境缺少变量生成接口，未发送请求');
     const api = Object.assign({}, Settings.load().secondApi, candidate || {});
     if (!api.url || !api.key || !api.model) throw new Error('请填写 URL、API Key 和模型名');
     const id = 'pastoral-second-test-' + (++sequence);
@@ -270,15 +341,14 @@ const ApiEngine = (function () {
     status('测试第二 API', `正在请求 ${target}…`, true, { id, target, purpose: 'test' });
     log(PREFIX_SECOND, '连接测试开始', { id, target, model: api.model });
     try {
-      const raw = textResult(await timeoutCall(() => generateRaw({
+      const raw = textResult(await timeoutCall(() => generateVariable({
         generation_id: id,
         user_input: '只回复 PASTORAL_API_OK，不要输出其他内容。',
         should_stream: false,
         should_silence: true,
         max_chat_history: 0,
-        ordered_prompts: ['user_input'],
         custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
-      }), Math.max(1000, Number(api.timeout) || 30000), id));
+      }, 'normal', Settings.load()), Math.max(1000, Number(api.timeout) || 30000), id));
       const elapsedMs = Math.round(now() - started);
       status('第二 API 测试成功', `${target} · ${elapsedMs}ms · ${raw.slice(0, 80) || '收到空文本'}`, false, { id, target, elapsedMs, purpose: 'test' });
       log(PREFIX_SECOND, '连接测试完成', { id, target, elapsedMs });
@@ -296,6 +366,10 @@ const ApiEngine = (function () {
 
   return {
     RULE_ENTRY_NAME,
+    INTERNAL_PRESET_NAME,
+    availablePresetNames,
+    buildBlankPreset,
+    resolvePreset,
     buildAdditionalContext,
     buildDailyPurpose,
     buildPrompt,

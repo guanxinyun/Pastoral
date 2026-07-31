@@ -57,11 +57,13 @@
 
     const tabs = h('div', { class: 'settings-tabs', role: 'tablist', 'aria-label': '设置页面' }, [
       h('button', { class: 'settings-tab is-active', type: 'button', role: 'tab', 'aria-selected': 'true', 'data-settings-tab': 'api' }, '接口设置'),
-      h('button', { class: 'settings-tab', type: 'button', role: 'tab', 'aria-selected': 'false', 'data-settings-tab': 'prompts' }, '更新提示词')
+      h('button', { class: 'settings-tab', type: 'button', role: 'tab', 'aria-selected': 'false', 'data-settings-tab': 'prompts' }, '更新提示词'),
+      h('button', { class: 'settings-tab', type: 'button', role: 'tab', 'aria-selected': 'false', 'data-settings-tab': 'presets' }, '变量请求预设')
     ]);
     pop.appendChild(tabs);
     const apiPage = h('div', { class: 'settings-page is-active', 'data-settings-page': 'api' });
     const promptPage = h('div', { class: 'settings-page', 'data-settings-page': 'prompts', hidden: '' });
+    const presetPage = h('div', { class: 'settings-page', 'data-settings-page': 'presets', hidden: '' });
 
     const themeBtn = h('button', { class: 'btn btn--ghost btn--sm', type: 'button' },
       document.documentElement.getAttribute('data-theme') === 'night' ? '当前：夜 · 切昼' : '当前：昼 · 切夜');
@@ -168,7 +170,71 @@
       toast('info', '已恢复内置默认', '网页缓存中的自定义提示词已清空。');
     });
     promptPage.appendChild(promptForm);
-    pop.appendChild(apiPage); pop.appendChild(promptPage);
+
+    const presetForm = h('form', { class: 'settings-form preset-settings-form', id: 'presetSettingsForm' });
+    const presetNames = window.ApiEngine && typeof ApiEngine.availablePresetNames === 'function' ? ApiEngine.availablePresetNames() : [];
+    const contextLabels = {
+      worldInfoBefore: '世界书（角色定义前）', personaDescription: '玩家人格', charDescription: '角色描述',
+      charPersonality: '角色性格', scenario: '场景', worldInfoAfter: '世界书（角色定义后）',
+      dialogueExamples: '示例对话', chatHistory: '聊天历史'
+    };
+    const presetCard = (kind, title) => {
+      const setting = cfg.variablePresets[kind];
+      const card = h('fieldset', { class: 'set-api preset-card', 'data-preset-card': kind });
+      card.appendChild(h('legend', {}, title));
+      const mode = h('select', { class: 'set-input', name: kind + 'PresetMode', 'aria-label': title + '预设模式' }, [
+        h('option', { value: 'none' }, '不带预设'),
+        h('option', { value: 'current' }, '跟随酒馆当前预设'),
+        h('option', { value: 'fixed' }, '固定指定预设')
+      ]);
+      mode.value = setting.mode;
+      card.appendChild(h('label', { class: 'set-field' }, [h('span', { class: 'set-field__label' }, '预设模式'), mode]));
+      const missingPreset = setting.presetName && !presetNames.includes(setting.presetName)
+        ? [h('option', { value: setting.presetName }, setting.presetName + '（已不存在，请重新选择）')]
+        : [];
+      const fixed = h('label', { class: 'set-field', 'data-preset-fixed': kind }, [
+        h('span', { class: 'set-field__label' }, '固定预设'),
+        h('select', { class: 'set-input', name: kind + 'PresetName', 'aria-label': title + '固定预设' }, missingPreset.concat(presetNames.length
+          ? presetNames.map((name) => h('option', { value: name }, name))
+          : [h('option', { value: '' }, '未找到可用酒馆预设')]))
+      ]);
+      fixed.querySelector('select').value = missingPreset.length ? setting.presetName : (presetNames.includes(setting.presetName) ? setting.presetName : (presetNames[0] || ''));
+      fixed.querySelector('select').disabled = !presetNames.length && !missingPreset.length;
+      card.appendChild(fixed);
+      const context = h('div', { class: 'preset-context', 'data-preset-context': kind }, [
+        h('p', { class: 'faint set-help' }, '不带预设时，选择仍要发送的游戏上下文。本次变量任务提示始终发送。'),
+        h('div', { class: 'preset-context__grid' }, Object.entries(contextLabels).map(([key, label]) => {
+          const input = h('input', { type: 'checkbox', name: kind + 'Context_' + key, value: '1' });
+          input.checked = setting.context[key] !== false;
+          return h('label', { class: 'preset-check' }, [input, h('span', {}, label)]);
+        }))
+      ]);
+      card.appendChild(context);
+      const sync = () => { fixed.hidden = mode.value !== 'fixed'; context.hidden = mode.value !== 'none'; };
+      mode.addEventListener('change', sync); sync();
+      return card;
+    };
+    presetForm.appendChild(presetCard('normal', '普通变量更新'));
+    presetForm.appendChild(presetCard('endday', '归寝变量更新'));
+    presetForm.appendChild(h('div', { class: 'notice notice--info set-notice' }, '主剧情仍使用酒馆正常发送和当前预设；这里仅控制主剧情后的变量请求。'));
+    presetForm.appendChild(h('div', { class: 'settings-actions' }, h('button', { class: 'btn btn--primary', type: 'submit' }, '保存变量预设')));
+    presetForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const stage = (kind) => {
+        const context = {};
+        Object.keys(contextLabels).forEach((key) => { context[key] = !!presetForm.elements[kind + 'Context_' + key].checked; });
+        return {
+          mode: presetForm.elements[kind + 'PresetMode'].value,
+          presetName: presetForm.elements[kind + 'PresetName'].value,
+          context
+        };
+      };
+      Settings.save({ variablePresets: { normal: stage('normal'), endday: stage('endday') } });
+      toast('success', '变量预设已保存', '普通更新与归寝更新将分别使用所选策略。');
+    });
+    presetPage.appendChild(presetForm);
+
+    pop.appendChild(apiPage); pop.appendChild(promptPage); pop.appendChild(presetPage);
     $$('.settings-tab', pop).forEach((tab) => tab.addEventListener('click', () => {
       const name = tab.dataset.settingsTab;
       $$('.settings-tab', pop).forEach((item) => { const on = item === tab; item.classList.toggle('is-active', on); item.setAttribute('aria-selected', on ? 'true' : 'false'); });
