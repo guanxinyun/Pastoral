@@ -29,13 +29,16 @@ function build() {
   tpl = tpl.split('<!--STYLE-->').join(styleTag);
   tpl = tpl.split('<!--SCRIPT-->').join(scriptTag);
 
+  const publicDir = path.join(root, 'public');
+  fs.mkdirSync(publicDir, { recursive: true });
   fs.writeFileSync(path.join(root, 'index.html'), tpl);
+  fs.writeFileSync(path.join(publicDir, 'index.html'), tpl);
   return tpl.length;
 }
 
 if (require.main === module) {
   const len = build();
-  console.log(`[build] index.html 已生成 · ${len} 字节`);
+  console.log(`[build] index.html + public/index.html 已生成 · ${len} 字节`);
 }
 
 module.exports = { build };
