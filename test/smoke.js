@@ -138,7 +138,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(!doc.querySelector('[name="normalAssembly"]') && !doc.querySelector('[name="enddayAssembly"]'),
       '界面不再提供跨宿主不一致的 compile/inject 组装开关');
     const effectiveText = doc.querySelector('[data-preset-effective="normal"]');
-    ok(/短暂切换.*立即切回/.test(effectiveText.textContent), '固定模式说明短暂切换并立即恢复当前预设');
+    ok(/等待约 1 秒.*保留约 2 秒.*切回/.test(effectiveText.textContent), '固定模式说明切换与提示词捕获延迟');
     ok(/只发送一次/.test(effectiveText.textContent), '设置页明确任务只通过 user_input 发送一次');
     ok(!Object.prototype.hasOwnProperty.call(JSON.parse(win.localStorage.getItem('mrfz_settings')).variablePresets.normal, 'assembly'),
       '保存结果不再包含旧 assembly 字段');

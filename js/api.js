@@ -25,6 +25,8 @@ const ApiEngine = (function () {
   let lastFailure = null;
   // 只串行“保存现场→切换→发起→恢复”这几步；API 网络等待不在锁内。
   let presetLaunchTail = Promise.resolve();
+  const PRESET_SETTLE_MS = 1000;
+  const PROMPT_CAPTURE_MS = 2000;
 
   function now() { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); }
   function log(prefix, stage, detail) { console.info(prefix, stage, detail || ''); }
@@ -214,6 +216,8 @@ const ApiEngine = (function () {
     return JSON.parse(JSON.stringify(value));
   }
 
+  function delay(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+
   function variablePresetConfig(kind, config) {
     const key = kind === 'endday' ? 'endday' : 'normal';
     const value = config && config.variablePresets && config.variablePresets[key];
@@ -239,8 +243,8 @@ const ApiEngine = (function () {
   }
 
   /**
-   * 短事务：切到固定预设发起 generate，立即恢复原预设，再在锁外等待网络结果。
-   * 同时恢复 in_use 现场，避免玩家尚未保存的预设编辑因切换而丢失。
+   * 短事务：切换后等待 1 秒，发起 generate 后保留 2 秒提示词捕获窗口，
+   * 再恢复原预设并在锁外等待网络结果。同时恢复 in_use 现场，避免未保存编辑丢失。
    */
   function launchWithFixedPreset(targetPreset, generateConfig) {
     let responsePromise;
@@ -258,8 +262,10 @@ const ApiEngine = (function () {
       try {
         if (!loadPreset(targetPreset)) throw new Error('切换目标预设“' + targetPreset + '”失败');
         switched = true;
-        // 这里只取得 Promise，不等待网络回复。
+        // 给酒馆时间提交预设切换，再发起生成；发起后继续保留一小段提示词捕获窗口。
+        await delay(PRESET_SETTLE_MS);
         responsePromise = Promise.resolve(generate(generateConfig));
+        await delay(PROMPT_CAPTURE_MS);
       } catch (e) {
         launchError = e;
       } finally {

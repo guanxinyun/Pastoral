@@ -321,7 +321,7 @@
           parts.push('使用酒馆当前预设');
           parts.push('任务只发送一次（通过 user_input）');
         } else {
-          parts.push('短暂切换到固定预设并发起请求，然后立即切回且不等待 API 回复');
+          parts.push('切换到固定预设，等待约 1 秒后发起请求，再保留约 2 秒提示词捕获窗口后切回；不等待 API 回复完成');
           parts.push('任务只发送一次（通过 user_input）');
         }
         parts.push(blockDepth.checked ? '已屏蔽深度注入与作者注释' : '⚠ 放行深度注入与作者注释');

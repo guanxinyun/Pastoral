@@ -120,7 +120,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
         normal: { mode: 'none', presetName: '', context: Object.assign({}, noContext) },
         endday: { mode: 'current', presetName: '', context: Object.assign({}, noContext) }
       },
-      secondApi: { url: 'https://logic.example/v1', key: 'secret', model: 'logic-model', timeout: 1000, maxRetries: 2 }
+      secondApi: { url: 'https://logic.example/v1', key: 'secret', model: 'logic-model', timeout: 5000, maxRetries: 2 }
     };
     win.Rules = {
       DEFAULT_GUIDE: { normal: '内置日常指导', endday: '内置归寝指导' },
@@ -207,23 +207,31 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       return new Promise((resolve) => networkResolvers.push(resolve));
     };
 
+    const firstStarted = Date.now();
     const firstNetwork = win.ApiEngine.launchWithFixedPreset('日常A', { user_input: 'TASK_A' });
-    await wait(0);
+    await wait(600);
+    ok(transactionEvents.includes('load:日常A') && !transactionEvents.some((x) => x.startsWith('generate:')),
+      '切换目标预设后等待至少 1 秒再发起生成');
+    await wait(600);
+    ok(transactionEvents.includes('generate:日常A:TASK_A') && activePreset === '日常A',
+      '发起 generate 后继续保持目标预设以供异步收集提示词');
+    await wait(1900);
     ok(transactionEvents.join('>') === [
       'get-name:玩家当前预设', 'get-preset:in_use', 'load:日常A', 'generate:日常A:TASK_A',
       'load:玩家当前预设', 'replace:in_use:none'
-    ].join('>'), '固定预设严格执行保存现场→切换→发起→立即恢复');
+    ].join('>'), '固定预设严格执行保存→切换等待→发起等待→恢复');
+    ok(Date.now() - firstStarted >= 2900, '固定预设在约 3 秒启动窗口后才恢复原预设');
     ok(activePreset === '玩家当前预设' && restoredLive.length === 1
       && restoredLive[0] !== livePreset && restoredLive[0].prompts[0].content === '尚未保存的现场编辑',
     '原预设名称与未保存 in_use 现场均已恢复');
 
     transactionEvents.length = 0;
     const secondNetwork = win.ApiEngine.launchWithFixedPreset('归寝B', { user_input: 'TASK_B' });
-    await wait(0);
+    await wait(3100);
     ok(transactionEvents.includes('generate:归寝B:TASK_B'), '首个网络响应未完成时第二个短事务仍能发起');
-    ok(activePreset === '玩家当前预设', '第二个短事务也在网络完成前恢复预设');
+    ok(activePreset === '玩家当前预设', '第二个短事务在提示词捕获延迟后恢复预设');
     networkResolvers[0]('FIRST_OK'); networkResolvers[1]('SECOND_OK');
-    ok((await firstNetwork) === 'FIRST_OK' && (await secondNetwork) === 'SECOND_OK', '网络 Promise 在短锁外并发等待并各自返回');
+    ok((await firstNetwork) === 'FIRST_OK' && (await secondNetwork) === 'SECOND_OK', '网络 Promise 仍在短锁外并发等待并各自返回');
 
     transactionEvents.length = 0;
     win.generate = () => { transactionEvents.push('generate-throw'); throw new Error('sync launch error'); };
@@ -305,7 +313,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
     ok(configs.length === 1 && rawConfigs.length === 0, 'fixed 模式使用 generate');
     ok(transactionEvents.includes('load:变量专用') && transactionEvents.includes('load:玩家当前预设'),
-      'fixed 模式真实切到阶段预设并立即切回');
+      'fixed 模式真实切到阶段预设并在捕获延迟后切回');
     ok(!configs[0].preset_name && !configs[0].injects, 'fixed 模式不再使用 preset_name 或 injects');
     ok(/玩家普通变量要求/.test(configs[0].user_input), 'fixed 模式仅通过 user_input 发送日常任务');
     ok(requestDiagnostics.some((d) => d.stage === 'normal' && d.mode === 'fixed'
