@@ -51,6 +51,20 @@
 - 未验证：`generateRaw` 的 `RolePrompt.content` 是否仍执行宏替换（本地实测 `{{char}}` 原样透传，真实替换由酒馆运行时决定）；角色卡历史后指令在 `generateRaw` 路径下的行为。
 - `npm test` 373 项全通过；`node --check`、`git diff --check`、`index.html` 与 `public/index.html` 一致。
 
+### 2026-08-01 08:10 — 跨 Termux / Windows 的预设短事务与归寝阶段隔离
+- 用户确认 Termux 与 Windows 使用同一酒馆、TavernHelper 版本和最新构建，但表现相反：Termux 固定预设请求仍走当前预设且更新任务缺失；Windows 同一任务出现两遍。
+- 根因：旧 `inject` 路径同时保留 `user_input` 并复制到 `injects[0].content`。Windows 同时消费两条通道；Termux 未可靠消费 `injects`，而只传 `preset_name` 又没有像真实切换当前预设一样生效。
+- 用户补充关键历史行为：手机端已有脚本通过“切换预设→发起生成→立刻切回”实现过相同目的。最终方案据此改为固定预设短事务，而不是长期锁或统一 generateRaw。
+- 固定预设请求严格执行：保存 `getLoadedPresetName()` 与深拷贝 `getPreset('in_use')` → `loadPreset(阶段预设)` → 调用 `generate({ user_input })` 取得 Promise → 立刻 `loadPreset(原名称)` → `replacePreset('in_use', 原现场, {render:'none'})` → 锁外等待网络 Promise。
+- 短锁仅串行本地切换窗口，不等待 API：自动测试中首个网络 Promise 未解决时，第二个固定预设事务已成功发起并恢复。
+- 三种模式固定为：none = `generateRaw + user_input`；current = 当前预设 `generate + user_input`；fixed = 短切目标预设后 `generate + user_input`。生产代码不再设置 `injects` 或 `preset_name`，任务只发送一次。
+- 普通/归寝各自冻结阶段快照。多 API 归寝顺序为日常 A → 确定性结算 → 归寝 B；单 API 复用主剧情楼层的日常 MVU，不额外静默调用日常阶段。
+- 多 API 日常阶段失败时仍继续确定性与归寝阶段，但归寝提示收到“日常变量阶段失败；不得猜测、补算或重复执行日常即时变化”，最终账簿标为部分完成。
+- UI 删除跨宿主不稳定的 compile/inject 选择，改为说明固定预设会短暂切换并立即恢复，任务只通过 user_input 发送一次。旧 assembly 缓存字段自动迁移删除。
+- 新增安全诊断 `[Pastoral][VariableRequest]`：阶段、模式、目标预设、传输、任务指纹、切换/恢复状态及运行时版本；不记录 Key、完整提示词或 MVU 快照。
+- `npm test` 全套通过；修改脚本 `node --check` 通过；`index.html` 与 `public/index.html` 一致；`git diff --check` 仅有 CRLF 提示，无空白错误。
+- 仍需玩家在真实 Termux/Windows 上确认：`generate()` 在调用后立即切回预设时，两端都会按发起瞬间的目标预设完成请求。自动测试已按该 API 契约验证，但本地 JSDOM 无真实酒馆运行时。
+
 ## Decisions Made
 - 2026-08-01 主剧情保持酒馆原生 `/send` 与 `/trigger await=true`，不由 Pastoral 选择预设。
 - 2026-08-01 变量更新使用 `generate + preset_name`；`generateRaw` 仅作为 none 模式旧环境回退。

@@ -1,203 +1,174 @@
 # 跨平台变量请求与归寝流水线修复设计
 
 日期：2026-08-01
-状态：待用户最终审阅
+状态：已批准
 
-## 背景
+## 背景与根因
 
-相同的酒馆、TavernHelper 版本和 `index.html` 在两个宿主上表现相反：
+同一酒馆、TavernHelper 版本和 `index.html` 在两个宿主上表现相反：
 
-- Termux：变量更新请求只看到酒馆预设内容，前端保存的更新指导没有进入请求；
-- Windows BAT：更新指导进入请求两遍；
-- Windows 的归寝流程还表现为日常更新预设被使用，而归寝预设似乎没有使用；
-- 归寝语义需要明确分成日常即时更新、前端确定性结算、跨日归寝更新，而不是只执行最后一段。
+- Termux：固定预设请求仍使用当时的酒馆当前预设，前端更新任务没有进入请求；
+- Windows：更新任务进入请求两遍；
+- 归寝看起来一直使用日常预设；
+- 归寝还需要先完成即时（日常）更新，再做确定性结算，最后做跨日更新。
 
-目标是让 Termux 和 Windows 生成完全相同、可核验的变量请求，并保证日常与归寝使用各自设置。
+当前 `js/api.js` 的 `inject` 路径把同一任务同时放在 `user_input` 和 `injects[0].content`。Windows 同时消费两条通道，所以出现两份；Termux 没有可靠消费 `injects`，而 `preset_name` 路径又没有像真正切换当前预设那样生效，所以只剩原酒馆预设。
 
-## 根因
-
-### 1. 同一任务通过两条通道发送
-
-`js/api.js` 的 `generateVariable()` 在 `assembly === 'inject'` 时同时：
-
-1. 保留 `base.user_input`；
-2. 将同一文本写入 `injects[0].content`。
-
-这两条通道不是互斥的。Windows 运行时同时消费两者，得到两份更新指导；Termux 运行时没有可靠消费 `injects`，而 `user_input` 在预设中又没有保证落点，于是只剩预设内容。
-
-### 2. 预设没有 `user_input` 槽位
-
-- `_types_split/06-generate.txt` 的 `GenerateRawConfig.ordered_prompts` 支持 `'user_input'`；
-- `_types_split/09-preset.txt` 的 `PresetPlaceholderPrompt` 只包含世界书、角色、玩家人格、场景、示例对话和聊天历史，占位符枚举中没有 `user_input`；
-- `Overrides` 也没有 `user_input` 字段。
-
-因此 `generate({ preset_name, user_input })` 无法保证任务文本进入最终请求。
-
-### 3. 归寝阶段看似使用日常预设
-
-多 API 归寝当前确实先调用一次：
-
-```text
-processAfterMain(... purpose: 'normal')
-```
-
-然后才执行确定性结算和：
-
-```text
-processEndday(... purpose: 'endday')
-```
-
-所以日志中首先出现日常预设本身符合当前顺序。若第二阶段因任务丢失、重复或格式错误失败，结果看起来就像归寝只使用日常预设。
-
-### 4. 单 API 与多 API 的归寝语义不同
-
-日常前置请求只在 `mode === 'multi'` 时显式执行。单 API 复用主剧情楼层自带的 MVU 更新，随后直接进入前端确定性结算与归寝请求。这种调用次数差异是合理的，但代码没有把两者表述成同一套三阶段语义，也缺少阶段级诊断。
+用户确认此前脚本通过“切换预设、发起生成、立刻切回”在手机端正常工作。变量请求因此改用酒馆原生当前预设生成，不再依赖 `preset_name + injects` 组合。
 
 ## 已确认的产品语义
 
-### 单 API
+### 预设模式
+
+- `none`：不切换酒馆预设，使用 `generateRaw()` 和前端明确组装的上下文。
+- `current`：不切换，直接用当前 `in_use` 调用 `generate({ user_input })`。
+- `fixed`：短事务切换到阶段固定预设，调用 `generate({ user_input })` 获得 Promise，立刻恢复原预设，再在事务外等待结果。
+
+所有模式中更新任务只通过一条通道发送；不再使用 `injects`。
+
+### 单 API 归寝
 
 ```text
 主剧情（楼层自带 MVU = 日常阶段）
 → 前端确定性结算
-→ 当前主 API 静默执行归寝阶段
+→ 当前主 API 使用归寝预设静默执行归寝阶段
 → 最终事实锁定与写回
 ```
 
-单 API 不额外静默调用日常更新，避免重复请求。
+单 API 不额外静默调用日常更新。
 
-### 多 API
+### 多 API 归寝
 
 ```text
 主剧情
-→ 第二 API 执行日常阶段
+→ 第二 API 使用日常预设执行日常阶段
 → 前端确定性结算
-→ 第二 API 执行归寝阶段
+→ 第二 API 使用归寝预设执行归寝阶段
 → 最终事实锁定与写回
 ```
 
-### 日常阶段失败
+多 API 日常阶段失败后继续确定性与归寝阶段，但最终标为“部分完成”，且归寝提示包含“日常变量阶段失败；不得猜测、补算或重复执行日常即时变化”。
 
-多 API 的日常阶段失败后继续执行前端确定性结算和归寝阶段，但：
+## 1. 阶段配置快照
 
-- 账簿标为“部分完成”；
-- 保留日常阶段错误；
-- 归寝提示包含“日常阶段失败，不得猜测补算”；
-- 归寝阶段不能兼任或补算日常职责。
-
-## 设计
-
-## 1. 统一确定性编译
-
-删除运行时的 `generate + injects` 变量请求路径。所有变量更新请求统一为：
-
-```text
-阶段配置快照
-→ 读取选中预设
-→ 编译 ordered_prompts
-→ 强制追加唯一任务消息
-→ generateRaw
-```
-
-### 1.1 阶段配置快照
-
-每次变量请求开始时读取一次 `Settings.load()`，根据 `kind` 明确选择：
-
-- `variablePresets.normal`；或
-- `variablePresets.endday`。
-
-建立不可变快照：
-
-- `kind`；
-- `mode`；
-- `presetName`；
-- `context`；
-- `temperature`；
-- 深度内容屏蔽设置；
-- 本阶段更新指导。
-
-后续编译和发送只能使用该快照，不能重新读取另一阶段设置。普通与归寝预设由结构保证隔离。
-
-### 1.2 预设解析
-
-- `none`：不读取预设提示词；
-- `current`：读取 `getPreset('in_use')`；
-- `fixed`：读取 `getPreset(snapshot.presetName)`；
-- 固定预设不存在：明确报错或按既有行为降级为 none，并记录诊断。
-
-只读取预设，不调用 `loadPreset`，不修改玩家当前预设，不写入临时预设。
-
-### 1.3 消息编译
-
-编译器按预设 `prompts` 原顺序：
-
-1. 跳过 `enabled === false`；
-2. 跳过 `prompts_unused`；
-3. 普通和系统提示词转为 `{ role, content }`；
-4. 占位符转为 `generateRaw` 对应占位符；
-5. 玩家取消勾选的上下文，即使预设启用也不发送；
-6. 最后追加唯一任务消息：
+每次请求发起前读取一次 `Settings.load()`，根据 `kind` 选择 `variablePresets.normal` 或 `variablePresets.endday`，建立不可变快照：
 
 ```js
-{ role: 'user', content: taskPrompt }
+{
+  kind: 'normal' | 'endday',
+  mode: 'none' | 'current' | 'fixed',
+  presetName: string,
+  context: Record<string, boolean>,
+  blockDepthEntries: boolean,
+  temperature: number,
+  guide: string
+}
 ```
 
-发送前验证：
+后续提示词构建、预设选择和生成只能使用该快照，不能重新读取另一阶段设置。这从结构上保证日常使用日常预设、归寝使用归寝预设。
 
-- 任务消息出现次数严格等于 1；
-- 任务消息位于末位；
-- 阶段为 `normal` 时只包含日常指导指纹；
-- 阶段为 `endday` 时只包含归寝指导指纹；
-- 编译预设名与阶段快照一致。
+## 2. 固定预设短事务
 
-任一不变量失败时终止请求，不发送不完整或重复请求。
+### 2.1 范围
 
-### 1.4 发送
+事务只覆盖本地同步/短异步步骤：
 
-只调用 `generateRaw()`：
+```text
+保存现场 → 切换目标 → 调用 generate 获得 Promise → 恢复现场 → 释放锁
+```
 
-- `ordered_prompts` 使用编译结果；
-- 第二 API URL、Key、模型和采样参数继续通过 `custom_api` 提供；
-- 单 API 静默归寝也走同一编译器，但不提供 `custom_api`；
-- 不传 `injects`；
-- 不再把同一任务同时放入 `user_input` 与消息列表；如 API 契约要求 `user_input` 字段，传空字符串或不传。
+网络响应等待不在锁内。事务释放后才 `await responsePromise`。
 
-缺少 `generateRaw` 或需要的预设读取 API 时明确报兼容错误，不静默退化为 `generate()` 或酒馆当前预设。
+### 2.2 现场保存
 
-## 2. 归寝阶段控制器
+固定预设请求开始时保存：
 
-将现有散落在 `Chat.handleUnifiedRequest()` 与 `ApiEngine.processEndday()` 的阶段调用抽成明确控制器。每个阶段返回：
+- `getLoadedPresetName()`：当前预设来源名；
+- 深拷贝 `getPreset('in_use')`：当前现场内容，包括尚未保存回来源预设的编辑。
+
+保存现场是必要的，因为仅按名称切回会加载磁盘中的已保存版本，可能丢失玩家对 `in_use` 的未保存编辑。
+
+### 2.3 发起与恢复
+
+伪代码：
+
+```js
+let responsePromise;
+await withPresetLaunchLock(async () => {
+  const originalName = getLoadedPresetName();
+  const originalLive = clone(getPreset('in_use'));
+  try {
+    if (!loadPreset(stage.presetName)) throw new Error('切换目标预设失败');
+    responsePromise = Promise.resolve(generate(config));
+  } finally {
+    if (!loadPreset(originalName)) throw new Error('恢复原预设失败');
+    await replacePreset('in_use', originalLive, { render: 'none' });
+  }
+});
+return await responsePromise;
+```
+
+`generate(config)` 的调用发生在目标预设处于 `in_use` 时；随后立即恢复，不等待 API 回复。
+
+### 2.4 短锁
+
+短锁只防止两个请求在“切换 → 发起 → 恢复”窗口内交叉。锁不覆盖网络等待，不会让普通与归寝请求长期串行。
+
+锁可用 Promise 链实现：每个事务等待前一个本地事务恢复完成，然后立即执行并释放。即使生成请求需要 30 秒，锁通常只占本地几步所需时间。
+
+### 2.5 异常
+
+- 缺少 `getLoadedPresetName/getPreset/loadPreset/replacePreset/generate`：明确报兼容错误；
+- 目标预设不存在或切换失败：不发送请求；
+- `generate` 同步抛错：仍恢复原现场；
+- 恢复名称失败或恢复现场失败：记录严重错误并提示玩家检查当前预设；
+- API Promise 后续拒绝：原预设已经恢复，不影响酒馆界面。
+
+## 3. 三种生成路径
+
+### none
+
+使用 `generateRaw()`：
+
+- `ordered_prompts` 按上下文勾选生成；
+- 末尾只放一个 `user_input` 占位符；
+- `user_input` 存放任务文本；
+- 不传 `injects`。
+
+### current
+
+直接调用：
+
+```js
+generate({
+  user_input: taskPrompt,
+  should_stream: false,
+  should_silence: true,
+  custom_api
+})
+```
+
+不传 `preset_name`，不传 `injects`，不切换预设。任务只出现一次。
+
+### fixed
+
+通过短事务切换目标阶段预设，然后调用与 current 相同的 `generate({ user_input })`。不传 `preset_name`，因为目标已经真实加载为 `in_use`。
+
+## 4. 归寝阶段控制
+
+每个阶段返回：
 
 ```js
 {
   stage: 'normal' | 'deterministic' | 'endday' | 'enforce',
+  stageId: string,
   ok: boolean,
   source: 'main-story' | 'main-api' | 'second-api' | 'script',
-  snapshot,
-  error,
-  stageId
+  error: Error | null
 }
 ```
 
-### 2.1 多 API 流程
-
-1. 从主生成前快照，以 `normal` 阶段快照调用第二 API；
-2. 将日常结果写回，读取最新 MVU 快照；
-3. 执行前端确定性结算和有限等待写回；
-4. 以确定性结算后的最新快照和 `endday` 阶段快照调用第二 API；
-5. 锁定确定性事实并最终写回。
-
-### 2.2 单 API 流程
-
-1. 将主剧情楼层已完成的 MVU 视为 `normal` 阶段结果，来源标记 `main-story`；
-2. 读取主剧情后的最新 MVU 快照；
-3. 执行同一套前端确定性结算；
-4. 以 `endday` 阶段快照调用当前主 API一次；
-5. 锁定确定性事实并最终写回。
-
-### 2.3 幂等性
-
-每个阶段使用独立标识：
+阶段标识：
 
 ```text
 endday:<messageId>:normal
@@ -206,37 +177,26 @@ endday:<messageId>:endday
 endday:<messageId>:enforce
 ```
 
-同一消息不能重复执行同一阶段。重试只重试失败阶段，不重新执行已成功阶段或确定性扣费。
+### 多 API
 
-## 3. 失败处理
+1. 冻结 normal 快照，固定模式短切日常预设并发起第二 API 日常请求，立即恢复；
+2. 写回日常结果并读取最新 MVU；
+3. 执行确定性扣费、作物、每日标记、引力与有限等待写回；
+4. 冻结 endday 快照，固定模式短切归寝预设并发起第二 API 归寝请求，立即恢复；
+5. 最终事实锁定与写回。
 
-### 日常阶段失败
+### 单 API
 
-- 记录错误；
-- 继续确定性与归寝阶段；
-- 把以下事实加入归寝任务：
+1. 主剧情楼层自带 MVU 作为 normal 阶段结果；
+2. 执行同一套确定性结算；
+3. 冻结 endday 快照，固定模式短切归寝预设并发起当前主 API 归寝请求，立即恢复；
+4. 最终事实锁定与写回。
 
-```text
-日常变量阶段失败；不得猜测、补算或重复执行日常即时变化。
-```
+重试只重试失败的变量阶段，不重新执行确定性结算。
 
-- 最终账簿标为“部分完成”。
+## 5. 设置与界面
 
-### 首次确定性写回超时
-
-沿用当前有限等待：继续归寝阶段，结束时再次锁定。迟到写回完成后再执行一次事实锁定。
-
-### 归寝阶段失败
-
-保留日常阶段结果和确定性结算，账簿标为“部分完成”。
-
-### 最终写回失败
-
-不得报告完整成功；显示最终写回错误。
-
-## 4. 设置迁移与界面
-
-保留普通/归寝各自的：
+保留两阶段各自的：
 
 - `mode`；
 - `presetName`；
@@ -244,95 +204,69 @@ endday:<messageId>:enforce
 - `temperature`；
 - 深度内容屏蔽设置。
 
-移除界面上的 `assembly` 选择。旧缓存中的 `assembly: 'inject'` 自动归一化为确定性编译，不要求清缓存。
+移除 `assembly` 选择。旧缓存中的 `assembly` 字段迁移时删除，不要求玩家清缓存。
 
-设置页和预览页显示：
+设置页说明三种模式的真实行为，并显示最近请求的安全诊断：阶段、模式、目标预设、传输方式、任务数量、任务指纹、切换与恢复结果。
 
-- 阶段；
-- 实际预设；
-- 编译消息数；
-- 任务消息数量；
-- 任务消息是否末位；
-- 上下文占位符清单。
+## 6. 安全诊断
 
-不再显示“保真 + 注入”选项或可能误导的说明。
-
-## 5. 诊断
-
-每个变量请求发送前记录安全元数据：
+每个请求发起时记录：
 
 ```text
 [Pastoral][VariableRequest]
 stage=normal|endday
 mode=none|current|fixed
-preset=<name|none>
-transport=generateRaw
-messages=<n>
+targetPreset=<name|in_use|none>
+transport=generateRaw|generate-current|generate-switched
 taskCount=1
-taskLast=true
 taskFingerprint=<hash>
+switched=true|false
+restored=true|false
 tavernHelperVersion=<version|unknown>
 tavernVersion=<version|unknown>
 ```
 
-不记录：
+不记录 API Key、完整提示词或完整 MVU 快照。
 
-- API Key；
-- 完整提示词；
-- 完整 MVU 快照。
+## 7. 测试
 
-诊断使 Termux 与 Windows 能直接比较同一请求的结构，而不依赖模型回复倒推。
+### 重复与缺失
 
-## 6. 测试
+- Windows 模拟器同时消费 `user_input` 和 `injects`：因为生产配置没有 `injects`，任务只有一份；
+- Termux 模拟器忽略 `injects`：任务仍通过唯一 `user_input` 进入；
+- `none` 模式继续使用 `generateRaw + user_input`，任务只有一份。
 
-### 请求组装
+### 固定预设短事务
 
-- 生产变量路径不调用 `generate()`；
-- 生产变量路径不设置 `injects`；
-- 任务文本只出现一次且位于 `ordered_prompts` 末位；
-- 格式纠正请求同样只有一份任务；
-- 模拟 Windows 同时消费 `user_input` 和 `injects`、Termux 忽略 `injects`：两种宿主均只收到相同的 `ordered_prompts` 任务消息。
+- 调用顺序严格为：保存名称 → 保存现场 → 切目标 → 调用 generate → 切回名称 → 恢复现场；
+- `generate` 返回的 Promise 未解决时，恢复已经完成且短锁已释放；
+- 两个并发请求的切换窗口不交叉，但网络等待可以并发；
+- 同步抛错仍恢复；
+- 原 `in_use` 未保存编辑被精确恢复。
 
-### 阶段设置隔离
+### 阶段隔离
 
-设日常固定预设 A、归寝固定预设 B：
-
-- 多 API 归寝必须记录 `normal → A`；
-- 确定性结算后必须记录 `endday → B`；
-- 两阶段指导指纹不同且与对应阶段匹配；
-- 阶段二不重新读取或复用阶段一快照。
-
-### 归寝顺序
-
-多 API：
+日常固定 A、归寝固定 B：
 
 ```text
-normal(A) → deterministic → initial-write → endday(B) → enforce
+多 API：switch(A) → launch normal → restore → deterministic → switch(B) → launch endday → restore → enforce
+单 API：main-story-as-normal → deterministic → switch(B) → launch endday → restore → enforce
 ```
-
-单 API：
-
-```text
-main-story-as-normal → deterministic → initial-write → endday(B) → enforce
-```
-
-单 API 不额外调用日常静默请求。
 
 ### 失败路径
 
-- 多 API 日常失败后仍继续后两阶段；
-- 归寝提示包含“日常阶段失败，不得补算”；
-- 最终结果标为部分完成并包含日常错误；
-- 归寝失败保留前两阶段；
+- 日常失败后继续并标为部分完成；
+- 归寝提示带“日常失败，不得补算”；
+- 归寝失败保留日常和确定性结果；
 - 最终写回失败不报成功；
-- 重试不重复扣费、不重复推进作物。
+- 重试不重复扣费或推进作物。
 
-## 7. 验收标准
+## 8. 验收标准
 
-- Termux 与 Windows 的请求诊断中，给定相同设置时 `stage/preset/messages/taskCount/taskLast/taskFingerprint` 完全一致；
-- 任何变量请求都不存在同一任务两份或零份；
-- 日常与归寝使用各自预设和指导；
-- 多 API 归寝按日常 → 确定性 → 归寝执行；
-- 单 API 复用主剧情日常结果，不额外调用日常静默请求；
-- 日常阶段失败时归寝可继续但明确为部分完成；
-- 全量测试、脚本语法检查、构建一致性和差异检查全部通过。
+- Windows 不再出现两份任务；
+- Termux 固定模式真实切换到目标阶段预设发起请求，并立即恢复；
+- 网络等待不占用预设切换锁；
+- 玩家当前预设名称和未保存现场内容均恢复；
+- 日常和归寝严格使用各自预设；
+- 归寝流程符合单/多 API 的已确认语义；
+- 全量测试、语法检查、构建一致性和差异检查全部通过。
