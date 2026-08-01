@@ -302,7 +302,7 @@ body.is-immersive .page {
     max-height: none;
   }
   body.is-immersive.mobile-page--story .composer { flex: 0 0 auto; padding-top: var(--space-2); }
-  body.is-immersive.mobile-page--story .composer__input { min-height: calc(3.4em + 22px); max-height: min(168px, 32dvh); }
+  body.is-immersive.mobile-page--story .composer__input { max-height: min(132px, 24dvh); }
   body.is-immersive.mobile-page--story .dock {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
