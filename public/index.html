@@ -1140,6 +1140,19 @@ body.is-immersive .journal__stream {
 .item-row__meta { font-size: 11px; color: var(--color-text-muted); }
 .item-row__qty { font-family: var(--font-mono); font-size: var(--font-size-sm); font-weight: 600; color: var(--color-primary); }
 
+/* ---------- 同名资源图标 ---------- */
+.resource-icon { position: relative; display: inline-grid; place-items: center; width: 44px; height: 44px; flex: none; padding: 6px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text-soft); background: linear-gradient(145deg, var(--color-surface-raised), var(--color-bg-deep)); box-shadow: var(--shadow-paper); cursor: context-menu; transition: transform var(--t-fast) var(--ease-soft), color var(--t-base), border-color var(--t-base), box-shadow var(--t-base); }
+.resource-icon:hover, .resource-icon:focus-visible { color: var(--color-primary); border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber); transform: translateY(-2px); outline: none; }
+.resource-icon:active { transform: translateY(0) scale(.97); }
+.resource-icon .icon-slot, .resource-icon .icon-slot svg, .resource-icon .custom-icon-image { width: 100%; height: 100%; }
+.item-row__icon.resource-icon { width: 38px; height: 38px; }
+.recipe-materials { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 1px; vertical-align: middle; }
+.recipe-material { display: inline-flex; align-items: center; gap: 3px; color: var(--color-text-muted); white-space: nowrap; }
+.recipe-material__icon.resource-icon { width: 28px; height: 28px; min-height: 28px; padding: 4px; box-shadow: none; }
+@media (hover: none) and (pointer: coarse) {
+  .item-row__icon.resource-icon, .recipe-material__icon.resource-icon { width: 44px; height: 44px; min-height: 44px; }
+}
+
 /* ---------- 食谱卡（只展示，不判材料） ---------- */
 .recipe { padding: 10px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); transition: all var(--t-base) var(--ease-soft); cursor: pointer; }
 .recipe + .recipe { margin-top: 8px; }
@@ -2156,6 +2169,108 @@ const Icon = {
 };
 
 window.Icon = Icon;
+
+
+/* === resource-icon.js === */
+/* ============================================================
+   同名资源图标
+   - 规范化库存、种子、作物共享键
+   - 安全识别并美化食谱材料，不改变原始文本或业务判断
+   ============================================================ */
+const ResourceIcon = (function () {
+  'use strict';
+
+  function normalizeName(value) {
+    return String(value == null ? '' : value).trim().replace(/\s+/g, ' ');
+  }
+
+  function baseCropName(value) {
+    return normalizeName(value).replace(/种子$/u, '').trim();
+  }
+
+  function key(value) {
+    const name = baseCropName(value);
+    return name ? `resource:${name}` : '';
+  }
+
+  function fallback(value) {
+    const name = baseCropName(value);
+    if (/菇|菌|茸/.test(name)) return 'mushroom';
+    if (/麦|粉|谷|米|面/.test(name)) return 'grain';
+    if (/蛋/.test(name)) return 'egg';
+    if (/草|药|香|薄荷/.test(name)) return 'herb';
+    if (/鱼/.test(name)) return 'fish';
+    if (/蜜|糖/.test(name)) return 'honey';
+    if (/木|柴|板|梁/.test(name)) return 'wood';
+    if (/石|矿|砖/.test(name)) return 'stone';
+    if (/花|兰|菊|薇/.test(name)) return 'flower';
+    if (/符石|宝石|晶|魔石|露/.test(name)) return 'gem';
+    return 'bag';
+  }
+
+  function entries(value) {
+    return value && typeof value === 'object' ? Object.entries(value) : [];
+  }
+
+  function knownNames(state) {
+    const names = new Set();
+    const add = (value) => { const name = normalizeName(value); if (name) names.add(name); };
+    entries(state && state.旅店 && state.旅店.库存).forEach(([name]) => add(name));
+    entries(state && state.农牧 && state.农牧.种子图鉴).forEach(([name]) => { add(name); add(baseCropName(name)); });
+    ['农田网格', '魔法农田网格'].forEach((field) => {
+      entries(state && state.农牧 && state.农牧[field]).forEach(([, plot]) => add(plot && plot.作物));
+    });
+    return Array.from(names).sort((a, b) => b.length - a.length || a.localeCompare(b, 'zh-CN'));
+  }
+
+  function tokens(materials, state) {
+    const source = String(materials == null ? '' : materials);
+    const names = knownNames(state);
+    const out = [];
+    let index = 0, text = '';
+    const flush = () => { if (text) { out.push({ type: 'text', value: text }); text = ''; } };
+    while (index < source.length) {
+      const found = names.find((name) => source.startsWith(name, index));
+      if (found) {
+        flush();
+        out.push({ type: 'resource', value: found, key: key(found) });
+        index += found.length;
+      } else {
+        text += source[index];
+        index++;
+      }
+    }
+    flush();
+    return out.map((token) => token.value).join('') === source ? out : [{ type: 'text', value: source }];
+  }
+
+  function esc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[char]);
+  }
+
+  function markup(name, options = {}) {
+    const display = normalizeName(name);
+    const base = baseCropName(display);
+    const resourceKey = key(display);
+    if (!resourceKey) return '';
+    const className = ['resource-icon', options.className || ''].filter(Boolean).join(' ');
+    const label = options.label || `资源 ${display}`;
+    const group = options.group || '资源';
+    return `<button type="button" class="${esc(className)}" data-icon-target="${esc(resourceKey)}" data-icon-shared="${esc(resourceKey)}" data-icon-force-shared="true" data-icon-fallback="${esc(fallback(base))}" data-icon-label="${esc(label)}" data-icon-target-label="所有同名资源“${esc(base)}”" data-icon-shared-label="所有同名资源“${esc(base)}”" data-icon-preset-group="${esc(group)}" aria-label="${esc(label)}；右键、长按或按菜单键更换同名资源图标" title="右键、长按或按菜单键更换同名资源图标"><span class="icon-slot" data-icon-slot data-i="${esc(fallback(base))}"></span></button>`;
+  }
+
+  function materialMarkup(materials, state) {
+    const body = tokens(materials, state).map((token) => token.type === 'resource'
+      ? `<span class="recipe-material">${markup(token.value, { className: 'recipe-material__icon', label: `食谱材料 ${token.value}`, group: '资源' })}<span>${esc(token.value)}</span></span>`
+      : esc(token.value)).join('');
+    return `<span class="recipe-materials">${body}</span>`;
+  }
+
+  return { normalizeName, baseCropName, key, fallback, knownNames, tokens, markup, materialMarkup };
+})();
+window.ResourceIcon = ResourceIcon;
 
 
 /* === data.js === */
@@ -3769,6 +3884,7 @@ const IconPicker = (function () {
 
   function presetGroupsFor(el) {
     const scope = el.dataset.iconPresetGroup;
+    if (scope === '资源') return ['作物', '农牧', '通用'];
     return scope && ['地图', '作物', '农牧'].includes(scope) ? [scope, '通用'] : ['地图', '作物', '农牧', '通用'];
   }
 
@@ -3789,7 +3905,7 @@ const IconPicker = (function () {
       <div class="icon-picker__tabs" role="tablist" aria-label="图标来源"><button type="button" class="is-active" role="tab" aria-selected="true" data-icon-picker-tab="preset">系统预设</button><button type="button" role="tab" aria-selected="false" data-icon-picker-tab="custom">我的图标</button></div>
       <div class="icon-picker__panel" data-icon-picker-panel="preset"></div>
       <div class="icon-picker__panel" data-icon-picker-panel="custom" hidden></div>
-      <fieldset class="icon-picker__scope"><legend>应用范围</legend><label><input type="radio" name="iconScope" value="target" checked> ${escapeHtml(el.dataset.iconTargetLabel || '仅当前项目')}</label>${el.dataset.iconShared ? `<label><input type="radio" name="iconScope" value="shared"> ${escapeHtml(el.dataset.iconSharedLabel || '应用到同名项目')}</label>` : ''}</fieldset>
+      <fieldset class="icon-picker__scope"><legend>应用范围</legend>${el.dataset.iconForceShared === 'true' && el.dataset.iconShared ? `<label><input type="radio" name="iconScope" value="shared" checked> ${escapeHtml(el.dataset.iconSharedLabel || '应用到所有同名资源')}</label>` : `<label><input type="radio" name="iconScope" value="target" checked> ${escapeHtml(el.dataset.iconTargetLabel || '仅当前项目')}</label>${el.dataset.iconShared ? `<label><input type="radio" name="iconScope" value="shared"> ${escapeHtml(el.dataset.iconSharedLabel || '应用到同名项目')}</label>` : ''}`}</fieldset>
       <div class="icon-picker__status" data-icon-picker-status role="status" aria-live="polite"></div>
       <footer class="icon-picker__foot"><button type="button" class="btn btn--ghost" data-icon-restore>恢复系统默认</button><span class="icon-picker__spacer"></span><button type="button" class="btn btn--ghost" data-icon-picker-close>取消</button><button type="button" class="btn btn--primary" data-icon-save>保存</button></footer>`;
     backdrop.append(dialog); document.body.append(backdrop); Icon.render(dialog);
@@ -5580,8 +5696,8 @@ window.Chat = Chat;
   function esc(value) { return String(value == null ? '' : value).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]); }
   function iconName(value) { return String(value == null ? '' : value).trim().replace(/\s+/g, ' ').slice(0, 160); }
   function cropIconName(value) { return iconName(value).replace(/种子$/u, '').trim(); }
-  function replaceableIcon({ target, shared = '', fallback = 'sparkle', label, targetLabel = '仅当前项目', sharedLabel = '', group = '通用', className = 'ic', wrapper = 'span' }) {
-    return `<${wrapper} class="${className}" data-icon-target="${esc(target)}"${shared ? ` data-icon-shared="${esc(shared)}"` : ''} data-icon-fallback="${esc(fallback)}" data-icon-label="${esc(label)}" data-icon-target-label="${esc(targetLabel)}"${sharedLabel ? ` data-icon-shared-label="${esc(sharedLabel)}"` : ''} data-icon-preset-group="${esc(group)}"><span class="icon-slot" data-icon-slot data-i="${esc(fallback)}"></span></${wrapper}>`;
+  function replaceableIcon({ target, shared = '', forceShared = false, fallback = 'sparkle', label, targetLabel = '仅当前项目', sharedLabel = '', group = '通用', className = 'ic', wrapper = 'span' }) {
+    return `<${wrapper} class="${className}" data-icon-target="${esc(target)}"${shared ? ` data-icon-shared="${esc(shared)}"` : ''}${forceShared ? ' data-icon-force-shared="true"' : ''} data-icon-fallback="${esc(fallback)}" data-icon-label="${esc(label)}" data-icon-target-label="${esc(targetLabel)}"${sharedLabel ? ` data-icon-shared-label="${esc(sharedLabel)}"` : ''} data-icon-preset-group="${esc(group)}"><span class="icon-slot" data-icon-slot data-i="${esc(fallback)}"></span></${wrapper}>`;
   }
   function decorateIcons(root) { if (window.IconPicker) IconPicker.decorate(root); }
   const HAS_LODASH = (typeof _ !== 'undefined') && _ && typeof _.get === 'function';
@@ -5921,7 +6037,7 @@ window.Chat = Chat;
           const qty = num(v && v.数量, 0);
           const q2 = (v && v.品质) || '普通';
           return `<div class="item-row" data-item="${name}">
-            <span class="ic item-row__icon" data-i="${itemIcon(name)}"></span>
+            ${ResourceIcon.markup(name, { className: 'item-row__icon', label: `库存物品 ${name}`, group: '资源' })}
             <div class="item-row__main"><div class="item-row__name">${name}</div><div class="item-row__meta">${(v && v.分类) || '杂项'} · ${(v && v.描述) || ''}</div></div>
             <span class="q-tag ${qClass(q2)}">${q2}</span>
             <span class="item-row__qty">×${qty}</span>
@@ -5935,7 +6051,7 @@ window.Chat = Chat;
           const price = num(r && r.售价, 0), diff = num(r && r.难度, 0), fac = (r && r.需要设施) || '厨房';
           return `<div class="recipe" data-recipe="${name}">
             <div class="recipe__head"><span class="ic" data-i="pot" style="--ic:16px;color:var(--color-primary)"></span><span class="recipe__name">${name}</span><span class="pill pill--amber">难度 ${diff}</span></div>
-            <div class="recipe__mats">材料：${(r && r.材料) || '随性发挥'}</div>
+            <div class="recipe__mats">材料：${ResourceIcon.materialMarkup((r && r.材料) || '随性发挥', Render.state)}</div>
             <div class="recipe__foot"><span class="card__sub">设施 · ${fac}</span><span class="num" style="color:var(--color-primary)">${price} 银</span></div>
           </div>`;
         }).join('')
@@ -5944,7 +6060,7 @@ window.Chat = Chat;
     container.innerHTML = segHtml + searchHtml +
       panelH('物品', `${filtered.length} / ${all.length}`) + listHtml +
       panelH('食谱', `${recArr.length}`) + recHtml;
-    Icon.render(container);
+    Icon.render(container); decorateIcons(container);
 
     $$('.seg__item', container).forEach((b) => b.addEventListener('click', () => {
       UI.invCat = b.dataset.cat; renderInventory(container, Render.state);
@@ -6251,7 +6367,8 @@ window.Chat = Chat;
     const days = num(p.剩余天数, 0), ripe = state === '种植中' && days <= 0;
     const pct = state === '种植中' && crop ? clamp(100 - days * 18, 5, 100) : 0;
     const fallback = ripe ? 'ripe' : state === '荒地' ? 'stone' : crop ? itemIcon(crop) : magic ? 'magicfarm' : 'garden';
-    const farmIcon = replaceableIcon({ target: `farm:${magic ? 'magic' : 'normal'}:${key}`, shared: crop ? `crop:${crop}` : '', fallback, label: `${magic ? '魔法' : '普通'}田格 ${key}${crop ? ` · ${crop}` : ''}`, targetLabel: '仅当前田格', sharedLabel: `所有同名作物“${crop}”`, group: crop ? '作物' : '农牧', className: 'ic' });
+    const resourceKey = crop ? ResourceIcon.key(crop) : '';
+    const farmIcon = replaceableIcon({ target: resourceKey || `farm:${magic ? 'magic' : 'normal'}:${key}`, shared: resourceKey, forceShared: !!resourceKey, fallback, label: crop ? `作物 ${crop}` : `${magic ? '魔法' : '普通'}田格 ${key}`, targetLabel: crop ? `所有同名资源“${crop}”` : '仅当前田格', sharedLabel: crop ? `所有同名资源“${crop}”` : '', group: crop ? '资源' : '农牧', className: 'ic' });
     return `<div class="crop-plot" data-plot-detail="${key}">
       <div class="crop-plot__head">
         ${farmIcon}
@@ -6293,7 +6410,8 @@ window.Chat = Chat;
       inRange.add(key);
       const state = p.状态 || '荒地', crop = iconName(p.作物 || ''), ripe = state === '种植中' && num(p.剩余天数, 0) <= 0;
       const fallback = ripe ? 'ripe' : state === '荒地' ? 'stone' : crop ? itemIcon(crop) : magic ? 'magicfarm' : 'garden';
-      const icon = replaceableIcon({ target: `farm:${magic ? 'magic' : 'normal'}:${key}`, shared: crop ? `crop:${crop}` : '', fallback, label: `${magic ? '魔法' : '普通'}田格 ${key}${crop ? ` · ${crop}` : ''}`, targetLabel: '仅当前田格', sharedLabel: `所有同名作物“${crop}”`, group: crop ? '作物' : '农牧', className: 'farm-cell__icon', wrapper: 'span' });
+      const resourceKey = crop ? ResourceIcon.key(crop) : '';
+      const icon = replaceableIcon({ target: resourceKey || `farm:${magic ? 'magic' : 'normal'}:${key}`, shared: resourceKey, forceShared: !!resourceKey, fallback, label: crop ? `作物 ${crop}` : `${magic ? '魔法' : '普通'}田格 ${key}`, targetLabel: crop ? `所有同名资源“${crop}”` : '仅当前田格', sharedLabel: crop ? `所有同名资源“${crop}”` : '', group: crop ? '资源' : '农牧', className: 'farm-cell__icon', wrapper: 'span' });
       cells.push(`<button class="farm-cell ${magic ? 'is-magic' : ''} ${state === '种植中' ? 'is-planted' : state === '已开垦' ? 'is-tilled' : 'is-wild'} ${ripe ? 'is-ripe' : ''}" type="button" data-plot="${key}" aria-label="田格${key}，${esc(state)}${crop ? '，' + esc(crop) : ''}"><span class="farm-cell__coord">${x},${y}</span>${icon}<span class="farm-cell__name">${esc(crop || state)}</span></button>`);
     }
     const overflow = entries(records).filter(([key]) => !inRange.has(key));
@@ -6327,7 +6445,7 @@ window.Chat = Chat;
       html += panelH('种子图鉴', seeds.length);
       html += seeds.length ? `<div class="seed-catalog">${seeds.map(([name, seed]) => {
         const cropName = cropIconName(name);
-        const seedIcon = replaceableIcon({ target: `crop:${cropName}`, fallback: itemIcon(cropName), label: `${cropName}种子及同名作物`, targetLabel: `应用于“${cropName}”种子及所有同名作物`, group: '作物', className: 'ic building__icon' });
+        const seedIcon = ResourceIcon.markup(name, { className: 'building__icon', label: `${cropName}种子及同名资源`, group: '资源' });
         return `<article class="seed-card"><div class="building__head">${seedIcon}<span class="building__name">${esc(name)}</span><span class="pill ${seed.类型 === '魔法' ? 'pill--mint' : ''}">${esc(seed.类型 || '普通')}</span></div><div class="card__sub">季节 · ${esc((seed.可种季节 || []).join('、') || '未限定')}　生长 · ${num(seed.生长天数, 0)} 日　种子价 · ${num(seed.种子价, 0)}</div><div class="quest-card__desc">产出 · ${esc(seed.产出 || '—')}　获取 · ${esc(seed.获取方式 || '—')}</div><div class="card__sub">连续收获 · ${seed.可连续收获 ? `是 / 间隔 ${num(seed.收获间隔天数, 0)} 日 / 上限 ${num(seed.收获次数上限, 1)}${seed.永续 ? ' / 永续' : ''}` : '否'}</div>${seed.特殊条件 ? `<div class="card__sub">条件 · ${esc(seed.特殊条件)}</div>` : ''}${seed.产出效果 ? `<div class="card__sub">效果 · ${esc(seed.产出效果)}</div>` : ''}${seed.描述 ? `<p class="quest-card__desc">${esc(seed.描述)}</p>` : ''}<button class="btn btn--sm" data-seed-use="${esc(name)}">用于播种</button></article>`;
       }).join('')}</div>` : emptyState('grain', '种子图鉴为空', '获得种子资料后会在这里记录。');
       container.innerHTML = html; Icon.render(container); decorateIcons(container); bindFarmActions(container);

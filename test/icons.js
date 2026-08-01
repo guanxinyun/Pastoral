@@ -29,14 +29,18 @@ if (fs.existsSync(pickerPath)) {
   ok(/image\/png/.test(picker) && /image\/svg\+xml/.test(picker), '上传入口限制允许的图片 MIME');
   ok(/createElement\(['"]img['"]\)/.test(picker), '个人 SVG/图片只通过 img Blob URL 显示');
   ok(/pastoral:icons-changed/.test(picker), '绑定变化发出局部刷新事件');
+  ok(/iconForceShared/.test(picker) && /value=\"shared\" checked/.test(picker), '资源图标可强制同名共享范围');
+  ok(/scope === '资源'/.test(picker), '选择器支持资源预设范围');
 }
 const build = fs.readFileSync(path.join(root, 'build.js'), 'utf8');
 ok(/'assets',\s*'icon-picker'/.test(build), '构建在 assets 后装入 icon-picker');
+ok(/'icons',\s*'resource-icon'/.test(build) && /'resource-icon'[\s\S]*'render'/.test(build), '构建在 render 前装入 resource-icon');
 
 const render = fs.readFileSync(path.join(root, 'js', 'render.js'), 'utf8');
 ok(/map:\$\{x\},\$\{y\}/.test(render) && /map-name:/.test(render), '地图提供坐标与同名映射键');
 ok(/farm:\$\{magic \? 'magic' : 'normal'\}/.test(render), '普通与魔法农田使用不同坐标键');
-ok(/crop:/.test(render) && /livestock:/.test(render), '作物/种子与畜牧提供共享映射键');
+ok(/ResourceIcon\.key\(crop\)/.test(render) && /livestock:/.test(render), '作物使用统一资源键且畜牧保留独立映射键');
+ok(/ResourceIcon\.markup\(name/.test(render) && /ResourceIcon\.materialMarkup/.test(render), '库存、种子与食谱材料接入同名资源图标');
 ok(/IconPicker\.decorate/.test(render), '动态面板渲染后重新装饰图标');
 
 console.log(failed ? `\n✗ ${failed} 项失败` : '\n✓ 全部通过');

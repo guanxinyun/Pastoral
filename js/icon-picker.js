@@ -145,6 +145,7 @@ const IconPicker = (function () {
 
   function presetGroupsFor(el) {
     const scope = el.dataset.iconPresetGroup;
+    if (scope === '资源') return ['作物', '农牧', '通用'];
     return scope && ['地图', '作物', '农牧'].includes(scope) ? [scope, '通用'] : ['地图', '作物', '农牧', '通用'];
   }
 
@@ -165,7 +166,7 @@ const IconPicker = (function () {
       <div class="icon-picker__tabs" role="tablist" aria-label="图标来源"><button type="button" class="is-active" role="tab" aria-selected="true" data-icon-picker-tab="preset">系统预设</button><button type="button" role="tab" aria-selected="false" data-icon-picker-tab="custom">我的图标</button></div>
       <div class="icon-picker__panel" data-icon-picker-panel="preset"></div>
       <div class="icon-picker__panel" data-icon-picker-panel="custom" hidden></div>
-      <fieldset class="icon-picker__scope"><legend>应用范围</legend><label><input type="radio" name="iconScope" value="target" checked> ${escapeHtml(el.dataset.iconTargetLabel || '仅当前项目')}</label>${el.dataset.iconShared ? `<label><input type="radio" name="iconScope" value="shared"> ${escapeHtml(el.dataset.iconSharedLabel || '应用到同名项目')}</label>` : ''}</fieldset>
+      <fieldset class="icon-picker__scope"><legend>应用范围</legend>${el.dataset.iconForceShared === 'true' && el.dataset.iconShared ? `<label><input type="radio" name="iconScope" value="shared" checked> ${escapeHtml(el.dataset.iconSharedLabel || '应用到所有同名资源')}</label>` : `<label><input type="radio" name="iconScope" value="target" checked> ${escapeHtml(el.dataset.iconTargetLabel || '仅当前项目')}</label>${el.dataset.iconShared ? `<label><input type="radio" name="iconScope" value="shared"> ${escapeHtml(el.dataset.iconSharedLabel || '应用到同名项目')}</label>` : ''}`}</fieldset>
       <div class="icon-picker__status" data-icon-picker-status role="status" aria-live="polite"></div>
       <footer class="icon-picker__foot"><button type="button" class="btn btn--ghost" data-icon-restore>恢复系统默认</button><span class="icon-picker__spacer"></span><button type="button" class="btn btn--ghost" data-icon-picker-close>取消</button><button type="button" class="btn btn--primary" data-icon-save>保存</button></footer>`;
     backdrop.append(dialog); document.body.append(backdrop); Icon.render(dialog);

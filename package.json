@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node build.js",
     "dev": "node dev.js",
-    "test": "node build.js && node test/build.js && node test/intro.js && node test/money.js && node test/rules.js && node test/settings.js && node test/mvu.js && node test/api.js && node test/assets.js && node test/icons.js && node test/staff.js && node test/farm.js && node test/smoke.js && node test/iframe.js && node test/layout.js"
+    "test": "node build.js && node test/build.js && node test/intro.js && node test/resource-icons.js && node test/money.js && node test/rules.js && node test/settings.js && node test/mvu.js && node test/api.js && node test/assets.js && node test/icons.js && node test/staff.js && node test/farm.js && node test/smoke.js && node test/iframe.js && node test/layout.js"
   },
   "devDependencies": {
     "jsdom": "29.1.1"
