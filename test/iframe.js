@@ -77,6 +77,11 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   cdoc.close();
   await wait(700);
 
+  ok(!!cdoc.getElementById('titleScreen') && cdoc.getElementById('book').hasAttribute('inert'), 'iframe 加载后标题先出现');
+  cdoc.getElementById('titleStart').dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
+  await wait(100);
+  ok(!cdoc.getElementById('book').hasAttribute('inert') && cdoc.getElementById('prologue').hidden, '已有楼层从标题直接恢复正式界面');
+
   console.log('\n[1] 第 0 层接管其余聊天楼层');
   const style = pdoc.getElementById('pastoral-host-takeover');
   ok(!!style, '父文档已注入仅供全屏的 <style>');

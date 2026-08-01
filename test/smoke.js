@@ -97,6 +97,10 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     await wait(600);
 
     ok(doc.body.innerHTML.length > 0, 'body 未被销毁');
+    ok(!!doc.getElementById('titleScreen') && doc.getElementById('book').hasAttribute('inert'), '加载后先显示标题且正式界面不可误操作');
+    doc.getElementById('titleStart').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    await wait(80);
+    ok(doc.getElementById('prologue').hidden && !doc.getElementById('book').hasAttribute('inert'), '已有楼层点击开始后跳过序章并恢复存档');
     ok(!!doc.getElementById('pageLeft') && !!doc.getElementById('pageRight'), '双页均在');
     ok(!!doc.getElementById('composerInput'), 'composer 输入框存在');
     ok(!!doc.getElementById('requestStatus') && doc.getElementById('requestStatus').getAttribute('role') === 'status', '请求阶段状态条存在且可被辅助技术读取');
@@ -234,6 +238,24 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const sent = calls.slash.join(' | ');
     ok(/\/send 推门远望/.test(sent), '/send 已发出：' + sent);
     ok(/\/trigger/.test(sent), '/trigger 已发出');
+  }
+
+  /* ---------- 1a. 只有零楼时强制完整序章 ---------- */
+  console.log('\n[1a] 只有零楼时强制序章');
+  {
+    const chat = [{ message_id: 0, role: 'assistant', name: '暮归旅店', is_hidden: false, message: '```\n```' }];
+    const { win, doc, calls } = load(0, { chat });
+    let readyEvents = 0;
+    win.addEventListener('pastoral:intro-ready', () => readyEvents++);
+    await wait(600);
+    const start = doc.getElementById('titleStart');
+    start.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    start.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    await wait(100);
+    const prologueText = doc.getElementById('prologue').textContent;
+    ok(/第一年.*春季第1天/.test(prologueText) && /霍根·星摇/.test(prologueText) && /声望\+3/.test(prologueText), '零楼围栏被完整内置序章替代');
+    ok(doc.querySelectorAll('[data-prologue-chapter="letter"]').length === 1 && readyEvents === 1, '快速双击只生成一个序章并发出一次就绪事件');
+    ok(calls.set.length === 0 && calls.del.length === 0 && calls.slash.length === 0, '强制序章不写聊天也不触发模型');
   }
 
   /* ---------- 1b. 生成中新楼 MVU 为空时保持上一楼 ---------- */
