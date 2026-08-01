@@ -93,5 +93,15 @@ ok(!/body\.is-immersive\.is-mobile-keyboard-open\s+\.composer\s*\{[^}]*(position
 console.log('\n[4] 滚动条已按主题定制');
 ok(/\.journal__stream::-webkit-scrollbar-thumb/.test(CSS), '对话流滚动条已定制');
 
+console.log('\n[5] 标题、序章与全面视觉契约');
+ok(/\.title-screen\s*\{[^}]*min-height:\s*100svh/.test(CSS), '标题占据沉浸视口');
+ok(/\.prologue__measure\s*\{[^}]*max-width:\s*72ch/.test(CSS), '序章阅读宽度限制为 72ch');
+ok(/\.bub__body\s*>\s*\*\s*\{[^}]*max-width:\s*(66ch|72ch)/.test(CSS), '正式正文阅读宽度受限');
+ok(/min-height:\s*44px/.test(CSS), '交互控件包含 44px 触控目标');
+ok(/@media\s*\(prefers-reduced-motion:\s*reduce\)/.test(CSS), '提供减少动效覆盖');
+ok(/--color-title-sky:/.test(CSS) && /--color-parchment-warm:/.test(CSS), '标题山谷与信纸使用设计令牌');
+ok(/\.book\s*\{[^}]*box-shadow:\s*var\(--shadow-book\)/.test(CSS), '正式双页书使用统一高端层次阴影');
+ok(/\.card:hover[^{]*\{[^}]*transform:\s*translateY/.test(CSS), '正式卡片具有细腻悬停反馈');
+
 console.log(failed ? `\n✗ ${failed} 项失败` : '\n✓ 全部通过');
 process.exit(failed ? 1 : 0);
