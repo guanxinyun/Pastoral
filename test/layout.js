@@ -84,8 +84,26 @@ ok(/body\.is-immersive\.mobile-page--story\s+\.page--left[\s\S]*display:\s*none/
 ok(!/body\.is-immersive\s+\.book\s*\{[^}]*flex-wrap:\s*wrap[^}]*height:\s*auto/.test(CSS),
   '手机沉浸不再上下堆叠双页');
 ok(/height:\s*var\(--mobile-viewport-height,\s*100dvh\)/.test(CSS), '手机沉浸高度由 VisualViewport CSS 变量驱动并回退 100dvh');
+ok(/html\.in-tavern--dynamic\.is-immersive\s*\{[^}]*height:\s*var\(--mobile-viewport-height,\s*100dvh\)[^}]*overflow:\s*hidden/.test(CSS),
+  '手机全屏覆盖动态 html 的自然高度并锁定为可视视口');
+ok(/body\.in-tavern\.in-tavern--dynamic\.is-game\.is-immersive\s*\{[^}]*height:\s*var\(--mobile-viewport-height,\s*100dvh\)[^}]*overflow:\s*hidden/.test(CSS),
+  '手机全屏 body 明确占满可视视口而不是保留自然短高度');
+ok(/body\.in-tavern\.in-tavern--dynamic\.is-game\.is-immersive\s+\.book\s*\{[^}]*height:\s*var\(--mobile-viewport-height,\s*100dvh\)/.test(CSS),
+  '手机全屏书本用足够高优先级覆盖酒馆 100% 高度规则');
 ok(/body\.is-immersive\.mobile-page--story\s+\.page--right\s*\{[^}]*min-height:\s*0/.test(CSS), '手机剧情页保持纵向弹性且允许正文收缩');
 ok(/body\.is-immersive\.mobile-page--story\s+\.dock\s*\{[^}]*display:\s*grid/.test(CSS), '手机剧情 dock 使用稳定网格而非任意换行');
+ok(!/@media\s*\(max-width:\s*899px\)[\s\S]*body\.in-tavern\.is-game\s+\.mobile-page-switcher/.test(CSS),
+  '普通手机内嵌模式不显示全屏页签');
+ok(!/body\.in-tavern\.is-game\.mobile-page--(?:ledger|story)/.test(CSS),
+  '普通手机内嵌模式不套用全屏单页隐藏规则');
+ok(/body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s*\{[^}]*height:\s*auto[^}]*min-height:\s*640px[^}]*overflow:\s*visible/.test(CSS),
+  '普通手机游玩页仅在非全屏时使用自然高度');
+ok(/body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s+\.book\s*\{[^}]*height:\s*auto[^}]*min-height:\s*640px[^}]*flex-direction:\s*column[^}]*flex-wrap:\s*nowrap/.test(CSS),
+  '普通手机游玩书页纵向自然排列而非折叠或硬挤双栏');
+ok(/body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s+\.page\s*\{[^}]*width:\s*100%[^}]*height:\s*auto[^}]*overflow:\s*visible/.test(CSS),
+  '普通手机内嵌的两张页面各占完整宽度');
+ok(!/body\.in-tavern\.in-tavern--dynamic\.is-game\s+\.book\s*\{[^}]*height:\s*auto/.test(CSS),
+  '自然高度规则不会覆盖手机全屏视口范围');
 ok(/body\.is-immersive\.is-mobile-keyboard-open\s+\.dock\s*\{[^}]*display:\s*none/.test(CSS), '软键盘打开时隐藏状态与快捷栏');
 ok(/body\.is-immersive\.is-mobile-keyboard-open\s+\.hud/.test(CSS), '软键盘打开时 HUD 使用紧凑样式');
 ok(!/body\.is-immersive\.is-mobile-keyboard-open\s+\.composer\s*\{[^}]*(position:\s*(fixed|absolute))/.test(CSS), '键盘模式 composer 仍在正常布局流');
@@ -121,10 +139,6 @@ ok(/body\.in-tavern\.in-tavern--dynamic\s+\.title-screen\s*\{[^}]*height:\s*auto
   '父页面不可接管时标题至少 560px 并完整暴露开始按钮');
 ok(/body\.in-tavern\.in-tavern--dynamic\.is-prologue\s+\.prologue\s*\{[^}]*height:\s*auto[^}]*max-height:\s*none[^}]*overflow:\s*visible/.test(CSS),
   '动态宿主序章按完整内容自然展开');
-ok(/html\.in-tavern--unmanaged[\s\S]*body\.in-tavern\.in-tavern--unmanaged\.is-game\s*\{[^}]*height:\s*auto[^}]*min-height:\s*640px[^}]*overflow:\s*visible/.test(CSS),
-  '无法控制父 frame 时正式游戏暴露至少 640px 自然高度');
-ok(/body\.in-tavern\.in-tavern--unmanaged\.is-game\s+\.book\s*\{[^}]*height:\s*640px[^}]*min-height:\s*640px/.test(CSS),
-  '无法控制父 frame 时书页不是 96px 短条');
 ok(/body\.in-tavern\s+\.title-screen\s*\{[^}]*height:\s*100%[^}]*min-height:\s*0/.test(CSS), '有界酒馆标题不使用 dvh 参与高度反馈');
 ok(/body\.in-tavern\.is-prologue\s+\.prologue\s*\{[^}]*width:\s*calc\(100%\s*-\s*24px\)[^}]*height:\s*calc\(100%\s*-\s*24px\)[^}]*margin:\s*12px auto[^}]*overflow-y:\s*auto/.test(CSS), '酒馆序章在留白视口内滚动');
 ok(/\.book\s*\{[^}]*--book-edge-inline:\s*clamp\(16px,\s*2vw,\s*32px\)/.test(CSS),
@@ -133,8 +147,8 @@ ok(/body\.in-tavern\.is-game\s+\.book\s*\{[^}]*width:\s*100%[^}]*max-width:\s*no
   '酒馆舞台铺满，桌面页缘位于书本内部');
 ok(/body\.is-immersive\s+\.book\s*\{[^}]*padding-inline:\s*var\(--book-edge-inline\)/.test(CSS),
   '桌面沉浸模式仍保留书本轮廓');
-ok(/@media\s*\(max-width:\s*899px\)[\s\S]*body\.in-tavern\.is-game\s+\.book\s*,[\s\S]*body\.is-immersive\s+\.book\s*\{[^}]*padding-inline:\s*max\(0px,\s*env\(safe-area-inset-left\)\)\s+max\(0px,\s*env\(safe-area-inset-right\)\)/.test(CSS),
-  '手机移除装饰页缘，仅保留左右安全区');
+ok(/@media\s*\(max-width:\s*899px\)[\s\S]*body\.is-immersive\s+\.book\s*\{[^}]*padding-inline:\s*max\(0px,\s*env\(safe-area-inset-left\)\)\s+max\(0px,\s*env\(safe-area-inset-right\)\)/.test(CSS),
+  '手机全屏移除装饰页缘，仅保留左右安全区');
 ok(!/body\.in-tavern\.is-game\s+\.book\s*\{[^}]*width:\s*calc\(100%\s*-\s*24px\)/.test(CSS),
   '正式书本不再通过缩小外壳制造外部留白');
 ok(/body\.in-tavern\.is-prologue\s+\.book[\s\S]*display:\s*none/.test(CSS), '酒馆序章与正式界面互斥显示');

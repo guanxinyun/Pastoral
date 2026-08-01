@@ -18,10 +18,20 @@ html.in-tavern--dynamic { height: auto; min-height: 0; overflow: visible; }
 body.in-tavern.in-tavern--dynamic { height: auto; min-height: 0; overflow: visible; }
 body.in-tavern.in-tavern--dynamic .title-screen { height: auto; min-height: 560px; overflow: visible; }
 body.in-tavern.in-tavern--dynamic.is-prologue .prologue { height: auto; max-height: none; overflow: visible; }
-body.in-tavern.in-tavern--dynamic.is-game { height: 100%; overflow: hidden; }
-html.in-tavern--unmanaged,
-body.in-tavern.in-tavern--unmanaged.is-game { height: auto; min-height: 640px; overflow: visible; }
-body.in-tavern.in-tavern--unmanaged.is-game .book { height: 640px; min-height: 640px; overflow: hidden; }
+body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) { height: auto; min-height: 640px; overflow: visible; }
+body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) .book { height: auto; min-height: 640px; overflow: visible; flex-direction: column; flex-wrap: nowrap; }
+body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) .page { width: 100%; height: auto; overflow: visible; flex: 0 0 auto; }
+html.in-tavern--dynamic.is-immersive {
+  height: var(--mobile-viewport-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+}
+body.in-tavern.in-tavern--dynamic.is-game.is-immersive {
+  height: var(--mobile-viewport-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+}
+body.in-tavern.in-tavern--dynamic.is-game.is-immersive .book { height: var(--mobile-viewport-height, 100dvh); }
 body.in-tavern.is-title .prologue,
 body.in-tavern.is-title .book,
 body.in-tavern.is-prologue .title-screen,
@@ -175,7 +185,6 @@ body.is-immersive .page {
 .mobile-page-switcher { display: none; }
 
 @media (max-width: 899px) {
-  body.in-tavern .book,
   body.is-immersive .book {
     height: 100%;
     min-height: 0;
@@ -190,14 +199,12 @@ body.is-immersive .page {
     flex-direction: column;
     flex-wrap: nowrap;
   }
-  body.in-tavern.is-game .book,
   body.is-immersive .book {
     padding-block: max(0px, env(safe-area-inset-top)) max(0px, env(safe-area-inset-bottom));
     padding-inline: max(0px, env(safe-area-inset-left)) max(0px, env(safe-area-inset-right));
     border-radius: 0;
     box-shadow: none;
   }
-  body.in-tavern.is-game .mobile-page-switcher,
   body.is-immersive .mobile-page-switcher {
     display: grid;
     grid-template-columns: 1fr 1fr auto;
@@ -233,21 +240,13 @@ body.is-immersive .page {
   .mobile-page-switcher__tab:active,
   .mobile-page-switcher__exit:active { transform: scale(0.98); }
   .mobile-page-switcher__tab.is-active { color: var(--color-text); background: var(--amber-glow); border-color: var(--color-primary); }
-  body.in-tavern.is-game .page,
   body.is-immersive .page { width: 100%; height: auto; flex: 1 1 0; min-height: 0; }
-  body.in-tavern.is-game.mobile-page--ledger .page--right,
-  body.in-tavern.is-game.mobile-page--story .page--left,
   body.is-immersive.mobile-page--ledger .page--right,
   body.is-immersive.mobile-page--story .page--left { display: none; }
-  body.in-tavern.is-game.mobile-page--ledger .page--left,
-  body.in-tavern.is-game.mobile-page--story .page--right,
   body.is-immersive.mobile-page--ledger .page--left,
   body.is-immersive.mobile-page--story .page--right { display: flex; }
-  body.in-tavern.is-game.mobile-page--story .page--right,
   body.is-immersive.mobile-page--story .page--right { min-height: 0; flex-direction: column; }
-  body.in-tavern.is-game.mobile-page--story .journal,
   body.is-immersive.mobile-page--story .journal { flex: 1 1 auto; min-height: 0; overflow: hidden; }
-  body.in-tavern.is-game.mobile-page--story .journal__stream,
   body.is-immersive.mobile-page--story .journal__stream { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   body.is-immersive.mobile-page--story .composer { flex: 0 0 auto; padding-top: var(--space-2); }
   body.is-immersive.mobile-page--story .composer__input { max-height: min(132px, 24dvh); }

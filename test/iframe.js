@@ -32,6 +32,8 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   const errors = [];
   const dom = new JSDOM(HOST_PAGE, { runScripts: 'dangerously', pretendToBeVisual: true, url: 'http://localhost:8000/' });
   const { window: pwin, window: { document: pdoc } } = dom;
+  Object.defineProperty(pwin, 'innerWidth', { value: 390, writable: true, configurable: true });
+  Object.defineProperty(pwin, 'innerHeight', { value: 856, writable: true, configurable: true });
   pwin.matchMedia = () => ({ matches: false, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} });
 
   // 建 iframe 并注入酒馆 API + 卡片
@@ -88,13 +90,17 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   ok(cdoc.body.classList.contains('is-game') && !cdoc.body.classList.contains('is-title'),
     '已有存档进入游戏后清除标题阶段状态');
   const embeddedSwitcher = cdoc.querySelector('[data-mobile-page-switcher]');
-  const embeddedStoryTab = cdoc.querySelector('[data-mobile-page="story"]');
   const embeddedExit = cdoc.querySelector('[data-mobile-exit]');
-  ok(embeddedSwitcher && !embeddedSwitcher.hidden && cdoc.body.classList.contains('mobile-page--ledger'), '窄酒馆 iframe 非全屏也启用单页经营视图');
-  ok(embeddedExit && embeddedExit.hidden, '非全屏手机酒馆隐藏退出按钮');
-  embeddedStoryTab && embeddedStoryTab.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
-  ok(cdoc.body.classList.contains('mobile-page--story'), '窄酒馆 iframe 非全屏可切换剧情页');
-  cdoc.querySelector('[data-mobile-page="ledger"]').dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
+  const embeddedLeft = cdoc.getElementById('pageLeft');
+  const embeddedRight = cdoc.getElementById('pageRight');
+  ok(embeddedSwitcher && embeddedSwitcher.hidden, '窄酒馆 iframe 非全屏隐藏全屏页签');
+  ok(embeddedExit && embeddedExit.hidden, '窄酒馆 iframe 非全屏隐藏退出按钮');
+  ok(!cdoc.body.classList.contains('mobile-page--ledger') && !cdoc.body.classList.contains('mobile-page--story'),
+    '普通内嵌模式不设置全屏单页状态');
+  ok(!embeddedLeft.hidden && !embeddedRight.hidden,
+    '普通内嵌模式同时保留经营页与剧情页');
+  ok(/body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s+\.book\s*\{[^}]*flex-direction:\s*column/.test(CARD),
+    '普通手机内嵌按纵向完整页面排列');
   measuredHeight = 980;
   cdoc.body.classList.add('is-prologue');
   await wait(80);
@@ -112,6 +118,22 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   ok(iframe.classList.contains('pastoral-host-dynamic'), '窄屏宿主 iframe 使用动态高度模式');
   ok(parseFloat(iframe.style.getPropertyValue('--pastoral-frame-height')) >= 560,
     '标题阶段立即写入至少 560px 的动态 iframe 高度');
+  pwin.innerWidth = 1280;
+  cwin.innerWidth = 850;
+  pwin.dispatchEvent(new pwin.Event('resize'));
+  await wait(80);
+  ok(!iframe.classList.contains('pastoral-host-dynamic')
+    && !cdoc.documentElement.classList.contains('in-tavern--dynamic')
+    && !cdoc.body.classList.contains('in-tavern--dynamic'),
+  '桌面父视口下窄聊天栏仍使用有界序章滚动，不误判为手机动态高度');
+  pwin.innerWidth = 390;
+  cwin.innerWidth = 390;
+  pwin.dispatchEvent(new pwin.Event('resize'));
+  await wait(80);
+  ok(iframe.classList.contains('pastoral-host-dynamic')
+    && cdoc.documentElement.classList.contains('in-tavern--dynamic')
+    && cdoc.body.classList.contains('in-tavern--dynamic'),
+  '父视口恢复手机宽度后重新启用动态内嵌高度');
   ok(/iframe\.pastoral-host-dynamic[\s\S]*height:\s*var\(--pastoral-frame-height,\s*560px\)/.test(css),
     '父页面以测量值驱动移动 iframe 高度');
   ok(/iframe\.pastoral-host-frame[\s\S]*height:\s*clamp\(560px,\s*78vh,\s*900px\)[\s\S]*height:\s*clamp\(560px,\s*78dvh,\s*900px\)/.test(css),
@@ -146,6 +168,7 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   const storyTab = cdoc.querySelector('[data-mobile-page="story"]');
   ok(switcher && !switcher.hidden && cdoc.body.classList.contains('mobile-page--ledger'), '手机全屏默认经营页');
   ok(embeddedExit && !embeddedExit.hidden, '进入全屏后显示退出按钮');
+  ok(embeddedRight.hidden, '手机全屏经营页语义隐藏剧情页');
   ok(ledgerTab && storyTab && ledgerTab.getAttribute('aria-selected') === 'true'
     && storyTab.getAttribute('aria-selected') === 'false', '经营页 ARIA 状态正确');
   if (storyTab) storyTab.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
@@ -157,14 +180,17 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   ok(!iframe.classList.contains('pastoral-immersive'), '退出：iframe 去沉浸类');
   ok(!pdoc.body.classList.contains('pastoral-immersive-lock'), '退出：父页解锁滚动');
   ok(!cdoc.body.classList.contains('is-immersive'), '退出：卡内类已移除');
-  ok(embeddedExit && embeddedExit.hidden, '退出全屏后再次隐藏退出按钮');
+  ok(embeddedSwitcher.hidden && embeddedExit.hidden, '退出全屏后隐藏页签与退出按钮');
+  ok(!cdoc.body.classList.contains('mobile-page--ledger') && !cdoc.body.classList.contains('mobile-page--story'),
+    '退出全屏后清除单页状态');
+  ok(!embeddedLeft.hidden && !embeddedRight.hidden,
+    '退出全屏后恢复普通双页流');
   measuredHeight = 2100;
   cdoc.body.classList.add('is-game');
   await wait(80);
   const gameFrameHeight = parseFloat(iframe.style.getPropertyValue('--pastoral-frame-height'));
   ok(gameFrameHeight <= 760,
     '进入游戏后 iframe 回到父视口可用高度而非跟随长内容（实际 ' + gameFrameHeight + 'px）');
-  ok(cdoc.body.classList.contains('mobile-page--ledger') !== cdoc.body.classList.contains('mobile-page--story'), '退出全屏后窄酒馆 iframe 仍保持一个单页视图');
   ok(btn.getAttribute('aria-pressed') === 'false', '退出：aria-pressed=false');
 
   console.log('\n[3] iframe 内对话流仍正常');

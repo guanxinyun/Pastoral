@@ -378,10 +378,20 @@ html.in-tavern--dynamic { height: auto; min-height: 0; overflow: visible; }
 body.in-tavern.in-tavern--dynamic { height: auto; min-height: 0; overflow: visible; }
 body.in-tavern.in-tavern--dynamic .title-screen { height: auto; min-height: 560px; overflow: visible; }
 body.in-tavern.in-tavern--dynamic.is-prologue .prologue { height: auto; max-height: none; overflow: visible; }
-body.in-tavern.in-tavern--dynamic.is-game { height: 100%; overflow: hidden; }
-html.in-tavern--unmanaged,
-body.in-tavern.in-tavern--unmanaged.is-game { height: auto; min-height: 640px; overflow: visible; }
-body.in-tavern.in-tavern--unmanaged.is-game .book { height: 640px; min-height: 640px; overflow: hidden; }
+body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) { height: auto; min-height: 640px; overflow: visible; }
+body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) .book { height: auto; min-height: 640px; overflow: visible; flex-direction: column; flex-wrap: nowrap; }
+body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) .page { width: 100%; height: auto; overflow: visible; flex: 0 0 auto; }
+html.in-tavern--dynamic.is-immersive {
+  height: var(--mobile-viewport-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+}
+body.in-tavern.in-tavern--dynamic.is-game.is-immersive {
+  height: var(--mobile-viewport-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+}
+body.in-tavern.in-tavern--dynamic.is-game.is-immersive .book { height: var(--mobile-viewport-height, 100dvh); }
 body.in-tavern.is-title .prologue,
 body.in-tavern.is-title .book,
 body.in-tavern.is-prologue .title-screen,
@@ -535,7 +545,6 @@ body.is-immersive .page {
 .mobile-page-switcher { display: none; }
 
 @media (max-width: 899px) {
-  body.in-tavern .book,
   body.is-immersive .book {
     height: 100%;
     min-height: 0;
@@ -550,14 +559,12 @@ body.is-immersive .page {
     flex-direction: column;
     flex-wrap: nowrap;
   }
-  body.in-tavern.is-game .book,
   body.is-immersive .book {
     padding-block: max(0px, env(safe-area-inset-top)) max(0px, env(safe-area-inset-bottom));
     padding-inline: max(0px, env(safe-area-inset-left)) max(0px, env(safe-area-inset-right));
     border-radius: 0;
     box-shadow: none;
   }
-  body.in-tavern.is-game .mobile-page-switcher,
   body.is-immersive .mobile-page-switcher {
     display: grid;
     grid-template-columns: 1fr 1fr auto;
@@ -593,21 +600,13 @@ body.is-immersive .page {
   .mobile-page-switcher__tab:active,
   .mobile-page-switcher__exit:active { transform: scale(0.98); }
   .mobile-page-switcher__tab.is-active { color: var(--color-text); background: var(--amber-glow); border-color: var(--color-primary); }
-  body.in-tavern.is-game .page,
   body.is-immersive .page { width: 100%; height: auto; flex: 1 1 0; min-height: 0; }
-  body.in-tavern.is-game.mobile-page--ledger .page--right,
-  body.in-tavern.is-game.mobile-page--story .page--left,
   body.is-immersive.mobile-page--ledger .page--right,
   body.is-immersive.mobile-page--story .page--left { display: none; }
-  body.in-tavern.is-game.mobile-page--ledger .page--left,
-  body.in-tavern.is-game.mobile-page--story .page--right,
   body.is-immersive.mobile-page--ledger .page--left,
   body.is-immersive.mobile-page--story .page--right { display: flex; }
-  body.in-tavern.is-game.mobile-page--story .page--right,
   body.is-immersive.mobile-page--story .page--right { min-height: 0; flex-direction: column; }
-  body.in-tavern.is-game.mobile-page--story .journal,
   body.is-immersive.mobile-page--story .journal { flex: 1 1 auto; min-height: 0; overflow: hidden; }
-  body.in-tavern.is-game.mobile-page--story .journal__stream,
   body.is-immersive.mobile-page--story .journal__stream { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   body.is-immersive.mobile-page--story .composer { flex: 0 0 auto; padding-top: var(--space-2); }
   body.is-immersive.mobile-page--story .composer__input { max-height: min(132px, 24dvh); }
@@ -2033,6 +2032,7 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
 
     if (frame) frame.classList.toggle(IMMERSIVE_CLASS, immersive);
     if (d && d.body) d.body.classList.toggle(IMMERSIVE_CLASS + '-lock', immersive);
+    document.documentElement.classList.toggle('is-immersive', immersive);
     document.body.classList.toggle('is-immersive', immersive);
 
     if (immersive) requestNativeFullscreen();
@@ -2060,12 +2060,19 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
 
   let dynamicFrameTimer = 0;
 
-  function isMobileViewport() { return window.innerWidth < 900; }
+  function hostViewport() {
+    const d = parentDoc();
+    return d && d.defaultView || window;
+  }
+
+  function isMobileViewport() {
+    const host = hostViewport();
+    return Number(host.visualViewport && host.visualViewport.width || host.innerWidth || window.innerWidth) < 900;
+  }
 
   function hostViewportHeight() {
-    const d = parentDoc();
-    const host = d && d.defaultView;
-    const height = Number(host && (host.visualViewport && host.visualViewport.height || host.innerHeight));
+    const host = hostViewport();
+    const height = Number(host.visualViewport && host.visualViewport.height || host.innerHeight);
     const fallback = Number(window.visualViewport && window.visualViewport.height || window.innerHeight);
     return Math.max(560, Math.min(900, Math.round((height > 0 ? height - 96 : fallback) || 560)));
   }
@@ -2084,10 +2091,23 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
     dynamicFrameTimer = setTimeout(() => { dynamicFrameTimer = 0; measureDynamicFrameHeight(frame); }, 24);
   }
 
+  let dynamicFrameInstalled = false;
+
+  function syncDynamicFrameMode(frame) {
+    if (!frame) return;
+    const active = isMobileViewport();
+    frame.classList.toggle('pastoral-host-dynamic', active);
+    document.documentElement.classList.toggle('in-tavern--dynamic', active);
+    document.body.classList.toggle('in-tavern--dynamic', active);
+    if (active) queueDynamicFrameMeasure(frame);
+    else frame.style.removeProperty('--pastoral-frame-height');
+  }
+
   function installDynamicFrameHeight(frame) {
-    if (!frame || !isMobileViewport()) return;
-    frame.classList.add('pastoral-host-dynamic');
-    queueDynamicFrameMeasure(frame);
+    if (!frame) return;
+    syncDynamicFrameMode(frame);
+    if (dynamicFrameInstalled) return;
+    dynamicFrameInstalled = true;
     if (typeof ResizeObserver !== 'undefined') {
       const resizeObserver = new ResizeObserver(() => queueDynamicFrameMeasure(frame));
       resizeObserver.observe(document.documentElement);
@@ -2097,7 +2117,10 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
       const mutationObserver = new MutationObserver(() => queueDynamicFrameMeasure(frame));
       mutationObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     }
-    window.addEventListener('resize', () => queueDynamicFrameMeasure(frame));
+    window.addEventListener('resize', () => syncDynamicFrameMode(frame));
+    const host = hostViewport();
+    if (host !== window) host.addEventListener('resize', () => syncDynamicFrameMode(frame));
+    if (host.visualViewport) host.visualViewport.addEventListener('resize', () => syncDynamicFrameMode(frame));
   }
 
   /* ---------- 初始化 ---------- */
@@ -2110,15 +2133,7 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
       if (frame) frame.classList.add('pastoral-host-frame');
       document.documentElement.classList.add('in-tavern');
       document.body.classList.add('in-tavern');
-      if (isMobileViewport()) {
-        document.documentElement.classList.add('in-tavern--dynamic');
-        document.body.classList.add('in-tavern--dynamic');
-        if (!frame) {
-          document.documentElement.classList.add('in-tavern--unmanaged');
-          document.body.classList.add('in-tavern--unmanaged');
-        }
-        installDynamicFrameHeight(frame);
-      }
+      installDynamicFrameHeight(frame);
       // 酒馆可能在切换聊天后重建 DOM，补注一次
       setTimeout(() => {
         injectTakeover();
@@ -7095,7 +7110,7 @@ window.Intro = Intro;
     const visual = window.visualViewport;
     const height = visual && Number(visual.height) > 0 ? Number(visual.height) : window.innerHeight;
     document.documentElement.style.setProperty('--mobile-viewport-height', Math.round(height) + 'px');
-    const activeStory = (Host.immersive || Host.inTavern) && isMobileViewport() && mobilePage === 'story';
+    const activeStory = Host.immersive && isMobileViewport() && mobilePage === 'story';
     if (!composerFocused) mobileBaselineHeight = Math.max(mobileBaselineHeight, window.innerHeight || 0, height);
     const layoutHeight = Math.max(mobileBaselineHeight, window.innerHeight || 0, document.documentElement.clientHeight || 0, height);
     const reduced = visual ? layoutHeight - height > Math.max(120, layoutHeight * 0.18) : composerFocused;
@@ -7117,6 +7132,10 @@ window.Intro = Intro;
     mobilePage = name === 'story' ? 'story' : 'ledger';
     document.body.classList.toggle('mobile-page--ledger', mobilePage === 'ledger');
     document.body.classList.toggle('mobile-page--story', mobilePage === 'story');
+    const left = document.getElementById('pageLeft');
+    const right = document.getElementById('pageRight');
+    if (left) left.hidden = mobilePage === 'story';
+    if (right) right.hidden = mobilePage === 'ledger';
     $$('[data-mobile-page]').forEach((button) => {
       const on = button.dataset.mobilePage === mobilePage;
       button.classList.toggle('is-active', on);
@@ -7126,14 +7145,18 @@ window.Intro = Intro;
   }
 
   function syncMobileImmersiveState(resetOnEnter) {
-    const active = (Host.immersive || Host.inTavern) && isMobileViewport();
+    const active = Host.immersive && isMobileViewport();
     const switcher = $('[data-mobile-page-switcher]');
     const exit = $('[data-mobile-exit]');
     if (switcher) switcher.hidden = !active;
-    if (exit) exit.hidden = !Host.immersive;
+    if (exit) exit.hidden = !active;
     if (active) setMobilePage(resetOnEnter ? 'ledger' : mobilePage);
     else {
       document.body.classList.remove('mobile-page--ledger', 'mobile-page--story', 'is-mobile-keyboard-open');
+      const left = document.getElementById('pageLeft');
+      const right = document.getElementById('pageRight');
+      if (left) left.hidden = false;
+      if (right) right.hidden = false;
       keyboardWasOpen = false;
     }
     queueMobileViewportSync();
@@ -7154,7 +7177,7 @@ window.Intro = Intro;
     $$('.panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === name));
     // 面板由 display:none 转 block 时自动重放 inkBleed 翻页动效；立即渲染该面板
     Render.panel(name, Render.state, true);
-    if ((Host.immersive || Host.inTavern) && isMobileViewport()) setMobilePage('ledger');
+    if (Host.immersive && isMobileViewport()) setMobilePage('ledger');
   }
 
   /* ---------- 主题 ---------- */

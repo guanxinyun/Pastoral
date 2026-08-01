@@ -26,7 +26,7 @@
     const visual = window.visualViewport;
     const height = visual && Number(visual.height) > 0 ? Number(visual.height) : window.innerHeight;
     document.documentElement.style.setProperty('--mobile-viewport-height', Math.round(height) + 'px');
-    const activeStory = (Host.immersive || Host.inTavern) && isMobileViewport() && mobilePage === 'story';
+    const activeStory = Host.immersive && isMobileViewport() && mobilePage === 'story';
     if (!composerFocused) mobileBaselineHeight = Math.max(mobileBaselineHeight, window.innerHeight || 0, height);
     const layoutHeight = Math.max(mobileBaselineHeight, window.innerHeight || 0, document.documentElement.clientHeight || 0, height);
     const reduced = visual ? layoutHeight - height > Math.max(120, layoutHeight * 0.18) : composerFocused;
@@ -48,6 +48,10 @@
     mobilePage = name === 'story' ? 'story' : 'ledger';
     document.body.classList.toggle('mobile-page--ledger', mobilePage === 'ledger');
     document.body.classList.toggle('mobile-page--story', mobilePage === 'story');
+    const left = document.getElementById('pageLeft');
+    const right = document.getElementById('pageRight');
+    if (left) left.hidden = mobilePage === 'story';
+    if (right) right.hidden = mobilePage === 'ledger';
     $$('[data-mobile-page]').forEach((button) => {
       const on = button.dataset.mobilePage === mobilePage;
       button.classList.toggle('is-active', on);
@@ -57,14 +61,18 @@
   }
 
   function syncMobileImmersiveState(resetOnEnter) {
-    const active = (Host.immersive || Host.inTavern) && isMobileViewport();
+    const active = Host.immersive && isMobileViewport();
     const switcher = $('[data-mobile-page-switcher]');
     const exit = $('[data-mobile-exit]');
     if (switcher) switcher.hidden = !active;
-    if (exit) exit.hidden = !Host.immersive;
+    if (exit) exit.hidden = !active;
     if (active) setMobilePage(resetOnEnter ? 'ledger' : mobilePage);
     else {
       document.body.classList.remove('mobile-page--ledger', 'mobile-page--story', 'is-mobile-keyboard-open');
+      const left = document.getElementById('pageLeft');
+      const right = document.getElementById('pageRight');
+      if (left) left.hidden = false;
+      if (right) right.hidden = false;
       keyboardWasOpen = false;
     }
     queueMobileViewportSync();
@@ -85,7 +93,7 @@
     $$('.panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === name));
     // 面板由 display:none 转 block 时自动重放 inkBleed 翻页动效；立即渲染该面板
     Render.panel(name, Render.state, true);
-    if ((Host.immersive || Host.inTavern) && isMobileViewport()) setMobilePage('ledger');
+    if (Host.immersive && isMobileViewport()) setMobilePage('ledger');
   }
 
   /* ---------- 主题 ---------- */

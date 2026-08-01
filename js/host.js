@@ -155,6 +155,7 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
 
     if (frame) frame.classList.toggle(IMMERSIVE_CLASS, immersive);
     if (d && d.body) d.body.classList.toggle(IMMERSIVE_CLASS + '-lock', immersive);
+    document.documentElement.classList.toggle('is-immersive', immersive);
     document.body.classList.toggle('is-immersive', immersive);
 
     if (immersive) requestNativeFullscreen();
@@ -182,12 +183,19 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
 
   let dynamicFrameTimer = 0;
 
-  function isMobileViewport() { return window.innerWidth < 900; }
+  function hostViewport() {
+    const d = parentDoc();
+    return d && d.defaultView || window;
+  }
+
+  function isMobileViewport() {
+    const host = hostViewport();
+    return Number(host.visualViewport && host.visualViewport.width || host.innerWidth || window.innerWidth) < 900;
+  }
 
   function hostViewportHeight() {
-    const d = parentDoc();
-    const host = d && d.defaultView;
-    const height = Number(host && (host.visualViewport && host.visualViewport.height || host.innerHeight));
+    const host = hostViewport();
+    const height = Number(host.visualViewport && host.visualViewport.height || host.innerHeight);
     const fallback = Number(window.visualViewport && window.visualViewport.height || window.innerHeight);
     return Math.max(560, Math.min(900, Math.round((height > 0 ? height - 96 : fallback) || 560)));
   }
@@ -206,10 +214,23 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
     dynamicFrameTimer = setTimeout(() => { dynamicFrameTimer = 0; measureDynamicFrameHeight(frame); }, 24);
   }
 
+  let dynamicFrameInstalled = false;
+
+  function syncDynamicFrameMode(frame) {
+    if (!frame) return;
+    const active = isMobileViewport();
+    frame.classList.toggle('pastoral-host-dynamic', active);
+    document.documentElement.classList.toggle('in-tavern--dynamic', active);
+    document.body.classList.toggle('in-tavern--dynamic', active);
+    if (active) queueDynamicFrameMeasure(frame);
+    else frame.style.removeProperty('--pastoral-frame-height');
+  }
+
   function installDynamicFrameHeight(frame) {
-    if (!frame || !isMobileViewport()) return;
-    frame.classList.add('pastoral-host-dynamic');
-    queueDynamicFrameMeasure(frame);
+    if (!frame) return;
+    syncDynamicFrameMode(frame);
+    if (dynamicFrameInstalled) return;
+    dynamicFrameInstalled = true;
     if (typeof ResizeObserver !== 'undefined') {
       const resizeObserver = new ResizeObserver(() => queueDynamicFrameMeasure(frame));
       resizeObserver.observe(document.documentElement);
@@ -219,7 +240,10 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
       const mutationObserver = new MutationObserver(() => queueDynamicFrameMeasure(frame));
       mutationObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     }
-    window.addEventListener('resize', () => queueDynamicFrameMeasure(frame));
+    window.addEventListener('resize', () => syncDynamicFrameMode(frame));
+    const host = hostViewport();
+    if (host !== window) host.addEventListener('resize', () => syncDynamicFrameMode(frame));
+    if (host.visualViewport) host.visualViewport.addEventListener('resize', () => syncDynamicFrameMode(frame));
   }
 
   /* ---------- 初始化 ---------- */
@@ -232,15 +256,7 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
       if (frame) frame.classList.add('pastoral-host-frame');
       document.documentElement.classList.add('in-tavern');
       document.body.classList.add('in-tavern');
-      if (isMobileViewport()) {
-        document.documentElement.classList.add('in-tavern--dynamic');
-        document.body.classList.add('in-tavern--dynamic');
-        if (!frame) {
-          document.documentElement.classList.add('in-tavern--unmanaged');
-          document.body.classList.add('in-tavern--unmanaged');
-        }
-        installDynamicFrameHeight(frame);
-      }
+      installDynamicFrameHeight(frame);
       // 酒馆可能在切换聊天后重建 DOM，补注一次
       setTimeout(() => {
         injectTakeover();
