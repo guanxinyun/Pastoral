@@ -235,6 +235,10 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
       if (isMobileViewport()) {
         document.documentElement.classList.add('in-tavern--dynamic');
         document.body.classList.add('in-tavern--dynamic');
+        if (!frame) {
+          document.documentElement.classList.add('in-tavern--unmanaged');
+          document.body.classList.add('in-tavern--unmanaged');
+        }
         installDynamicFrameHeight(frame);
       }
       // 酒馆可能在切换聊天后重建 DOM，补注一次

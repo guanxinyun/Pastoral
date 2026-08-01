@@ -89,7 +89,9 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
     '已有存档进入游戏后清除标题阶段状态');
   const embeddedSwitcher = cdoc.querySelector('[data-mobile-page-switcher]');
   const embeddedStoryTab = cdoc.querySelector('[data-mobile-page="story"]');
+  const embeddedExit = cdoc.querySelector('[data-mobile-exit]');
   ok(embeddedSwitcher && !embeddedSwitcher.hidden && cdoc.body.classList.contains('mobile-page--ledger'), '窄酒馆 iframe 非全屏也启用单页经营视图');
+  ok(embeddedExit && embeddedExit.hidden, '非全屏手机酒馆隐藏退出按钮');
   embeddedStoryTab && embeddedStoryTab.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
   ok(cdoc.body.classList.contains('mobile-page--story'), '窄酒馆 iframe 非全屏可切换剧情页');
   cdoc.querySelector('[data-mobile-page="ledger"]').dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
@@ -143,6 +145,7 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   const ledgerTab = cdoc.querySelector('[data-mobile-page="ledger"]');
   const storyTab = cdoc.querySelector('[data-mobile-page="story"]');
   ok(switcher && !switcher.hidden && cdoc.body.classList.contains('mobile-page--ledger'), '手机全屏默认经营页');
+  ok(embeddedExit && !embeddedExit.hidden, '进入全屏后显示退出按钮');
   ok(ledgerTab && storyTab && ledgerTab.getAttribute('aria-selected') === 'true'
     && storyTab.getAttribute('aria-selected') === 'false', '经营页 ARIA 状态正确');
   if (storyTab) storyTab.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
@@ -154,6 +157,7 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   ok(!iframe.classList.contains('pastoral-immersive'), '退出：iframe 去沉浸类');
   ok(!pdoc.body.classList.contains('pastoral-immersive-lock'), '退出：父页解锁滚动');
   ok(!cdoc.body.classList.contains('is-immersive'), '退出：卡内类已移除');
+  ok(embeddedExit && embeddedExit.hidden, '退出全屏后再次隐藏退出按钮');
   measuredHeight = 2100;
   cdoc.body.classList.add('is-game');
   await wait(80);

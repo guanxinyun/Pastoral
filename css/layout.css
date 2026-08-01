@@ -19,6 +19,9 @@ body.in-tavern.in-tavern--dynamic { height: auto; min-height: 0; overflow: visib
 body.in-tavern.in-tavern--dynamic .title-screen { height: auto; min-height: 560px; overflow: visible; }
 body.in-tavern.in-tavern--dynamic.is-prologue .prologue { height: auto; max-height: none; overflow: visible; }
 body.in-tavern.in-tavern--dynamic.is-game { height: 100%; overflow: hidden; }
+html.in-tavern--unmanaged,
+body.in-tavern.in-tavern--unmanaged.is-game { height: auto; min-height: 640px; overflow: visible; }
+body.in-tavern.in-tavern--unmanaged.is-game .book { height: 640px; min-height: 640px; overflow: hidden; }
 body.in-tavern.is-title .prologue,
 body.in-tavern.is-title .book,
 body.in-tavern.is-prologue .title-screen,

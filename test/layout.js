@@ -121,6 +121,10 @@ ok(/body\.in-tavern\.in-tavern--dynamic\s+\.title-screen\s*\{[^}]*height:\s*auto
   '父页面不可接管时标题至少 560px 并完整暴露开始按钮');
 ok(/body\.in-tavern\.in-tavern--dynamic\.is-prologue\s+\.prologue\s*\{[^}]*height:\s*auto[^}]*max-height:\s*none[^}]*overflow:\s*visible/.test(CSS),
   '动态宿主序章按完整内容自然展开');
+ok(/html\.in-tavern--unmanaged[\s\S]*body\.in-tavern\.in-tavern--unmanaged\.is-game\s*\{[^}]*height:\s*auto[^}]*min-height:\s*640px[^}]*overflow:\s*visible/.test(CSS),
+  '无法控制父 frame 时正式游戏暴露至少 640px 自然高度');
+ok(/body\.in-tavern\.in-tavern--unmanaged\.is-game\s+\.book\s*\{[^}]*height:\s*640px[^}]*min-height:\s*640px/.test(CSS),
+  '无法控制父 frame 时书页不是 96px 短条');
 ok(/body\.in-tavern\s+\.title-screen\s*\{[^}]*height:\s*100%[^}]*min-height:\s*0/.test(CSS), '有界酒馆标题不使用 dvh 参与高度反馈');
 ok(/body\.in-tavern\.is-prologue\s+\.prologue\s*\{[^}]*width:\s*calc\(100%\s*-\s*24px\)[^}]*height:\s*calc\(100%\s*-\s*24px\)[^}]*margin:\s*12px auto[^}]*overflow-y:\s*auto/.test(CSS), '酒馆序章在留白视口内滚动');
 ok(/\.book\s*\{[^}]*--book-edge-inline:\s*clamp\(16px,\s*2vw,\s*32px\)/.test(CSS),
