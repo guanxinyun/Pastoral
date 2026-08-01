@@ -117,8 +117,11 @@ ok(/body\.is-immersive\.is-mobile-keyboard-open\s+\.dock\s*\{[^}]*display:\s*non
 ok(/body\.is-immersive\.is-mobile-keyboard-open\s+\.hud/.test(CSS), '软键盘打开时 HUD 使用紧凑样式');
 ok(!/body\.is-immersive\.is-mobile-keyboard-open\s+\.composer\s*\{[^}]*(position:\s*(fixed|absolute))/.test(CSS), '键盘模式 composer 仍在正常布局流');
 
-console.log('\n[4] 滚动条已按主题定制');
+console.log('\n[4] 滚动与输入区视觉');
 ok(/\.journal__stream::-webkit-scrollbar-thumb/.test(CSS), '对话流滚动条已定制');
+ok(!/\.composer__input\s*\{[^}]*repeating-linear-gradient/.test(CSS), '发送输入框不再绘制重复横格线');
+ok(/\.composer__input\s*\{[^}]*background:\s*var\(--color-surface-raised\)/.test(CSS),
+  '发送输入框使用现有表面令牌的纯净背景');
 
 console.log('\n[5] 标题、序章与全面视觉契约');
 ok(/\.title-screen\s*\{[^}]*min-height:\s*100svh/.test(CSS), '标题占据沉浸视口');
