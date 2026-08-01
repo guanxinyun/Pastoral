@@ -102,6 +102,13 @@ ok(/\.bub__body\s*>\s*\*\s*\{[^}]*max-width:\s*(66ch|72ch)/.test(CSS), '正式�
 ok(/min-height:\s*44px/.test(CSS), '交互控件包含 44px 触控目标');
 ok(/@media\s*\(prefers-reduced-motion:\s*reduce\)/.test(CSS), '提供减少动效覆盖');
 ok(/--color-title-sky:/.test(CSS) && /--color-parchment-warm:/.test(CSS), '标题山谷与信纸使用设计令牌');
+ok(/--title-scene-image:\s*none\s*;/.test(CSS), '标题场景图床入口默认关闭');
+ok(/\.title-screen__sky\s*\{[^}]*background-image:\s*var\(--title-scene-image\)[^}]*radial-gradient[^}]*linear-gradient/.test(CSS),
+  '标题图片覆盖层之下保留太阳与山谷渐变回退');
+ok(/\.title-screen__sky\s*\{[^}]*background-size:\s*cover\s*,/.test(CSS),
+  '标题图床图片使用 cover 且不改变下层构图');
+ok(/\.title-screen__sky\s*\{[^}]*background-repeat:\s*no-repeat/.test(CSS),
+  '标题图床图片不平铺');
 ok(/\.book\s*\{[^}]*box-shadow:\s*var\(--shadow-book\)/.test(CSS), '正式双页书使用统一高端层次阴影');
 ok(/\.card:hover[^{]*\{[^}]*transform:\s*translateY/.test(CSS), '正式卡片具有细腻悬停反馈');
 

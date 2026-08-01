@@ -50,6 +50,8 @@
   --color-magic:       var(--mint);
 
   /* 标题山谷 / 序章信纸 */
+  /* 可选图床原图直链：改为 url("https://...")；none 时使用下方纯 CSS 山谷 */
+  --title-scene-image: none;
   --color-title-sky: hsl(211 42% 18%);
   --color-title-horizon: hsl(35 58% 54%);
   --color-title-forest: hsl(154 35% 12%);
@@ -394,10 +396,15 @@ body.in-tavern.is-game .prologue { display: none !important; }
 .title-screen.is-leaving { opacity: 0; transform: translateY(-12px) scale(1.01); filter: blur(3px); pointer-events: none; }
 .title-screen__scene { position: absolute; inset: 0; pointer-events: none; }
 .title-screen__scene > span { position: absolute; pointer-events: none; }
-.title-screen__sky { inset: 0;
-  background:
+.title-screen__sky {
+  inset: 0;
+  background-image:
+    var(--title-scene-image),
     radial-gradient(circle at 73% 17%, hsl(41 80% 78% / .95) 0 2.4%, hsl(41 84% 66% / .2) 4% 17%, transparent 32%),
     linear-gradient(177deg, var(--color-title-sky) 0%, hsl(214 40% 26%) 38%, var(--color-title-horizon) 72%, hsl(39 68% 66%) 100%);
+  background-position: center, center, center;
+  background-size: cover, auto, auto;
+  background-repeat: no-repeat;
 }
 .title-screen__mountains--far { inset: 32% 0 0; clip-path: polygon(0 54%,8% 35%,17% 52%,27% 22%,38% 51%,51% 17%,62% 48%,74% 28%,87% 54%,100% 35%,100% 100%,0 100%); background: hsl(211 38% 19% / .78); }
 .title-screen__mountains--near { inset: 45% 0 0; clip-path: polygon(0 43%,12% 25%,23% 48%,36% 16%,48% 46%,64% 23%,77% 49%,90% 20%,100% 44%,100% 100%,0 100%); background: hsl(166 25% 13% / .9); }
