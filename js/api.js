@@ -87,6 +87,37 @@ const ApiEngine = (function () {
     const max = limit || 160;
     return flat.length > max ? flat.slice(0, max) + '…' : flat;
   }
+
+  function fingerprint(text) {
+    let hash = 2166136261;
+    const value = String(text || '');
+    for (let i = 0; i < value.length; i++) {
+      hash ^= value.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16).padStart(8, '0');
+  }
+
+  function safeVersion(name) {
+    try { return typeof window[name] === 'function' ? String(window[name]()) : 'unknown'; }
+    catch (e) { return 'unknown'; }
+  }
+
+  function requestDiagnostic(snapshot, task, detail) {
+    const value = Object.assign({
+      stage: snapshot.kind,
+      mode: snapshot.mode,
+      targetPreset: snapshot.mode === 'fixed' ? snapshot.presetName : (snapshot.mode === 'current' ? 'in_use' : 'none'),
+      taskCount: 1,
+      taskFingerprint: fingerprint(task),
+      tavernHelperVersion: safeVersion('getTavernHelperVersion'),
+      tavernVersion: safeVersion('getTavernVersion')
+    }, detail || {});
+    console.info('[Pastoral][VariableRequest]', value);
+    window.dispatchEvent(new CustomEvent('pastoral:variable-request', { detail: value }));
+    return value;
+  }
+
   function status(stage, message, loading, detail) {
     window.dispatchEvent(new CustomEvent('pastoral:api-status', { detail: Object.assign({ stage, message, loading: !!loading }, detail || {}) }));
   }
@@ -141,8 +172,9 @@ const ApiEngine = (function () {
       return role + ' #' + m.message_id + ':\n' + Extract.stripUpdateVariable(m.message || '');
     }).join('\n\n');
     const config = context.config || Settings.load();
-    const kind = context.purpose === 'endday' ? 'endday' : 'normal';
-    const guide = context.rules || updateGuide(kind, config);
+    const snapshot = context.snapshot;
+    const kind = snapshot ? snapshot.kind : (context.purpose === 'endday' ? 'endday' : 'normal');
+    const guide = context.rules || (snapshot ? snapshot.guide : updateGuide(kind, config));
     const format = outputFormat();
     const extra = buildAdditionalContext(context);
     const calculated = context.calculated
@@ -362,73 +394,42 @@ const ApiEngine = (function () {
     return out;
   }
 
-  /**
-   * 解析本次变量请求的预设策略。
-   * - none：完全不使用酒馆预设，走 generateRaw + ordered_prompts
-   * - current/fixed + compile：读预设编译成 generateRaw 消息列表，任务消息强制在末位
-   * - current/fixed + inject：generate + preset_name，任务消息走 injects
-   * - fixed 预设已删除时本次降级为 none
-   */
+  /** 固定预设不存在时降级为 none；current 与 fixed 都只通过 user_input 发送一次任务。 */
   function resolvePreset(kind, config) {
-    const selected = variablePresetConfig(kind, config);
-    // 深度注入屏蔽与采样参数对三种模式一致生效。
-    const shared = {
-      context: selected.context || {},
-      blockDepthEntries: selected.blockDepthEntries !== false,
-      temperature: selected.temperature,
-      assembly: selected.assembly === 'inject' ? 'inject' : 'compile'
-    };
-    if (selected.mode === 'current') return Object.assign({ mode: 'current', presetName: 'in_use' }, shared);
-    if (selected.mode === 'fixed') {
-      if (availablePresetNames().includes(selected.presetName)) {
-        return Object.assign({ mode: 'fixed', presetName: selected.presetName }, shared);
-      }
+    const snapshot = createStageSnapshot(kind, config);
+    if (snapshot.mode === 'fixed' && !availablePresetNames().includes(snapshot.presetName)) {
       if (typeof toast === 'function') {
-        toast('warn', '变量预设不存在', '“' + selected.presetName + '”已不存在，本次改用不带预设。');
+        toast('warn', '变量预设不存在', '“' + snapshot.presetName + '”已不存在，本次改用不带预设。');
       }
+      return Object.freeze(Object.assign({}, snapshot, { mode: 'none', presetName: '' }));
     }
-    return Object.assign({ mode: 'none', presetName: '' }, shared);
+    return snapshot;
   }
 
-  async function generateVariable(config, kind, settings) {
-    const preset = resolvePreset(kind, settings);
-    const overrides = buildOverrides(preset);
-    // 采样参数只在走自定义 API 时能覆盖；跟随主 API 时保持原样。
+  async function generateVariable(config, snapshot) {
+    const overrides = buildOverrides(snapshot);
     const base = Object.assign({}, config);
-    if (base.custom_api) base.custom_api = Object.assign({}, samplingOverrides(preset), base.custom_api);
+    // 任务只能通过 user_input 一条通道发送；彻底删除宿主行为不一致的 injects。
+    delete base.injects;
+    delete base.preset_name;
+    if (base.custom_api) base.custom_api = Object.assign({}, samplingOverrides(snapshot), base.custom_api);
     if (overrides) base.overrides = Object.assign({}, overrides, base.overrides);
-    if (preset.mode === 'none') {
-      // generateRaw 才能完全绕开酒馆预设；只发我们指定的占位符和本次任务提示。
+    if (snapshot.mode === 'none') {
       if (typeof generateRaw !== 'function') throw new Error('当前环境缺少 generateRaw，无法发送不带预设的变量请求');
+      requestDiagnostic(snapshot, base.user_input, { transport: 'generateRaw', switched: false, restored: true });
       return generateRaw(Object.assign(base, {
         max_chat_history: base.max_chat_history == null ? 0 : base.max_chat_history,
-        ordered_prompts: orderedPrompts(preset.context)
+        ordered_prompts: orderedPrompts(snapshot.context)
       }));
     }
-    if (preset.assembly === 'inject') {
-      // 保真路径：预设的提示词、settings、in_chat 深度条目全部由酒馆组装。
-      if (typeof generate !== 'function') throw new Error('当前环境不支持按酒馆预设生成');
-      // max_chat_history: 0 会把唯一能承载注入的聊天区截断掉，预设模式必须留出该区域。
-      const history = base.max_chat_history === 0 || base.max_chat_history == null ? 1 : base.max_chat_history;
-      return generate(Object.assign(base, {
-        preset_name: preset.presetName,
-        max_chat_history: history,
-        injects: [{
-          role: 'system',
-          content: base.user_input,
-          position: 'in_chat',
-          depth: 0,
-          // 任务文本不得进入世界书绿灯扫描文本，否则会激活无关条目。
-          should_scan: false
-        }].concat(Array.isArray(base.injects) ? base.injects : [])
-      }));
+    if (typeof generate !== 'function') throw new Error('当前环境不支持酒馆预设生成');
+    if (snapshot.mode === 'fixed') {
+      const result = await launchWithFixedPreset(snapshot.presetName, base);
+      requestDiagnostic(snapshot, base.user_input, { transport: 'generate-switched', switched: true, restored: true });
+      return result;
     }
-    // compile 路径：任务消息作为数组字面对象，结构上不可能丢失。
-    if (typeof generateRaw !== 'function') throw new Error('当前环境缺少 generateRaw，无法编译预设消息列表');
-    return generateRaw(Object.assign(base, {
-      max_chat_history: base.max_chat_history == null ? 0 : base.max_chat_history,
-      ordered_prompts: compilePreset(preset.presetName, preset, base.user_input)
-    }));
+    requestDiagnostic(snapshot, base.user_input, { transport: 'generate-current', switched: false, restored: true });
+    return generate(base);
   }
 
   /** 只讲格式、不重述规则的纠正提示，附上模型自己刚才的输出。 */
@@ -448,7 +449,8 @@ const ApiEngine = (function () {
     const api = Object.assign({}, cfg.secondApi, { url: normalizeUrl(cfg.secondApi && cfg.secondApi.url) });
     const issues = inspectApi(api);
     if (issues.length) throw new Error('第二 API 配置有问题：' + issues.join('；'));
-    const prompt = buildPrompt(Object.assign({}, context, { config: cfg }));
+    const snapshot = resolvePreset(context.purpose, cfg);
+    const prompt = buildPrompt(Object.assign({}, context, { config: cfg, snapshot }));
     const target = hostOf(api.url);
     let failure;
     for (let attempt = 0; attempt <= api.maxRetries; attempt++) {
@@ -470,7 +472,7 @@ const ApiEngine = (function () {
             should_silence: true,
             max_chat_history: 0,
             custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
-          }, context.purpose, cfg), api.timeout, id));
+          }, snapshot), api.timeout, id));
           updateTag = Extract.salvageUpdateVariable(raw);
           if (updateTag) { repaired = pass > 0; break; }
           log(PREFIX_SECOND, '格式不合规', { id, pass: pass + 1, received: snippet(raw) });
@@ -532,11 +534,12 @@ const ApiEngine = (function () {
 
   async function callMainApiForDaily(context) {
     if (typeof generate !== 'function' && typeof generateRaw !== 'function') throw new Error('当前环境不支持主 API 静默日结');
-    const prompt = buildPrompt(Object.assign({}, context, { purpose: 'endday' }));
+    const cfg = Settings.load();
+    const snapshot = resolvePreset('endday', cfg);
+    const prompt = buildPrompt(Object.assign({}, context, { purpose: 'endday', config: cfg, snapshot }));
     const id = 'pastoral-daily-main-' + (++sequence);
     const started = now();
     log(PREFIX_MAIN, '日结开始', { messageId: context.messageId });
-    const cfg = Settings.load();
     let raw = '', updateTag = '';
     for (let pass = 0; pass < 2; pass++) {
       const passId = pass === 0 ? id : id + '-repair';
@@ -547,7 +550,7 @@ const ApiEngine = (function () {
         should_stream: false,
         should_silence: true,
         max_chat_history: 0
-      }, 'endday', cfg), 30000, passId, '主 API 日结'));
+      }, snapshot), 30000, passId, '主 API 日结'));
       updateTag = Extract.salvageUpdateVariable(raw);
       if (updateTag) break;
       log(PREFIX_MAIN, '日结格式不合规', { pass: pass + 1, received: snippet(raw) });
@@ -625,7 +628,9 @@ const ApiEngine = (function () {
 
   async function testSecondApi(candidate) {
     if (typeof generate !== 'function' && typeof generateRaw !== 'function') throw new Error('当前环境缺少变量生成接口，未发送请求');
-    const api = Object.assign({}, Settings.load().secondApi, candidate || {});
+    const cfg = Settings.load();
+    const snapshot = resolvePreset('normal', cfg);
+    const api = Object.assign({}, cfg.secondApi, candidate || {});
     api.url = normalizeUrl(api.url);
     const issues = inspectApi(api);
     if (issues.length) throw new Error('未发送请求：' + issues.join('；'));
@@ -642,7 +647,7 @@ const ApiEngine = (function () {
         should_silence: true,
         max_chat_history: 0,
         custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
-      }, 'normal', Settings.load()), Math.max(1000, Number(api.timeout) || 30000), id, '第二 API 测试'));
+      }, snapshot), Math.max(1000, Number(api.timeout) || 30000), id, '第二 API 测试'));
       const elapsedMs = Math.round(now() - started);
       status('第二 API 测试成功', `${target} · ${elapsedMs}ms · ${snippet(raw, 80) || '收到空文本'}`, false, { id, target, elapsedMs, purpose: 'test' });
       log(PREFIX_SECOND, '连接测试完成', { id, target, elapsedMs });
