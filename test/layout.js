@@ -74,6 +74,15 @@ ok(/body\.is-immersive\s+\.page\s*\{[^}]*width:\s*50%/.test(CSS), '全屏时双�
 ok(/body\.is-immersive\s+\.journal__stream\s*\{[^}]*flex:\s*1/.test(CSS), '全屏时对话流吃掉剩余高度');
 ok(/iframe\.pastoral-immersive[\s\S]*?position:\s*fixed\s*!important/.test(CSS) === false,
   '沉浸 iframe 规则不在卡内样式表（应注入父文档）');
+ok(/\.mobile-page-switcher/.test(CSS), '提供手机沉浸页签样式');
+ok(/@media\s*\(max-width:\s*899px\)[\s\S]*body\.is-immersive[\s\S]*100dvh/.test(CSS),
+  '手机沉浸使用动态视口高度');
+ok(/body\.is-immersive\.mobile-page--ledger\s+\.page--right[\s\S]*display:\s*none/.test(CSS),
+  '经营页状态隐藏剧情页');
+ok(/body\.is-immersive\.mobile-page--story\s+\.page--left[\s\S]*display:\s*none/.test(CSS),
+  '剧情页状态隐藏经营页');
+ok(!/body\.is-immersive\s+\.book\s*\{[^}]*flex-wrap:\s*wrap[^}]*height:\s*auto/.test(CSS),
+  '手机沉浸不再上下堆叠双页');
 
 console.log('\n[4] 滚动条已按主题定制');
 ok(/\.journal__stream::-webkit-scrollbar-thumb/.test(CSS), '对话流滚动条已定制');

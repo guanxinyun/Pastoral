@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>暮归旅店 · 经营志</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!--STYLE-->
 </head>
 <body>
@@ -13,6 +12,12 @@
 
   <!-- 双页书 -->
   <main class="book" id="book">
+
+    <nav class="mobile-page-switcher" data-mobile-page-switcher hidden role="tablist" aria-label="手机全屏页面">
+      <button class="mobile-page-switcher__tab is-active" type="button" role="tab" aria-selected="true" aria-controls="pageLeft" data-mobile-page="ledger">经营页</button>
+      <button class="mobile-page-switcher__tab" type="button" role="tab" aria-selected="false" aria-controls="pageRight" data-mobile-page="story">剧情页</button>
+      <button class="mobile-page-switcher__exit" type="button" data-mobile-exit aria-label="退出全屏">退出</button>
+    </nav>
 
     <!-- 书脊 -->
     <div class="book__spine" aria-hidden="true"></div>

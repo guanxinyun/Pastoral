@@ -12,6 +12,30 @@
 
   const $  = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  let mobilePage = 'ledger';
+  let wasImmersive = false;
+
+  function isMobileViewport() { return window.innerWidth < 900; }
+
+  function setMobilePage(name) {
+    mobilePage = name === 'story' ? 'story' : 'ledger';
+    document.body.classList.toggle('mobile-page--ledger', mobilePage === 'ledger');
+    document.body.classList.toggle('mobile-page--story', mobilePage === 'story');
+    $$('[data-mobile-page]').forEach((button) => {
+      const on = button.dataset.mobilePage === mobilePage;
+      button.classList.toggle('is-active', on);
+      button.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+  }
+
+  function syncMobileImmersiveState(resetOnEnter) {
+    const active = Host.immersive && isMobileViewport();
+    const switcher = $('[data-mobile-page-switcher]');
+    if (switcher) switcher.hidden = !active;
+    if (active) setMobilePage(resetOnEnter ? 'ledger' : mobilePage);
+    else document.body.classList.remove('mobile-page--ledger', 'mobile-page--story');
+    wasImmersive = Host.immersive;
+  }
 
   /* ---------- 当前标签 ---------- */
   function currentTab() {
@@ -27,6 +51,7 @@
     $$('.panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === name));
     // 面板由 display:none 转 block 时自动重放 inkBleed 翻页动效；立即渲染该面板
     Render.panel(name, Render.state, true);
+    if (Host.immersive && isMobileViewport()) setMobilePage('ledger');
   }
 
   /* ---------- 主题 ---------- */
@@ -573,6 +598,11 @@
     const themeBtn = $('#themeToggle'); if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
     const fsBtn = $('#fullscreenToggle'); if (fsBtn) fsBtn.addEventListener('click', toggleFullscreen);
     syncFullscreenBtn();
+    syncMobileImmersiveState(false);
+    $$('[data-mobile-page]').forEach((button) => button.addEventListener('click', () => setMobilePage(button.dataset.mobilePage)));
+    const mobileExit = $('[data-mobile-exit]');
+    if (mobileExit) mobileExit.addEventListener('click', () => Host.setImmersive(false));
+    window.addEventListener('resize', () => syncMobileImmersiveState(false));
     const setBtn = $('#settingsBtn'); if (setBtn) setBtn.addEventListener('click', openSettings);
 
     // 底栏
@@ -584,7 +614,11 @@
     });
 
     // 外部退出全屏（Esc / 系统手势）时同步按钮
-    window.addEventListener('pastoral:immersive', syncFullscreenBtn);
+    window.addEventListener('pastoral:immersive', () => {
+      const entering = Host.immersive && !wasImmersive;
+      syncFullscreenBtn();
+      syncMobileImmersiveState(entering);
+    });
 
     // 1s 状态轮询（对话流由 Chat 以 400ms 独立轮询）
     if (!started) { started = true; setInterval(refresh, 1000); }

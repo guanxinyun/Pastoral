@@ -46,11 +46,12 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
 
   const cwin = iframe.contentWindow;
   const cdoc = cwin.document;
+  Object.defineProperty(cwin, 'innerWidth', { value: 390, writable: true, configurable: true });
   let requestedElement = null;
   iframe.requestFullscreen = async function () { requestedElement = this; pdoc.fullscreenElement = this; };
   pdoc.exitFullscreen = async function () { pdoc.fullscreenElement = null; };
   Object.assign(cwin, {
-    matchMedia: () => ({ matches: false, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} }),
+    matchMedia: (query) => ({ matches: /max-width:\s*899px/.test(query), media: query, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} }),
     getCurrentMessageId: () => 0,
     getLastMessageId: () => 2,
     getChatMessages: (range) => {
@@ -105,12 +106,21 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   ok(btn.dataset.tip === '退出全屏', '进入：提示文案切换');
   ok(pwin.getComputedStyle(iframe).position === 'fixed', 'iframe 实际钉满视口（position:fixed）');
   ok(requestedElement === iframe, '原生全屏请求目标是当前 iframe，而不是父页面根节点');
+  const switcher = cdoc.querySelector('[data-mobile-page-switcher]');
+  const ledgerTab = cdoc.querySelector('[data-mobile-page="ledger"]');
+  const storyTab = cdoc.querySelector('[data-mobile-page="story"]');
+  ok(switcher && !switcher.hidden && cdoc.body.classList.contains('mobile-page--ledger'), '手机全屏默认经营页');
+  ok(ledgerTab && storyTab && ledgerTab.getAttribute('aria-selected') === 'true'
+    && storyTab.getAttribute('aria-selected') === 'false', '经营页 ARIA 状态正确');
+  if (storyTab) storyTab.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
+  ok(!!storyTab && cdoc.body.classList.contains('mobile-page--story') && storyTab.getAttribute('aria-selected') === 'true', '可切换到剧情页');
 
   btn.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
   await wait(120);
   ok(!iframe.classList.contains('pastoral-immersive'), '退出：iframe 去沉浸类');
   ok(!pdoc.body.classList.contains('pastoral-immersive-lock'), '退出：父页解锁滚动');
   ok(!cdoc.body.classList.contains('is-immersive'), '退出：卡内类已移除');
+  ok(!cdoc.body.classList.contains('mobile-page--ledger') && !cdoc.body.classList.contains('mobile-page--story'), '退出：手机单页状态已清除');
   ok(btn.getAttribute('aria-pressed') === 'false', '退出：aria-pressed=false');
 
   console.log('\n[3] iframe 内对话流仍正常');
