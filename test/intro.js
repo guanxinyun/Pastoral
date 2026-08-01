@@ -20,13 +20,25 @@ function load(options = {}) {
   win.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
   win.getLastMessageId = options.lastId;
   win.Host = { inTavern: !!options.inTavern };
-  let writeCalls = 0, slashCalls = 0, mvuWriteCalls = 0;
-  win.setChatMessages = () => { writeCalls++; throw new Error('序章不应写聊天'); };
-  win.deleteChatMessages = () => { writeCalls++; throw new Error('序章不应删聊天'); };
+  let writeCalls = 0, deleteCalls = 0, slashCalls = 0, mvuWriteCalls = 0;
+  let releaseWrite = null;
+  const writes = [];
+  win.setChatMessages = async (messages, config) => {
+    writeCalls++;
+    writes.push({ messages, config });
+    if (options.writeError) throw new Error(options.writeError);
+    if (options.deferWrite) await new Promise((resolve) => { releaseWrite = resolve; });
+  };
+  win.deleteChatMessages = () => { deleteCalls++; throw new Error('序章不应删聊天'); };
   win.triggerSlash = () => { slashCalls++; throw new Error('序章不应触发生成'); };
   win.Mvu = { replaceMvuData: () => { mvuWriteCalls++; throw new Error('序章不应写 MVU'); } };
   if (fs.existsSync(sourcePath)) win.eval(fs.readFileSync(sourcePath, 'utf8'));
-  return { win, doc: win.document, calls: () => ({ writeCalls, slashCalls, mvuWriteCalls }) };
+  return {
+    win,
+    doc: win.document,
+    releaseWrite: () => { if (releaseWrite) releaseWrite(); },
+    calls: () => ({ writeCalls, deleteCalls, slashCalls, mvuWriteCalls, writes })
+  };
 }
 
 (async () => {
@@ -81,17 +93,29 @@ function load(options = {}) {
     ok(doc.getElementById('prologue').textContent.includes('地下室有一扇上了锁的铁门'), '来信中段完整存在');
     ok(doc.getElementById('prologue').textContent.includes('又或者，你有自己的想法。'), '结尾自由行动提示存在');
     const calls = scene.calls();
-    ok(calls.writeCalls === 0 && calls.slashCalls === 0 && calls.mvuWriteCalls === 0, '序章不写聊天、不触发生成、不写 MVU');
+    ok(calls.writeCalls === 0 && calls.deleteCalls === 0 && calls.slashCalls === 0 && calls.mvuWriteCalls === 0,
+      '独立预览序章不写聊天、不触发生成、不写 MVU');
     ok(!doc.getElementById('book').hasAttribute('inert') && doc.getElementById('book').getAttribute('aria-hidden') !== 'true', '独立预览中序章后正式界面可用');
   }
 
-  console.log('\n[4] 酒馆序章与正式界面互斥');
-  const tavern = load({ lastId: () => 0, inTavern: true });
+  console.log('\n[4] 酒馆第 0 楼覆盖与序章互斥');
+  const tavern = load({ lastId: () => 0, inTavern: true, deferWrite: true });
   if (tavern.win.Intro) {
     tavern.win.Intro.init();
-    await tavern.win.Intro.start();
+    const starting = tavern.win.Intro.start();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const pending = tavern.calls();
+    const write = pending.writes[0];
+    ok(pending.writeCalls === 1 && write && write.messages[0].message_id === 0,
+      '酒馆新开局先写回第 0 楼');
+    ok(!!write && write.messages[0].message === tavern.win.Intro.OPENING_TEXT,
+      '第 0 楼正文被完整内置开局覆盖');
+    ok(!!write && write.config.refresh === 'none', '覆盖第 0 楼不触发宿主整页重载');
+    ok(tavern.doc.getElementById('prologue').hidden, '写回完成前不伪装序章已就绪');
+    tavern.releaseWrite();
+    await starting;
     const enter = tavern.doc.querySelector('[data-prologue-enter]');
-    ok(tavern.doc.body.classList.contains('is-prologue'), '酒馆新开局进入独立序章视图');
+    ok(tavern.doc.body.classList.contains('is-prologue'), '写回后进入独立序章视图');
     ok(tavern.doc.getElementById('book').hasAttribute('inert') && tavern.doc.getElementById('book').getAttribute('aria-hidden') === 'true', '酒馆阅读序章时正式界面保持锁定');
     ok(!!enter && enter.tagName === 'BUTTON', '酒馆序章提供进入旅店按钮');
     enter && enter.dispatchEvent(new tavern.win.MouseEvent('click', { bubbles: true }));
@@ -99,8 +123,21 @@ function load(options = {}) {
     ok(tavern.doc.getElementById('prologue').hidden && !tavern.doc.getElementById('book').hasAttribute('inert'), '进入游戏后隐藏序章并解锁双页书');
   }
 
-  console.log('\n[5] 零层围栏不能覆盖强制文本');
-  const fenced = load({ lastId: () => 0 });
+  console.log('\n[5] 第 0 楼覆盖失败可重试');
+  const failedWrite = load({ lastId: () => 0, inTavern: true, writeError: 'write denied' });
+  if (failedWrite.win.Intro) {
+    failedWrite.win.Intro.init();
+    let rejected = false;
+    try { await failedWrite.win.Intro.start(); } catch (error) { rejected = /write denied/.test(String(error && error.message)); }
+    const button = failedWrite.doc.getElementById('titleStart');
+    ok(rejected, '第 0 楼写回失败向调用方报告错误');
+    ok(button.disabled === false && button.getAttribute('aria-busy') === 'false', '写回失败后开始按钮恢复可点击');
+    ok(failedWrite.doc.getElementById('titleStatus').textContent === '暂时无法展卷，请再试一次。', '写回失败显示可重试状态');
+    ok(failedWrite.doc.getElementById('prologue').hidden, '写回失败不显示未持久化的序章');
+  }
+
+  console.log('\n[6] 零层围栏不能覆盖强制文本');
+  const fenced = load({ lastId: () => 0, inTavern: true });
   fenced.win.getChatMessages = () => [{ message_id: 0, message: '```\n```' }];
   if (fenced.win.Intro) {
     fenced.win.Intro.init();

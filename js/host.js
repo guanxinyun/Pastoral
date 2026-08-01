@@ -74,8 +74,10 @@ const Host = (function () {
 iframe.pastoral-host-frame:not(.${IMMERSIVE_CLASS}) {
   display: block !important;
   width: 100% !important;
+  height: clamp(560px, 78vh, 900px) !important;
   height: clamp(560px, 78dvh, 900px) !important;
   min-height: 0 !important;
+  max-height: calc(100vh - 96px) !important;
   max-height: calc(100dvh - 96px) !important;
   overflow: hidden !important;
   border: 0 !important;

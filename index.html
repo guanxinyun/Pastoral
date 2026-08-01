@@ -1942,8 +1942,10 @@ const Host = (function () {
 iframe.pastoral-host-frame:not(.${IMMERSIVE_CLASS}) {
   display: block !important;
   width: 100% !important;
+  height: clamp(560px, 78vh, 900px) !important;
   height: clamp(560px, 78dvh, 900px) !important;
   min-height: 0 !important;
+  max-height: calc(100vh - 96px) !important;
   max-height: calc(100dvh - 96px) !important;
   overflow: hidden !important;
   border: 0 !important;
@@ -6626,7 +6628,7 @@ window.Chat = Chat;
    山谷暮光标题与强制序章
    - 点击开始后检测最新楼层：0 楼/独立预览显示内置完整序章
    - 已有楼层直接恢复正式界面
-   - 序章只负责显示，不读取 0 楼正文、不写聊天或 MVU
+   - 酒馆第 0 楼在展示前强制写入内置完整开局；独立预览不写聊天或 MVU
    ============================================================ */
 const Intro = (function () {
   'use strict';
@@ -6828,6 +6830,13 @@ const Intro = (function () {
     values.forEach((value) => container.appendChild(paragraph(value, typeof classFor === 'function' ? classFor(value) : classFor)));
   }
 
+  async function persistFloorZeroOpening(decision) {
+    if (!decision || decision.reason !== 'floor-zero' || !(window.Host && Host.inTavern)) return false;
+    if (typeof setChatMessages !== 'function') throw new Error('当前环境无法覆盖第 0 楼开局文本');
+    await setChatMessages([{ message_id: 0, message: OPENING_TEXT }], { refresh: 'none' });
+    return true;
+  }
+
   function renderPrologue(decision) {
     const root = document.getElementById('prologue');
     if (!root) throw new Error('缺少序章挂载点');
@@ -6933,7 +6942,10 @@ const Intro = (function () {
     try {
       const decision = await detectEntry();
       window.dispatchEvent(new CustomEvent('pastoral:intro-start', { detail: decision }));
-      if (decision.mode === 'prologue') renderPrologue(decision);
+      if (decision.mode === 'prologue') {
+        await persistFloorZeroOpening(decision);
+        renderPrologue(decision);
+      }
       else { revealExperience(); ready = true; }
       return decision.mode;
     } catch (error) {
@@ -6955,7 +6967,7 @@ const Intro = (function () {
     button.addEventListener('click', start);
   }
 
-  return { OPENING_TEXT, chapters, detectEntry, init, start, renderPrologue, revealExperience, enterGame };
+  return { OPENING_TEXT, chapters, detectEntry, init, start, persistFloorZeroOpening, renderPrologue, revealExperience, enterGame };
 })();
 window.Intro = Intro;
 

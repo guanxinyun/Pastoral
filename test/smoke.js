@@ -255,7 +255,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const prologueText = doc.getElementById('prologue').textContent;
     ok(/第一年.*春季第1天/.test(prologueText) && /霍根·星摇/.test(prologueText) && /声望\+3/.test(prologueText), '零楼围栏被完整内置序章替代');
     ok(doc.querySelectorAll('[data-prologue-chapter="letter"]').length === 1 && readyEvents === 1, '快速双击只生成一个序章并发出一次就绪事件');
-    ok(calls.set.length === 0 && calls.del.length === 0 && calls.slash.length === 0, '强制序章不写聊天也不触发模型');
+    ok(calls.set.length === 1 && calls.set[0].length === 1 && calls.set[0][0].message_id === 0
+      && calls.set[0][0].message === win.Intro.OPENING_TEXT, '强制序章只覆盖一次第 0 楼完整正文');
+    ok(calls.del.length === 0 && calls.slash.length === 0, '强制序章不删除楼层也不触发模型');
   }
 
   /* ---------- 1b. 生成中新楼 MVU 为空时保持上一楼 ---------- */

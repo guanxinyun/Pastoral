@@ -95,8 +95,10 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   ok(/#chat > \.mes:not\(\[mesid="0"\]\)/.test(css), '接管样式隐藏第 1 层及以后聊天楼层');
   ok(!/#send_form[\s\S]*display:\s*none/.test(css), '接管样式保留原生输入区');
   ok(iframe.classList.contains('pastoral-host-frame'), '宿主 iframe 带有界布局标记');
-  ok(/iframe\.pastoral-host-frame[\s\S]*height:\s*clamp\(/.test(css), '父酒馆强制宿主 iframe 使用有界高度');
-  ok(/iframe\.pastoral-host-frame[\s\S]*max-height:\s*calc\(100dvh/.test(css), '宿主 iframe 不超过酒馆可视高度');
+  ok(/iframe\.pastoral-host-frame[\s\S]*height:\s*clamp\(560px,\s*78vh,\s*900px\)[\s\S]*height:\s*clamp\(560px,\s*78dvh,\s*900px\)/.test(css),
+    '父酒馆 iframe 先提供移动 WebView 可识别的 vh 高度，再用 dvh 增强');
+  ok(/iframe\.pastoral-host-frame[\s\S]*max-height:\s*calc\(100vh\s*-\s*96px\)[\s\S]*max-height:\s*calc\(100dvh\s*-\s*96px\)/.test(css),
+    '宿主 iframe 最大高度同时提供 vh 与 dvh，旧手机不会回退成 150px 短条');
 
   const mes1 = pdoc.querySelector('.mes[mesid="1"]');
   const mes0 = pdoc.querySelector('.mes[mesid="0"]');
