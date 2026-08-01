@@ -10,6 +10,7 @@ const path = require('path');
 const { JSDOM } = require('jsdom');
 
 const HTML = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const MIGRATION = fs.readFileSync(path.join(__dirname, '..', '迁移参考资料', 'README.md'), 'utf8');
 
 let failed = 0;
 function ok(cond, label) {
@@ -334,6 +335,14 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const same = doc.querySelector('.bub[data-mid="1"]');
     ok(first === same, '对话未变时气泡 DOM 节点未被替换');
   }
+
+  console.log('\n[6] 迁移资料自包含');
+  const sections = ['宿主接口', '正文提取', 'MVU 完整快照', '补丁验证', '第二 API', '固定预设', '伪零层', '移动视口', '本地图片', '验收清单'];
+  ok(sections.every((title) => MIGRATION.includes(title)), '迁移指南覆盖十个独立重建主题');
+  ok(/_types_split\/04-chat-message\.txt/.test(MIGRATION) && /_types_split\/15-ejs-mvu\.txt/.test(MIGRATION) && /slash_command_split\//.test(MIGRATION), '迁移指南精确指向接口切片');
+  ok(!/当前源码地图/.test(MIGRATION) && !/### 当前实现/.test(MIGRATION), '迁移指南不再维护 Pastoral 当前源码地图');
+  ok(!/`js\/(extract|mvu|api|chat|host|settings)\.js`/.test(MIGRATION) && !/`css\/(layout|components)\.css`/.test(MIGRATION), '迁移不要求读取 Pastoral JS/CSS 原件');
+  ok(!/test\/(api|settings|mvu|smoke|iframe|layout)\.js/.test(MIGRATION) && !/docs\/(specs|superpowers)/.test(MIGRATION), '迁移不依赖测试或历史设计稿');
 
   console.log('\n' + (errors.length ? '运行时错误：\n  ' + errors.join('\n  ') : '无运行时错误'));
   if (errors.length) failed += errors.length;

@@ -14,8 +14,35 @@
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   let mobilePage = 'ledger';
   let wasImmersive = false;
+  let viewportFrame = 0;
+  let composerFocused = false;
+  let keyboardWasOpen = false;
+  let mobileBaselineHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
 
   function isMobileViewport() { return window.innerWidth < 900; }
+
+  function syncMobileViewport() {
+    viewportFrame = 0;
+    const visual = window.visualViewport;
+    const height = visual && Number(visual.height) > 0 ? Number(visual.height) : window.innerHeight;
+    document.documentElement.style.setProperty('--mobile-viewport-height', Math.round(height) + 'px');
+    const activeStory = Host.immersive && isMobileViewport() && mobilePage === 'story';
+    if (!composerFocused) mobileBaselineHeight = Math.max(mobileBaselineHeight, window.innerHeight || 0, height);
+    const layoutHeight = Math.max(mobileBaselineHeight, window.innerHeight || 0, document.documentElement.clientHeight || 0, height);
+    const reduced = visual ? layoutHeight - height > Math.max(120, layoutHeight * 0.18) : composerFocused;
+    const keyboardOpen = activeStory && composerFocused && reduced;
+    document.body.classList.toggle('is-mobile-keyboard-open', keyboardOpen);
+    if (keyboardOpen && !keyboardWasOpen) {
+      const composer = document.getElementById('composer');
+      if (composer && composer.scrollIntoView) composer.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    keyboardWasOpen = keyboardOpen;
+  }
+
+  function queueMobileViewportSync() {
+    if (viewportFrame) return;
+    viewportFrame = requestAnimationFrame(syncMobileViewport);
+  }
 
   function setMobilePage(name) {
     mobilePage = name === 'story' ? 'story' : 'ledger';
@@ -26,6 +53,7 @@
       button.classList.toggle('is-active', on);
       button.setAttribute('aria-selected', on ? 'true' : 'false');
     });
+    queueMobileViewportSync();
   }
 
   function syncMobileImmersiveState(resetOnEnter) {
@@ -33,7 +61,11 @@
     const switcher = $('[data-mobile-page-switcher]');
     if (switcher) switcher.hidden = !active;
     if (active) setMobilePage(resetOnEnter ? 'ledger' : mobilePage);
-    else document.body.classList.remove('mobile-page--ledger', 'mobile-page--story');
+    else {
+      document.body.classList.remove('mobile-page--ledger', 'mobile-page--story', 'is-mobile-keyboard-open');
+      keyboardWasOpen = false;
+    }
+    queueMobileViewportSync();
     wasImmersive = Host.immersive;
   }
 
@@ -559,6 +591,7 @@
   /* ---------- 初始化 ---------- */
   async function init() {
     Icon.render(document);
+    if (window.IconPicker) await IconPicker.init();
 
     // 等待 MVU 就绪
     await MVU.init();
@@ -602,7 +635,17 @@
     $$('[data-mobile-page]').forEach((button) => button.addEventListener('click', () => setMobilePage(button.dataset.mobilePage)));
     const mobileExit = $('[data-mobile-exit]');
     if (mobileExit) mobileExit.addEventListener('click', () => Host.setImmersive(false));
-    window.addEventListener('resize', () => syncMobileImmersiveState(false));
+    window.addEventListener('resize', () => { syncMobileImmersiveState(false); queueMobileViewportSync(); });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', queueMobileViewportSync);
+      window.visualViewport.addEventListener('scroll', queueMobileViewportSync);
+    }
+    const composerInput = $('#composerInput');
+    if (composerInput) {
+      composerInput.addEventListener('focus', () => { composerFocused = true; queueMobileViewportSync(); });
+      composerInput.addEventListener('blur', () => { composerFocused = false; setTimeout(queueMobileViewportSync, 80); });
+    }
+    queueMobileViewportSync();
     const setBtn = $('#settingsBtn'); if (setBtn) setBtn.addEventListener('click', openSettings);
 
     // 底栏

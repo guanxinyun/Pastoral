@@ -146,7 +146,9 @@
 .farm-cell.is-tilled { color: var(--color-warning); background: hsl(36 45% 45% / 0.1); }
 .farm-cell.is-planted { color: var(--color-success); background: hsl(151 34% 42% / 0.1); }
 .farm-cell.is-ripe { color: var(--color-primary); box-shadow: 0 0 0 1px var(--amber-glow); }
-.farm-cell .ic { --ic: 22px; }
+.farm-cell .ic, .farm-cell__icon, .farm-cell__icon .icon-slot { --ic: 22px; width: 22px; height: 22px; display: grid; place-items: center; }
+.icon-slot { width: 100%; height: 100%; display: grid; place-items: center; }
+.icon-slot svg { width: 100%; height: 100%; display: block; }
 .farm-cell__coord { position: absolute; top: 3px; left: 5px; font-family: var(--font-mono); font-size: 9px; color: var(--color-text-faint); }
 .farm-cell__name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-kai); font-size: 10px; }
 #farmDetail { margin-top: 8px; }
@@ -356,6 +358,61 @@
 .prompt-preview[hidden] { display: none; }
 @media (min-width: 640px) { .preset-context__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 639px) { .settings-tabs { grid-template-columns: 1fr; } }
+
+/* ---------- 玩家图标选择器 ---------- */
+.replaceable-icon { position: relative; cursor: context-menu; outline: none; }
+.replaceable-icon:focus-visible { box-shadow: 0 0 0 2px var(--color-primary), var(--shadow-glow-amber); }
+.replaceable-icon::after { content: ""; position: absolute; right: -2px; bottom: -2px; width: 8px; height: 8px; border-radius: var(--radius-full); background: var(--color-primary); border: 2px solid var(--color-surface); opacity: 0; transform: scale(.6); transition: opacity var(--t-fast) var(--ease-soft), transform var(--t-fast) var(--ease-soft); pointer-events: none; }
+.replaceable-icon:hover::after, .replaceable-icon:focus-visible::after { opacity: .9; transform: scale(1); }
+.custom-icon-image { display: block; width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: inherit; }
+.icon-picker-backdrop { z-index: 520; align-items: end; padding: 0; }
+.icon-picker { width: 100%; max-height: min(88dvh, 760px); overflow: auto; padding: var(--space-4); border-radius: var(--radius-xl) var(--radius-xl) 0 0; color: var(--color-text); background: linear-gradient(165deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border-strong); box-shadow: var(--shadow-float); scrollbar-color: var(--color-border-strong) var(--color-bg-deep); animation: toastIn var(--t-slow) var(--ease-page) both; }
+.icon-picker__head { display: flex; align-items: center; gap: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-border); }
+.icon-picker__head > .ic { color: var(--color-primary); }
+.icon-picker__head > div { min-width: 0; flex: 1; }
+.icon-picker__head h2 { margin: 0; font-size: var(--font-size-xl); }
+.icon-picker__head p { margin: var(--space-1) 0 0; color: var(--color-text-muted); font-size: var(--font-size-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icon-picker__tabs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin: var(--space-4) 0; }
+.icon-picker__tabs button { min-height: 44px; padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-muted); background: var(--color-bg-deep); cursor: pointer; transition: color var(--t-base), border-color var(--t-base), background var(--t-base), transform var(--t-fast); }
+.icon-picker__tabs button:hover, .icon-picker__tabs button:focus-visible, .icon-picker__tabs button.is-active { color: var(--color-text); border-color: var(--color-primary); background: var(--amber-glow); outline: none; }
+.icon-picker__tabs button:active { transform: scale(.98); }
+.icon-picker__panel[hidden] { display: none; }
+.icon-picker__group + .icon-picker__group { margin-top: var(--space-4); }
+.icon-picker__group h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.icon-picker__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: var(--space-2); }
+.icon-picker__choice { min-width: 44px; min-height: 64px; display: grid; justify-items: center; align-content: center; gap: var(--space-1); padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-soft); background: var(--color-bg-deep); cursor: pointer; transition: color var(--t-base), border-color var(--t-base), background var(--t-base), transform var(--t-fast); }
+.icon-picker__choice .ic, .icon-picker__choice .custom-icon-image { width: 28px; height: 28px; }
+.icon-picker__choice:hover, .icon-picker__choice:focus-visible, .icon-picker__choice[aria-selected="true"] { color: var(--color-primary); border-color: var(--color-primary); background: var(--amber-glow); outline: none; }
+.icon-picker__choice:active { transform: scale(.97); }
+.icon-picker__choice-label { max-width: 100%; font-size: var(--font-size-2xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icon-picker__library-actions { display: flex; justify-content: center; margin-bottom: var(--space-3); }
+.icon-picker__upload { position: relative; overflow: hidden; }
+.icon-picker__upload input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.icon-picker__custom-item { min-width: 0; padding: var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.icon-picker__custom-item > .icon-picker__choice { width: 100%; border-color: transparent; }
+.icon-picker__manage { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-1); }
+.icon-picker__manage .set-input, .icon-picker__delete-copy { grid-column: 1 / -1; }
+.icon-picker__delete-copy { margin: 0; padding: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-2xs); line-height: 1.5; }
+.icon-picker__manage button { min-height: 32px; color: var(--color-text-muted); border-radius: var(--radius-sm); cursor: pointer; transition: color var(--t-fast), background var(--t-fast); }
+.icon-picker__manage button:hover, .icon-picker__manage button:focus-visible { color: var(--color-primary); background: var(--color-surface); outline: 1px solid var(--color-primary); }
+.icon-picker__manage button.is-danger { color: var(--color-danger); }
+.icon-picker__scope { display: grid; gap: var(--space-2); margin: var(--space-4) 0; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.icon-picker__scope legend { padding: 0 var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.icon-picker__scope label { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; cursor: pointer; }
+.icon-picker__scope input { width: 18px; height: 18px; accent-color: var(--color-primary); }
+.icon-picker__status { min-height: 1.5em; color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.icon-picker__status.is-error { color: var(--color-danger); }
+.icon-picker__status.is-success { color: var(--color-success); }
+.icon-picker__status.is-loading { color: var(--color-primary); }
+.icon-picker__foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+.icon-picker__spacer { flex: 1; }
+@media (min-width: 640px) {
+  .icon-picker-backdrop { place-items: center; padding: var(--space-4); }
+  .icon-picker { width: min(760px, 100%); max-height: min(760px, calc(100vh - 32px)); padding: var(--space-6); border-radius: var(--radius-xl); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .icon-picker, .replaceable-icon::after, .icon-picker__choice, .icon-picker__tabs button { animation: none; transition: none; }
+}
 
 /* ---------- 归寝确认 / 每日总结模态框 ---------- */
 .endday-preview { margin-top: var(--space-3); padding: var(--space-3); white-space: pre-wrap; font-family: var(--font-kai); color: var(--color-text); background: var(--color-bg-deep); border: 1px solid var(--color-border); border-radius: var(--radius-md); }

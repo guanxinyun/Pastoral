@@ -114,6 +114,7 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
     && storyTab.getAttribute('aria-selected') === 'false', '经营页 ARIA 状态正确');
   if (storyTab) storyTab.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
   ok(!!storyTab && cdoc.body.classList.contains('mobile-page--story') && storyTab.getAttribute('aria-selected') === 'true', '可切换到剧情页');
+  ok(/px$/.test(cdoc.documentElement.style.getPropertyValue('--mobile-viewport-height')), '手机沉浸同步可视视口高度 CSS 变量');
 
   btn.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
   await wait(120);

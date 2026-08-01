@@ -386,6 +386,7 @@ body.is-immersive .page {
   body.is-immersive .book {
     height: 100vh;
     height: 100dvh;
+    height: var(--mobile-viewport-height, 100dvh);
     min-height: 0;
     padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     flex-direction: column;
@@ -431,6 +432,31 @@ body.is-immersive .page {
   body.is-immersive.mobile-page--story .page--left { display: none; }
   body.is-immersive.mobile-page--ledger .page--left,
   body.is-immersive.mobile-page--story .page--right { display: flex; }
+  body.is-immersive.mobile-page--story .page--right { min-height: 0; flex-direction: column; }
+  body.is-immersive.mobile-page--story .journal { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  body.is-immersive.mobile-page--story .journal__stream { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  body.is-immersive.mobile-page--story .composer { flex: 0 0 auto; padding-top: var(--space-2); }
+  body.is-immersive.mobile-page--story .composer__input { max-height: min(132px, 24dvh); }
+  body.is-immersive.mobile-page--story .dock {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: var(--space-2);
+    flex: 0 0 auto;
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+  }
+  body.is-immersive.mobile-page--story .dock__stat { min-width: 0; flex-basis: auto; }
+  body.is-immersive.mobile-page--story .dock__actions { display: grid; grid-template-columns: repeat(4, 44px); gap: var(--space-1); }
+  body.is-immersive.mobile-page--story .dock__btn { width: 44px; height: 44px; }
+  body.is-immersive.is-mobile-keyboard-open .dock { display: none; }
+  body.is-immersive.is-mobile-keyboard-open .hud { gap: var(--space-2); margin-bottom: var(--space-1); padding-bottom: var(--space-1); flex-wrap: nowrap; }
+  body.is-immersive.is-mobile-keyboard-open .hud__center,
+  body.is-immersive.is-mobile-keyboard-open .hud__prestige { display: none; }
+  body.is-immersive.is-mobile-keyboard-open .hud__left { min-width: 0; flex: 1; }
+  body.is-immersive.is-mobile-keyboard-open .hud__right { flex: 0 0 auto; }
+  body.is-immersive.is-mobile-keyboard-open .journal__choices { max-height: 18dvh; overflow-y: auto; }
+  body.is-immersive.is-mobile-keyboard-open .composer { margin-top: var(--space-1); padding-top: var(--space-1); }
+  @media (hover: none) and (pointer: coarse) { [data-tip]::after { display: none; } }
 }
 
 /* 书脊：宽屏时居中分隔 */
@@ -1088,7 +1114,9 @@ body.is-immersive .journal__stream {
 .farm-cell.is-tilled { color: var(--color-warning); background: hsl(36 45% 45% / 0.1); }
 .farm-cell.is-planted { color: var(--color-success); background: hsl(151 34% 42% / 0.1); }
 .farm-cell.is-ripe { color: var(--color-primary); box-shadow: 0 0 0 1px var(--amber-glow); }
-.farm-cell .ic { --ic: 22px; }
+.farm-cell .ic, .farm-cell__icon, .farm-cell__icon .icon-slot { --ic: 22px; width: 22px; height: 22px; display: grid; place-items: center; }
+.icon-slot { width: 100%; height: 100%; display: grid; place-items: center; }
+.icon-slot svg { width: 100%; height: 100%; display: block; }
 .farm-cell__coord { position: absolute; top: 3px; left: 5px; font-family: var(--font-mono); font-size: 9px; color: var(--color-text-faint); }
 .farm-cell__name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-kai); font-size: 10px; }
 #farmDetail { margin-top: 8px; }
@@ -1298,6 +1326,61 @@ body.is-immersive .journal__stream {
 .prompt-preview[hidden] { display: none; }
 @media (min-width: 640px) { .preset-context__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 639px) { .settings-tabs { grid-template-columns: 1fr; } }
+
+/* ---------- 玩家图标选择器 ---------- */
+.replaceable-icon { position: relative; cursor: context-menu; outline: none; }
+.replaceable-icon:focus-visible { box-shadow: 0 0 0 2px var(--color-primary), var(--shadow-glow-amber); }
+.replaceable-icon::after { content: ""; position: absolute; right: -2px; bottom: -2px; width: 8px; height: 8px; border-radius: var(--radius-full); background: var(--color-primary); border: 2px solid var(--color-surface); opacity: 0; transform: scale(.6); transition: opacity var(--t-fast) var(--ease-soft), transform var(--t-fast) var(--ease-soft); pointer-events: none; }
+.replaceable-icon:hover::after, .replaceable-icon:focus-visible::after { opacity: .9; transform: scale(1); }
+.custom-icon-image { display: block; width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: inherit; }
+.icon-picker-backdrop { z-index: 520; align-items: end; padding: 0; }
+.icon-picker { width: 100%; max-height: min(88dvh, 760px); overflow: auto; padding: var(--space-4); border-radius: var(--radius-xl) var(--radius-xl) 0 0; color: var(--color-text); background: linear-gradient(165deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border-strong); box-shadow: var(--shadow-float); scrollbar-color: var(--color-border-strong) var(--color-bg-deep); animation: toastIn var(--t-slow) var(--ease-page) both; }
+.icon-picker__head { display: flex; align-items: center; gap: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-border); }
+.icon-picker__head > .ic { color: var(--color-primary); }
+.icon-picker__head > div { min-width: 0; flex: 1; }
+.icon-picker__head h2 { margin: 0; font-size: var(--font-size-xl); }
+.icon-picker__head p { margin: var(--space-1) 0 0; color: var(--color-text-muted); font-size: var(--font-size-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icon-picker__tabs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin: var(--space-4) 0; }
+.icon-picker__tabs button { min-height: 44px; padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-muted); background: var(--color-bg-deep); cursor: pointer; transition: color var(--t-base), border-color var(--t-base), background var(--t-base), transform var(--t-fast); }
+.icon-picker__tabs button:hover, .icon-picker__tabs button:focus-visible, .icon-picker__tabs button.is-active { color: var(--color-text); border-color: var(--color-primary); background: var(--amber-glow); outline: none; }
+.icon-picker__tabs button:active { transform: scale(.98); }
+.icon-picker__panel[hidden] { display: none; }
+.icon-picker__group + .icon-picker__group { margin-top: var(--space-4); }
+.icon-picker__group h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.icon-picker__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: var(--space-2); }
+.icon-picker__choice { min-width: 44px; min-height: 64px; display: grid; justify-items: center; align-content: center; gap: var(--space-1); padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-soft); background: var(--color-bg-deep); cursor: pointer; transition: color var(--t-base), border-color var(--t-base), background var(--t-base), transform var(--t-fast); }
+.icon-picker__choice .ic, .icon-picker__choice .custom-icon-image { width: 28px; height: 28px; }
+.icon-picker__choice:hover, .icon-picker__choice:focus-visible, .icon-picker__choice[aria-selected="true"] { color: var(--color-primary); border-color: var(--color-primary); background: var(--amber-glow); outline: none; }
+.icon-picker__choice:active { transform: scale(.97); }
+.icon-picker__choice-label { max-width: 100%; font-size: var(--font-size-2xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icon-picker__library-actions { display: flex; justify-content: center; margin-bottom: var(--space-3); }
+.icon-picker__upload { position: relative; overflow: hidden; }
+.icon-picker__upload input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.icon-picker__custom-item { min-width: 0; padding: var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.icon-picker__custom-item > .icon-picker__choice { width: 100%; border-color: transparent; }
+.icon-picker__manage { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-1); }
+.icon-picker__manage .set-input, .icon-picker__delete-copy { grid-column: 1 / -1; }
+.icon-picker__delete-copy { margin: 0; padding: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-2xs); line-height: 1.5; }
+.icon-picker__manage button { min-height: 32px; color: var(--color-text-muted); border-radius: var(--radius-sm); cursor: pointer; transition: color var(--t-fast), background var(--t-fast); }
+.icon-picker__manage button:hover, .icon-picker__manage button:focus-visible { color: var(--color-primary); background: var(--color-surface); outline: 1px solid var(--color-primary); }
+.icon-picker__manage button.is-danger { color: var(--color-danger); }
+.icon-picker__scope { display: grid; gap: var(--space-2); margin: var(--space-4) 0; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.icon-picker__scope legend { padding: 0 var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.icon-picker__scope label { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; cursor: pointer; }
+.icon-picker__scope input { width: 18px; height: 18px; accent-color: var(--color-primary); }
+.icon-picker__status { min-height: 1.5em; color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.icon-picker__status.is-error { color: var(--color-danger); }
+.icon-picker__status.is-success { color: var(--color-success); }
+.icon-picker__status.is-loading { color: var(--color-primary); }
+.icon-picker__foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+.icon-picker__spacer { flex: 1; }
+@media (min-width: 640px) {
+  .icon-picker-backdrop { place-items: center; padding: var(--space-4); }
+  .icon-picker { width: min(760px, 100%); max-height: min(760px, calc(100vh - 32px)); padding: var(--space-6); border-radius: var(--radius-xl); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .icon-picker, .replaceable-icon::after, .icon-picker__choice, .icon-picker__tabs button { animation: none; transition: none; }
+}
 
 /* ---------- 归寝确认 / 每日总结模态框 ---------- */
 .endday-preview { margin-top: var(--space-3); padding: var(--space-3); white-space: pre-wrap; font-family: var(--font-kai); color: var(--color-text); background: var(--color-bg-deep); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
@@ -1823,7 +1906,64 @@ const ICONS = {
   send:     '<path d="M4 12 20.5 4.5 13 21l-2.3-6.7z"/><path d="M10.7 14.3 20.5 4.5"/>',
   pencil:   '<path d="M4.5 19.5h4l10-10-4-4-10 10z"/><path d="M14.5 5.5l4 4"/><path d="M4.5 19.5 6 15.5"/>',
   copy:     '<rect x="9" y="9" width="10.5" height="10.5" rx="1.8"/><path d="M15 6.2A1.7 1.7 0 0 0 13.3 4.5H6.2A1.7 1.7 0 0 0 4.5 6.2v7.1A1.7 1.7 0 0 0 6.2 15"/>',
-  trash:    '<path d="M5 7h14"/><path d="M6.5 7 7.5 20h9L17.5 7"/><path d="M10 7V4.8h4V7"/><path d="M10.5 10.5v6M13.5 10.5v6"/>'
+  trash:    '<path d="M5 7h14"/><path d="M6.5 7 7.5 20h9L17.5 7"/><path d="M10 7V4.8h4V7"/><path d="M10.5 10.5v6M13.5 10.5v6"/>',
+
+  /* ---------- 可选地图预设 ---------- */
+  grassland:'<path d="M3 19h18"/><path d="M6 19c0-4 1-7 3-10M9 19c0-3-1-5-3-7M13 19c0-5 1-9 3-13M16 19c0-3 1-5 3-7"/>',
+  hill:     '<path d="M2.5 19c3-7 7-8 10-2 2-4 5-5 9-1"/><path d="M4 19h16"/>',
+  river:    '<path d="M8 3c7 4-3 7 5 10s1 6 3 8"/><path d="M13 3c6 4-4 7 4 10s0 6 2 8"/>',
+  coast:    '<path d="M3 5c5 2 3 6 8 7s3 5 10 7"/><path d="M3 17c2 0 2 2 4 2s2-2 4-2"/>',
+  swamp:    '<path d="M3 18h18M5 14h5M14 12h5"/><path d="M8 14V8m0 0-2-3m2 3 2-3M17 12V6"/>',
+  mine:     '<path d="M4 20V12a8 8 0 0 1 16 0v8"/><path d="M8 20 18 8M6 7l4 4M14 4l4 4"/>',
+  village:  '<path d="M3 12 8 7l5 5v8H3zM12 10l4-4 5 5v9h-8"/><path d="M6 20v-4h3v4M16 20v-5h3v5"/>',
+  road:     '<path d="M9 2c5 5-2 8 4 12 3 2 2 5 2 8M14 2c4 5-3 8 3 12 3 2 2 5 2 8"/>',
+  bridge:   '<path d="M3 17h18M5 17v-6h14v6M7 11c1-5 9-5 10 0"/><path d="M3 20c2 0 2-1 4-1s2 1 4 1 2-1 4-1 2 1 4 1"/>',
+  camp:     '<path d="M4 20 12 5l8 15zM12 5v15M8 20l4-7 4 7"/>',
+  temple:   '<path d="M3 8h18L12 3zM5 9v10M9 9v10M15 9v10M19 9v10M3 20h18"/>',
+  meadow:   '<path d="M3 20h18M7 20v-8m0 2c-4-1-4-4-2-5 2 1 3 3 2 5zm0 2c4-1 4-4 2-5-2 1-3 3-2 5zM16 20v-6"/>',
+  orchard:  '<path d="M12 20v-8M8 20h8"/><circle cx="12" cy="8" r="5"/><circle cx="9" cy="7" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/>',
+  desert:   '<path d="M2 18c4-4 8-4 12 0 2-3 5-3 8 0"/><path d="M16 14V5m0 4h3V7m-3 5h-3V9"/>',
+  snowland: '<path d="M3 18 9 8l3 5 3-4 6 9z"/><path d="m7 6 4-3 3 3 3-2"/>',
+
+  /* ---------- 可选作物预设 ---------- */
+  corn:     '<path d="M12 21V5M8 8c4 0 4 4 4 7-4 0-4-4-4-7zm8 0c-4 0-4 4-4 7 4 0 4-4 4-7z"/><path d="M10 5h4v9h-4z"/>',
+  rice:     '<path d="M10 21V5m4 16V7"/><path d="m10 7-3-2m3 5-4-1m8 0 3-2m-3 5 4-1"/>',
+  potato:   '<path d="M7 8c4-4 11-1 11 5 0 5-5 8-10 6-5-2-5-8-1-11z"/><circle cx="10" cy="11" r=".7" fill="currentColor"/><circle cx="14" cy="16" r=".7" fill="currentColor"/>',
+  turnip:   '<path d="M7 11c0 6 2 9 5 10 3-1 5-4 5-10z"/><path d="M12 11c-1-4 0-7 2-9m-2 9c1-4 4-5 6-4m-6 4c-1-3-4-4-6-3"/>',
+  beans:    '<path d="M7 4c9 1 12 9 8 16"/><path d="M8 7c3-1 4 2 2 4-3 2-5-2-2-4zm5 5c3-1 4 2 2 4-3 2-5-2-2-4z"/>',
+  fruit:    '<circle cx="12" cy="13" r="6"/><path d="M12 7c0-3 2-5 5-5-1 3-2 5-5 5zM11 7 9 4"/>',
+  seedbag:  '<path d="M7 7h10l2 4v8H5v-8z"/><path d="M9 7 8 3h8l-1 4M9 12c2-2 4-2 6 0"/>',
+  sprout:   '<path d="M12 21V10"/><path d="M12 12C7 12 5 9 6 6c4 0 6 2 6 6zm0-2c5 0 7-3 6-6-4 0-6 2-6 6z"/>',
+  ripe:     '<path d="M12 21V5M7 8l5 3 5-3M7 13l5 3 5-3"/><circle cx="7" cy="8" r="1" fill="currentColor"/><circle cx="17" cy="13" r="1" fill="currentColor"/>',
+  withered: '<path d="M12 21V7M12 12C8 8 6 9 5 11c2 3 5 3 7 1zm0 3c4-4 6-3 7-1-2 3-5 3-7 1z"/><path d="M8 4l8 16"/>',
+  magicplant:'<path d="M12 21V9M12 12C7 11 6 8 7 5c4 0 5 3 5 7zm0-3c5 0 6-3 5-6-4 0-5 2-5 6z"/><path d="M19 10v4m-2-2h4M5 15v3m-1.5-1.5h3"/>',
+
+  /* ---------- 可选农牧预设 ---------- */
+  magicfarm:'<path d="M3 19h18M4 15l4-4 4 4 4-4 4 4"/><path d="M12 3c.5 3 1.5 4 4.5 4.5-3 .5-4 1.5-4.5 4.5-.5-3-1.5-4-4.5-4.5 3-.5 4-1.5 4.5-4.5z"/>',
+  chicken:  '<path d="M7 14c0-4 3-7 7-6 4 1 5 6 2 9-3 3-9 1-9-3z"/><circle cx="14" cy="11" r=".8" fill="currentColor"/><path d="m17 12 4 1-4 2M9 17l-1 4m5-3v3"/>',
+  duck:     '<path d="M5 15c2-5 7-5 10-2 2 2 1 5-2 6-4 1-8-1-8-4z"/><circle cx="15" cy="9" r="3"/><path d="m18 9 4 1-4 1M9 19l-1 2m4-2v2"/>',
+  cow:      '<path d="M5 8h14v10H5zM8 8 5 4m11 4 3-4"/><circle cx="9" cy="12" r="1" fill="currentColor"/><path d="M8 18v3m8-3v3M10 16h4"/>',
+  sheep:    '<path d="M6 9a3 3 0 0 1 5-3 3 3 0 0 1 5 1 3 3 0 0 1 2 5 4 4 0 0 1-3 6H8a4 4 0 0 1-2-9z"/><path d="M9 18v3m6-3v3"/>',
+  pig:      '<path d="M4 12c0-5 4-8 9-7 5 1 8 5 7 10-1 4-5 5-10 4-4 0-6-3-6-7z"/><circle cx="15" cy="10" r="1" fill="currentColor"/><path d="M17 13h4M7 18v3m8-2v2"/>',
+  beehive:  '<path d="M7 20h10l3-4-2-9-6-4-6 4-2 9z"/><path d="M6 9h12M5 13h14M5 17h14"/><circle cx="12" cy="16" r="1.5"/>',
+  pasture:  '<path d="M3 19h18M5 19v-7m14 7v-7M5 14h14M8 12v7m8-7v7"/><path d="M7 8c3-4 7-4 10 0"/>',
+  barn:     '<path d="M3 10 12 3l9 7v11H3z"/><path d="M8 21v-8h8v8M8 13h8M12 13v8"/>',
+  trough:   '<path d="M3 10h18l-2 8H5zM7 18v3m10-3v3"/><path d="M6 13h12"/>',
+  compost:  '<path d="M5 7h14l-1 14H6zM4 7l2-4h12l2 4"/><path d="M9 15c0-3 2-5 5-5 0 3-2 5-5 5z"/>',
+  produce:  '<path d="M4 8h16v12H4zM7 8V5h10v3"/><path d="M8 13h8M8 16h5"/><path d="M18 2v4m-2-2h4"/>'
+};
+
+const ICON_GROUPS = {
+  地图: ['tree', 'lake', 'mountain', 'cave', 'ruin', 'grassland', 'hill', 'river', 'coast', 'swamp', 'mine', 'village', 'road', 'bridge', 'camp', 'temple', 'meadow', 'orchard', 'desert', 'snowland'],
+  作物: ['grain', 'carrot', 'cabbage', 'mushroom', 'herb', 'flower', 'berry', 'corn', 'rice', 'potato', 'turnip', 'beans', 'fruit', 'seedbag', 'sprout', 'ripe', 'withered', 'magicplant'],
+  农牧: ['garden', 'magicfarm', 'chicken', 'duck', 'cow', 'sheep', 'pig', 'beehive', 'pasture', 'barn', 'trough', 'compost', 'produce'],
+  通用: ['house', 'bag', 'hammer', 'compass', 'person', 'key', 'scroll', 'wheat', 'settings', 'coin', 'bed', 'water', 'sparkle']
+};
+const ICON_LABELS = {
+  tree:'森林', lake:'湖泊', mountain:'山峰', cave:'洞穴', ruin:'遗迹', grassland:'草原', hill:'丘陵', river:'河流', coast:'海岸', swamp:'沼泽', mine:'矿区', village:'村落', road:'道路', bridge:'桥梁', camp:'营地', temple:'神殿', meadow:'花田', orchard:'果林', desert:'荒漠', snowland:'雪地',
+  grain:'谷物', carrot:'胡萝卜', cabbage:'叶菜', mushroom:'蘑菇', herb:'香草', flower:'花卉', berry:'浆果', corn:'玉米', rice:'稻麦', potato:'薯类', turnip:'根茎', beans:'豆类', fruit:'果实', seedbag:'种子袋', sprout:'幼苗', ripe:'成熟', withered:'枯萎', magicplant:'魔法植物',
+  garden:'普通农田', magicfarm:'魔法农田', chicken:'鸡', duck:'鸭', cow:'牛', sheep:'羊', pig:'猪', beehive:'蜂箱', pasture:'牧场', barn:'畜棚', trough:'饲料槽', compost:'堆肥', produce:'待收取产出',
+  house:'旅店', bag:'背包', hammer:'建造', compass:'探索', person:'人物', key:'钥匙', scroll:'卷轴', wheat:'农牧', settings:'设置', coin:'货币', bed:'休息', water:'浇水', sparkle:'魔法'
 };
 
 const Icon = {
@@ -1842,6 +1982,16 @@ const Icon = {
     if (!el) return;
     el.dataset.i = name;
     el.innerHTML = Icon.get(name);
+  },
+  /** 返回选择器使用的系统预设目录 */
+  catalog(group) {
+    const groups = group && ICON_GROUPS[group] ? { [group]: ICON_GROUPS[group] } : ICON_GROUPS;
+    return Object.entries(groups).flatMap(([groupName, names]) => names.map((name) => ({
+      name,
+      label: ICON_LABELS[name] || name,
+      group: groupName,
+      keywords: [ICON_LABELS[name] || name, name, groupName]
+    })));
   }
 };
 
@@ -3120,28 +3270,36 @@ window.Settings = Settings;
 
 /* === assets.js === */
 /* ============================================================
-   IndexedDB 资产仓库 · 员工自定义头像
-   Blob 只存 Assets 表，不进入 localStorage / MVU。
+   IndexedDB 本地资产仓库 · 员工头像 / 个人图标 / 图标映射
+   Blob 与本地显示偏好不进入 localStorage、MVU 或聊天消息。
    ============================================================ */
 const Assets = (function () {
   'use strict';
 
   const DB_NAME = 'pastoral_assets';
-  const DB_VERSION = 1;
+  const DB_VERSION = 2;
   const STORE = 'Assets';
+  const ICON_MAX_BYTES = 2 * 1024 * 1024;
+  const ICON_MAX_COUNT = 100;
+  const ICON_MIME = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']);
   const urls = new Map();
   let dbPromise = null;
 
   function available() { return typeof indexedDB !== 'undefined' && indexedDB && typeof indexedDB.open === 'function'; }
 
-  function scope() {
-    try {
-      if (typeof getCurrentCharacterName === 'function') return getCurrentCharacterName() || 'unknown-character';
-    } catch (e) { /* ignore */ }
-    return location && location.pathname ? location.pathname : 'standalone';
+  function characterName() {
+    try { return typeof getCurrentCharacterName === 'function' ? getCurrentCharacterName() || '' : ''; }
+    catch (e) { return ''; }
   }
+  function pagePath() { return typeof location !== 'undefined' && location.pathname ? location.pathname : 'standalone'; }
+  function scope() { const character = characterName(); return character ? `${character}::${pagePath()}` : pagePath(); }
+  function staffScope() { return characterName() || pagePath(); }
 
-  function staffKey(name) { return scope() + '::' + String(name || ''); }
+  function prefix(kind) { return scope() + '::' + kind + '::'; }
+  // 保留 v1 员工头像键，升级数据库后既有头像无需迁移即可继续读取。
+  function staffKey(name) { return staffScope() + '::' + String(name || ''); }
+  function iconKey(id) { return prefix('custom-icon') + String(id || ''); }
+  function bindingsKey() { return prefix('icon-bindings') + 'registry'; }
 
   function open() {
     if (!available()) return Promise.resolve(null);
@@ -3158,9 +3316,9 @@ const Assets = (function () {
     return dbPromise;
   }
 
-  async function transact(mode, run) {
+  async function transact(mode, run, fallback = null) {
     const db = await open();
-    if (!db) return null;
+    if (!db) return fallback;
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE, mode);
       const store = tx.objectStore(STORE);
@@ -3168,7 +3326,12 @@ const Assets = (function () {
       try { request = run(store); } catch (e) { reject(e); return; }
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error || new Error('IndexedDB 操作失败'));
-    }).catch((e) => { console.error('[Pastoral][Assets]', e); return null; });
+    }).catch((e) => { console.error('[Pastoral][Assets]', e); return fallback; });
+  }
+
+  async function allRecords() {
+    const records = await transact('readonly', (store) => store.getAll(), []);
+    return Array.isArray(records) ? records : [];
   }
 
   async function putStaffAvatar(name, blob) {
@@ -3191,26 +3354,402 @@ const Assets = (function () {
     return result !== null;
   }
 
+  function validIconBlob(blob) {
+    return !!blob && ICON_MIME.has(String(blob.type || '').toLowerCase()) && Number(blob.size) <= ICON_MAX_BYTES;
+  }
+
+  async function listCustomIcons() {
+    const p = prefix('custom-icon');
+    return (await allRecords())
+      .filter((record) => record && record.kind === 'custom-icon' && String(record.key).startsWith(p))
+      .map(({ id, name, mime, updatedAt }) => ({ id, name, mime, updatedAt }))
+      .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
+  }
+
+  function makeIconId() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+    return 'icon-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  }
+
+  async function putCustomIcon(blob, name) {
+    if (!available() || !validIconBlob(blob)) return null;
+    if ((await listCustomIcons()).length >= ICON_MAX_COUNT) return null;
+    const id = makeIconId();
+    const cleanName = String(name || '我的图标').trim().slice(0, 80) || '我的图标';
+    const record = { key: iconKey(id), kind: 'custom-icon', id, name: cleanName, blob, mime: blob.type, updatedAt: Date.now() };
+    const result = await transact('readwrite', (store) => store.put(record));
+    return result == null ? null : { id, name: cleanName, mime: blob.type, updatedAt: record.updatedAt };
+  }
+
+  async function getCustomIcon(id) {
+    const record = await transact('readonly', (store) => store.get(iconKey(id)));
+    return record && record.kind === 'custom-icon' ? record : null;
+  }
+
+  async function renameCustomIcon(id, name) {
+    const record = await getCustomIcon(id);
+    const cleanName = String(name || '').trim().slice(0, 80);
+    if (!record || !cleanName) return false;
+    record.name = cleanName; record.updatedAt = Date.now();
+    return (await transact('readwrite', (store) => store.put(record))) != null;
+  }
+
+  async function getIconBindings() {
+    const record = await transact('readonly', (store) => store.get(bindingsKey()));
+    return record && record.bindings && typeof record.bindings === 'object' ? Object.assign({}, record.bindings) : {};
+  }
+
+  async function setIconBindings(bindings) {
+    const clean = {};
+    Object.entries(bindings && typeof bindings === 'object' ? bindings : {}).forEach(([key, id]) => {
+      const k = String(key || '').trim().slice(0, 240), v = String(id || '').trim().slice(0, 120);
+      if (k && v) clean[k] = v;
+    });
+    const result = await transact('readwrite', (store) => store.put({ key: bindingsKey(), kind: 'icon-bindings', bindings: clean, updatedAt: Date.now() }));
+    return result != null;
+  }
+
+  async function removeBindingsForIcon(id) {
+    const bindings = await getIconBindings();
+    let count = 0;
+    Object.keys(bindings).forEach((key) => { if (bindings[key] === id) { delete bindings[key]; count++; } });
+    if (count) await setIconBindings(bindings);
+    return count;
+  }
+
+  async function removeCustomIcon(id) {
+    const key = iconKey(id);
+    const removedBindings = await removeBindingsForIcon(id);
+    const result = await transact('readwrite', (store) => store.delete(key));
+    revoke(key);
+    return result !== null ? removedBindings : null;
+  }
+
   function revoke(key) {
     const old = urls.get(key);
     if (old && typeof URL !== 'undefined' && URL.revokeObjectURL) URL.revokeObjectURL(old);
     urls.delete(key);
   }
 
-  async function avatarUrl(name) {
-    const key = staffKey(name);
+  async function blobUrl(key, loader) {
     if (urls.has(key)) return urls.get(key);
-    const blob = await getStaffAvatar(name);
+    const blob = await loader();
     if (!blob || typeof URL === 'undefined' || !URL.createObjectURL) return '';
     const url = URL.createObjectURL(blob); urls.set(key, url); return url;
+  }
+
+  async function avatarUrl(name) {
+    const key = staffKey(name);
+    return blobUrl(key, () => getStaffAvatar(name));
+  }
+
+  async function customIconUrl(id) {
+    const key = iconKey(id);
+    return blobUrl(key, async () => { const record = await getCustomIcon(id); return record && record.blob; });
   }
 
   function cleanup() { Array.from(urls.keys()).forEach(revoke); }
   if (typeof addEventListener === 'function') addEventListener('beforeunload', cleanup);
 
-  return { available, staffKey, putStaffAvatar, getStaffAvatar, removeStaffAvatar, avatarUrl, cleanup };
+  return {
+    ICON_MAX_BYTES, ICON_MAX_COUNT, ICON_MIME: Array.from(ICON_MIME), available, staffKey,
+    putStaffAvatar, getStaffAvatar, removeStaffAvatar, avatarUrl,
+    listCustomIcons, putCustomIcon, getCustomIcon, renameCustomIcon, removeCustomIcon, customIconUrl,
+    getIconBindings, setIconBindings, removeBindingsForIcon, cleanup
+  };
 })();
 window.Assets = Assets;
+
+
+/* === icon-picker.js === */
+/* ============================================================
+   玩家图标选择器 · 系统预设 / IndexedDB 个人图片
+   桌面右键、触摸长按、ContextMenu 键或 Shift+F10 打开。
+   ============================================================ */
+const IconPicker = (function () {
+  'use strict';
+
+  const LONG_PRESS_MS = 550;
+  const MOVE_TOLERANCE = 12;
+  const ALLOWED_MIME = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+  let bindings = {};
+  let readyPromise = null;
+  let initialized = false;
+  let press = null;
+  let suppressClickUntil = 0;
+
+  function targets(root = document) { return Array.from(root.querySelectorAll('[data-icon-target]')); }
+  function keysFor(el) { return [el.dataset.iconTarget, el.dataset.iconShared].filter(Boolean); }
+  function resolve(keys, fallback) {
+    const ordered = Array.isArray(keys) ? keys : [keys];
+    for (const key of ordered) if (key && bindings[key]) return { id: bindings[key], key, fallback };
+    return { id: '', key: '', fallback };
+  }
+
+  async function loadBindings() {
+    bindings = window.Assets ? await Assets.getIconBindings() : {};
+    return bindings;
+  }
+
+  function renderSlot(el) { return el.querySelector('[data-icon-slot]') || el; }
+
+  async function renderTarget(el) {
+    if (!el || !el.isConnected) return;
+    const slot = renderSlot(el);
+    const fallback = el.dataset.iconFallback || slot.dataset.i || 'sparkle';
+    const found = resolve(keysFor(el), fallback);
+    slot.dataset.i = fallback;
+    slot.innerHTML = Icon.get(fallback);
+    el.classList.remove('has-custom-icon');
+    if (!found.id) return;
+    if (found.id.startsWith('preset:')) {
+      slot.innerHTML = Icon.get(found.id.slice(7));
+      el.classList.add('has-custom-icon');
+      return;
+    }
+    if (!window.Assets) return;
+    const url = await Assets.customIconUrl(found.id);
+    if (!url || !el.isConnected || resolve(keysFor(el), fallback).id !== found.id) return;
+    const img = document.createElement('img');
+    img.className = 'custom-icon-image'; img.alt = ''; img.src = url; img.draggable = false;
+    img.addEventListener('error', () => { el.classList.remove('has-custom-icon'); slot.innerHTML = Icon.get(fallback); }, { once: true });
+    slot.replaceChildren(img); el.classList.add('has-custom-icon');
+  }
+
+  function prepareTarget(el) {
+    const interactiveParent = el.closest('button, a');
+    if (interactiveParent && interactiveParent !== el) {
+      ['iconTarget', 'iconShared', 'iconFallback', 'iconLabel', 'iconTargetLabel', 'iconSharedLabel', 'iconPresetGroup'].forEach((key) => {
+        if (el.dataset[key]) interactiveParent.dataset[key] = el.dataset[key];
+      });
+      Array.from(el.attributes).filter((attr) => attr.name.startsWith('data-icon-') && attr.name !== 'data-icon-slot').forEach((attr) => el.removeAttribute(attr.name));
+      prepareTarget(interactiveParent);
+      return;
+    }
+    if (!el.dataset.iconLabel) el.dataset.iconLabel = '此项目';
+    if (!/^(BUTTON|A)$/.test(el.tagName) && !el.hasAttribute('tabindex')) { el.tabIndex = 0; el.setAttribute('role', 'button'); }
+    const existing = el.getAttribute('aria-label');
+    if (!existing || !existing.includes('更换图标')) el.setAttribute('aria-label', `${existing ? existing + '；' : ''}${el.dataset.iconLabel}，右键或长按更换图标`);
+    el.classList.add('replaceable-icon');
+    renderTarget(el);
+  }
+
+  function decorate(root = document) { targets(root).forEach(prepareTarget); }
+  async function refresh(root = document) { await loadBindings(); decorate(root); }
+
+  function targetFromEvent(event) { return event.target && event.target.closest ? event.target.closest('[data-icon-target]') : null; }
+  function cancelPress() { if (press && press.timer) clearTimeout(press.timer); press = null; }
+
+  function onPointerDown(event) {
+    const el = targetFromEvent(event);
+    if (!el || event.button !== 0 || event.pointerType === 'mouse') return;
+    cancelPress();
+    press = { el, pointerId: event.pointerId, x: event.clientX, y: event.clientY, timer: setTimeout(() => {
+      if (!press || press.el !== el) return;
+      suppressClickUntil = Date.now() + 700;
+      if (navigator.vibrate) navigator.vibrate(20);
+      open(el); cancelPress();
+    }, LONG_PRESS_MS) };
+  }
+
+  function onPointerMove(event) {
+    if (!press || event.pointerId !== press.pointerId) return;
+    if (Math.hypot(event.clientX - press.x, event.clientY - press.y) > MOVE_TOLERANCE) cancelPress();
+  }
+
+  function closeDialog(backdrop, previous) {
+    if (!backdrop || !backdrop.isConnected) return;
+    backdrop.remove();
+    if (previous && previous.focus) previous.focus();
+  }
+
+  function focusables(root) {
+    return Array.from(root.querySelectorAll('button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+  }
+
+  function trap(event, backdrop, dialog, previous) {
+    if (event.key === 'Escape') { event.preventDefault(); closeDialog(backdrop, previous); return; }
+    if (event.key !== 'Tab') return;
+    const list = focusables(dialog); if (!list.length) return;
+    const first = list[0], last = list[list.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+
+  function iconButton(entry, selected) {
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = 'icon-picker__choice';
+    button.dataset.iconChoice = entry.id || entry.name;
+    button.dataset.iconKind = entry.id ? 'custom' : 'preset';
+    button.setAttribute('aria-label', entry.label || entry.name);
+    button.setAttribute('aria-selected', selected ? 'true' : 'false');
+    if (entry.id) {
+      const img = document.createElement('img'); img.className = 'custom-icon-image'; img.alt = '';
+      Assets.customIconUrl(entry.id).then((url) => { if (url && img.isConnected) img.src = url; });
+      button.append(img);
+    } else {
+      const icon = document.createElement('span'); icon.className = 'ic'; icon.innerHTML = Icon.get(entry.name); button.append(icon);
+    }
+    const label = document.createElement('span'); label.className = 'icon-picker__choice-label'; label.textContent = entry.label || entry.name; button.append(label);
+    return button;
+  }
+
+  function setStatus(dialog, text, type) {
+    const status = dialog.querySelector('[data-icon-picker-status]');
+    if (!status) return; status.textContent = text || ''; status.className = 'icon-picker__status' + (type ? ` is-${type}` : '');
+  }
+
+  async function imageDecodes(file) {
+    if (file.type === 'image/svg+xml') return true;
+    if (typeof createImageBitmap === 'function') {
+      try { const bitmap = await createImageBitmap(file); if (bitmap.close) bitmap.close(); return true; } catch (e) { return false; }
+    }
+    return true;
+  }
+
+  function presetGroupsFor(el) {
+    const scope = el.dataset.iconPresetGroup;
+    return scope && ['地图', '作物', '农牧'].includes(scope) ? [scope, '通用'] : ['地图', '作物', '农牧', '通用'];
+  }
+
+  async function open(el) {
+    if (!el || document.getElementById('iconPickerBackdrop')) return;
+    await (readyPromise || loadBindings());
+    const previous = document.activeElement;
+    const current = resolve(keysFor(el), el.dataset.iconFallback || 'sparkle');
+    let selected = current.id
+      ? (current.id.startsWith('preset:') ? { kind: 'preset', value: current.id.slice(7) } : { kind: 'custom', value: current.id })
+      : { kind: 'preset', value: el.dataset.iconFallback || 'sparkle' };
+    let library = window.Assets ? await Assets.listCustomIcons() : [];
+
+    const backdrop = document.createElement('div'); backdrop.id = 'iconPickerBackdrop'; backdrop.className = 'modal-backdrop icon-picker-backdrop';
+    const dialog = document.createElement('section'); dialog.className = 'icon-picker'; dialog.setAttribute('role', 'dialog'); dialog.setAttribute('aria-modal', 'true'); dialog.setAttribute('aria-labelledby', 'iconPickerTitle');
+    dialog.innerHTML = `
+      <header class="icon-picker__head"><span class="ic" data-i="sparkle"></span><div><h2 id="iconPickerTitle">更换图标</h2><p>${escapeHtml(el.dataset.iconLabel || '当前项目')}</p></div><button type="button" class="settings-pop__close" data-icon-picker-close aria-label="关闭"><span class="ic" data-i="close"></span></button></header>
+      <div class="icon-picker__tabs" role="tablist" aria-label="图标来源"><button type="button" class="is-active" role="tab" aria-selected="true" data-icon-picker-tab="preset">系统预设</button><button type="button" role="tab" aria-selected="false" data-icon-picker-tab="custom">我的图标</button></div>
+      <div class="icon-picker__panel" data-icon-picker-panel="preset"></div>
+      <div class="icon-picker__panel" data-icon-picker-panel="custom" hidden></div>
+      <fieldset class="icon-picker__scope"><legend>应用范围</legend><label><input type="radio" name="iconScope" value="target" checked> ${escapeHtml(el.dataset.iconTargetLabel || '仅当前项目')}</label>${el.dataset.iconShared ? `<label><input type="radio" name="iconScope" value="shared"> ${escapeHtml(el.dataset.iconSharedLabel || '应用到同名项目')}</label>` : ''}</fieldset>
+      <div class="icon-picker__status" data-icon-picker-status role="status" aria-live="polite"></div>
+      <footer class="icon-picker__foot"><button type="button" class="btn btn--ghost" data-icon-restore>恢复系统默认</button><span class="icon-picker__spacer"></span><button type="button" class="btn btn--ghost" data-icon-picker-close>取消</button><button type="button" class="btn btn--primary" data-icon-save>保存</button></footer>`;
+    backdrop.append(dialog); document.body.append(backdrop); Icon.render(dialog);
+
+    const renderPanels = () => {
+      const presetPanel = dialog.querySelector('[data-icon-picker-panel="preset"]'); presetPanel.innerHTML = '';
+      presetGroupsFor(el).forEach((group) => {
+        const section = document.createElement('section'); section.className = 'icon-picker__group';
+        const title = document.createElement('h3'); title.textContent = group; section.append(title);
+        const grid = document.createElement('div'); grid.className = 'icon-picker__grid'; grid.setAttribute('role', 'listbox');
+        Icon.catalog(group).forEach((entry) => grid.append(iconButton(entry, selected.kind === 'preset' && selected.value === entry.name)));
+        section.append(grid); presetPanel.append(section);
+      });
+      const customPanel = dialog.querySelector('[data-icon-picker-panel="custom"]'); customPanel.innerHTML = '';
+      const actions = document.createElement('div'); actions.className = 'icon-picker__library-actions';
+      const upload = document.createElement('label'); upload.className = 'btn btn--primary icon-picker__upload'; upload.innerHTML = '<span class="ic" data-i="plus"></span>上传新图标';
+      const input = document.createElement('input'); input.type = 'file'; input.dataset.iconUpload = ''; input.accept = ALLOWED_MIME.join(','); upload.append(input); actions.append(upload); customPanel.append(actions); Icon.render(actions);
+      if (!window.Assets || !Assets.available()) {
+        const empty = document.createElement('div'); empty.className = 'empty-state'; empty.innerHTML = '<div class="empty-state__title">当前浏览器无法保存个人图标</div><div class="empty-state__desc">仍可使用全部系统预设。</div>'; customPanel.append(empty); input.disabled = true;
+      } else if (!library.length) {
+        const empty = document.createElement('div'); empty.className = 'empty-state'; empty.innerHTML = '<span class="ic empty-state__icon" data-i="seedbag"></span><div class="empty-state__title">个人图标库为空</div><div class="empty-state__desc">上传 PNG、JPG、WebP 或 SVG，之后可在不同格子间复用。</div>'; customPanel.append(empty); Icon.render(empty);
+      } else {
+        const grid = document.createElement('div'); grid.className = 'icon-picker__grid'; grid.setAttribute('role', 'listbox');
+        library.forEach((entry) => {
+          const wrap = document.createElement('div'); wrap.className = 'icon-picker__custom-item'; wrap.append(iconButton({ ...entry, label: entry.name }, selected.kind === 'custom' && selected.value === entry.id));
+          const manage = document.createElement('div'); manage.className = 'icon-picker__manage'; manage.dataset.iconManage = entry.id; manage.innerHTML = `<button type="button" data-icon-rename="${entry.id}">重命名</button><button type="button" data-icon-delete="${entry.id}" data-icon-delete-refs="${Object.values(bindings).filter((value) => value === entry.id).length}">删除</button>`; wrap.append(manage); grid.append(wrap);
+        }); customPanel.append(grid);
+      }
+    };
+    renderPanels();
+
+    dialog.addEventListener('click', async (event) => {
+      const close = event.target.closest('[data-icon-picker-close]'); if (close) { closeDialog(backdrop, previous); return; }
+      const tab = event.target.closest('[data-icon-picker-tab]');
+      if (tab) {
+        dialog.querySelectorAll('[data-icon-picker-tab]').forEach((button) => { const active = button === tab; button.classList.toggle('is-active', active); button.setAttribute('aria-selected', active ? 'true' : 'false'); });
+        dialog.querySelectorAll('[data-icon-picker-panel]').forEach((panel) => { panel.hidden = panel.dataset.iconPickerPanel !== tab.dataset.iconPickerTab; }); return;
+      }
+      const choice = event.target.closest('[data-icon-choice]');
+      if (choice) { selected = { kind: choice.dataset.iconKind, value: choice.dataset.iconChoice }; renderPanels(); return; }
+      const rename = event.target.closest('[data-icon-rename]');
+      if (rename) {
+        const entry = library.find((item) => item.id === rename.dataset.iconRename); if (!entry) return;
+        const manage = rename.closest('[data-icon-manage]');
+        manage.innerHTML = `<label class="sr-only" for="iconRenameInput">新的图标名称</label><input class="set-input" id="iconRenameInput" value="${escapeHtml(entry.name)}" maxlength="80"><button type="button" data-icon-rename-save="${entry.id}">保存名称</button><button type="button" data-icon-manage-cancel>取消</button>`;
+        manage.querySelector('input').focus(); return;
+      }
+      const renameSave = event.target.closest('[data-icon-rename-save]');
+      if (renameSave) {
+        const value = renameSave.closest('[data-icon-manage]').querySelector('input').value;
+        if (await Assets.renameCustomIcon(renameSave.dataset.iconRenameSave, value)) { library = await Assets.listCustomIcons(); renderPanels(); setStatus(dialog, '名称已更新。', 'success'); }
+        else setStatus(dialog, '请输入有效名称。', 'error'); return;
+      }
+      if (event.target.closest('[data-icon-manage-cancel]')) { renderPanels(); return; }
+      const remove = event.target.closest('[data-icon-delete]');
+      if (remove) {
+        const id = remove.dataset.iconDelete; const refs = Object.values(bindings).filter((value) => value === id).length;
+        const manage = remove.closest('[data-icon-manage]');
+        manage.innerHTML = `<p class="icon-picker__delete-copy">此图标正用于 ${refs} 个位置。删除后将恢复下一优先级。</p><button type="button" data-icon-delete-confirm="${id}" class="is-danger">确认删除</button><button type="button" data-icon-manage-cancel>取消</button>`; return;
+      }
+      const removeConfirm = event.target.closest('[data-icon-delete-confirm]');
+      if (removeConfirm) {
+        const id = removeConfirm.dataset.iconDeleteConfirm; await Assets.removeCustomIcon(id);
+        if (selected.value === id) selected = { kind: 'preset', value: el.dataset.iconFallback || 'sparkle' };
+        await loadBindings(); library = await Assets.listCustomIcons(); renderPanels(); setStatus(dialog, '图标已删除，引用位置已安全回退。', 'success'); dispatchChanged(); return;
+      }
+      if (event.target.closest('[data-icon-restore]')) {
+        const scope = dialog.querySelector('[name="iconScope"]:checked').value;
+        delete bindings[scope === 'shared' && el.dataset.iconShared ? el.dataset.iconShared : el.dataset.iconTarget];
+        if (await Assets.setIconBindings(bindings)) { dispatchChanged(); closeDialog(backdrop, previous); } else setStatus(dialog, '恢复默认失败，请重试。', 'error');
+        return;
+      }
+      if (event.target.closest('[data-icon-save]')) {
+        const scope = dialog.querySelector('[name="iconScope"]:checked').value;
+        const key = scope === 'shared' && el.dataset.iconShared ? el.dataset.iconShared : el.dataset.iconTarget;
+        bindings[key] = selected.kind === 'preset' ? `preset:${selected.value}` : selected.value;
+        if (await Assets.setIconBindings(bindings)) { dispatchChanged(); closeDialog(backdrop, previous); } else setStatus(dialog, '图标保存失败，请检查浏览器存储。', 'error');
+      }
+    });
+
+    dialog.addEventListener('change', async (event) => {
+      const input = event.target.closest('[data-icon-upload]'); if (!input || !input.files || !input.files[0]) return;
+      const file = input.files[0];
+      if (!ALLOWED_MIME.includes(file.type) || file.size > Assets.ICON_MAX_BYTES || !(await imageDecodes(file))) { setStatus(dialog, '文件不是受支持且可读取的图片，或超过 2 MiB。', 'error'); input.value = ''; return; }
+      input.disabled = true; setStatus(dialog, '正在保存个人图标…', 'loading');
+      const name = file.name.replace(/\.[^.]+$/, '') || '我的图标'; const saved = await Assets.putCustomIcon(file, name);
+      input.disabled = false; input.value = '';
+      if (!saved) { setStatus(dialog, '保存失败，可能已达到 100 个上限。', 'error'); return; }
+      library = await Assets.listCustomIcons(); selected = { kind: 'custom', value: saved.id }; renderPanels();
+      const customTab = dialog.querySelector('[data-icon-picker-tab="custom"]'); customTab.click(); setStatus(dialog, '图标已加入个人库。', 'success');
+    });
+    dialog.addEventListener('keydown', (event) => trap(event, backdrop, dialog, previous));
+    backdrop.addEventListener('mousedown', (event) => { if (event.target === backdrop) closeDialog(backdrop, previous); });
+    const first = dialog.querySelector('[data-icon-picker-close]'); if (first) first.focus();
+  }
+
+  function escapeHtml(value) {
+    const div = document.createElement('div'); div.textContent = String(value == null ? '' : value); return div.innerHTML;
+  }
+
+  function dispatchChanged() {
+    window.dispatchEvent(new CustomEvent('pastoral:icons-changed'));
+  }
+
+  function init() {
+    if (initialized) return readyPromise;
+    initialized = true; readyPromise = loadBindings().then(() => decorate(document));
+    document.addEventListener('contextmenu', (event) => { const el = targetFromEvent(event); if (!el) return; event.preventDefault(); open(el); });
+    document.addEventListener('keydown', (event) => { const el = targetFromEvent(event); if (!el || !(event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10'))) return; event.preventDefault(); open(el); });
+    document.addEventListener('pointerdown', onPointerDown, { passive: true });
+    document.addEventListener('pointermove', onPointerMove, { passive: true });
+    ['pointerup', 'pointercancel', 'pointerleave', 'scroll'].forEach((name) => document.addEventListener(name, cancelPress, true));
+    document.addEventListener('click', (event) => { if (Date.now() < suppressClickUntil && targetFromEvent(event)) { event.preventDefault(); event.stopPropagation(); } }, true);
+    window.addEventListener('pastoral:icons-changed', () => refresh(document));
+    return readyPromise;
+  }
+
+  return { LONG_PRESS_MS, MOVE_TOLERANCE, init, decorate, refresh, resolve, open };
+})();
+window.IconPicker = IconPicker;
 
 
 /* === money.js === */
@@ -4878,6 +5417,13 @@ window.Chat = Chat;
   const num = (v, d = 0) => { const n = Number(v); return isNaN(n) ? d : n; };
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const entries = (o) => (o && typeof o === 'object' ? Object.entries(o) : []);
+  function esc(value) { return String(value == null ? '' : value).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]); }
+  function iconName(value) { return String(value == null ? '' : value).trim().replace(/\s+/g, ' ').slice(0, 160); }
+  function cropIconName(value) { return iconName(value).replace(/种子$/u, '').trim(); }
+  function replaceableIcon({ target, shared = '', fallback = 'sparkle', label, targetLabel = '仅当前项目', sharedLabel = '', group = '通用', className = 'ic', wrapper = 'span' }) {
+    return `<${wrapper} class="${className}" data-icon-target="${esc(target)}"${shared ? ` data-icon-shared="${esc(shared)}"` : ''} data-icon-fallback="${esc(fallback)}" data-icon-label="${esc(label)}" data-icon-target-label="${esc(targetLabel)}"${sharedLabel ? ` data-icon-shared-label="${esc(sharedLabel)}"` : ''} data-icon-preset-group="${esc(group)}"><span class="icon-slot" data-icon-slot data-i="${esc(fallback)}"></span></${wrapper}>`;
+  }
+  function decorateIcons(root) { if (window.IconPicker) IconPicker.decorate(root); }
   const HAS_LODASH = (typeof _ !== 'undefined') && _ && typeof _.get === 'function';
   function get(o, p, d) {
     if (HAS_LODASH) { const r = _.get(o, p); return r === undefined ? d : r; }
@@ -5332,7 +5878,9 @@ window.Chat = Chat;
         if (explored.has(key)) {
           const t = tiles[key];
           const center = x === 0 && y === 0;
-          cells += `<div class="map-cell explored ${center ? 'center' : ''}" data-x="${x}" data-y="${y}" title="${get(t, '类型', '地块')} (${x},${y})"><span class="ic" data-i="${tileIcon(get(t, '类型', ''))}"></span></div>`;
+          const type = iconName(get(t, '类型', '地块')) || '地块';
+          const mapIcon = replaceableIcon({ target: `map:${x},${y}`, shared: `map-name:${type}`, fallback: tileIcon(type), label: `${type} (${x},${y})`, targetLabel: '仅当前坐标', sharedLabel: `所有同名地块“${type}”`, group: '地图' });
+          cells += `<div class="map-cell explored ${center ? 'center' : ''}" data-x="${x}" data-y="${y}" title="${esc(type)} (${x},${y})">${mapIcon}</div>`;
         } else {
           const adj = neighbors(x, y);
           cells += `<div class="map-cell fog ${adj ? 'adjacent' : ''}" data-x="${x}" data-y="${y}">${adj ? '<span class="faint" style="font-size:8px">?</span>' : ''}</div>`;
@@ -5345,7 +5893,7 @@ window.Chat = Chat;
       `<div class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>点击已探明地块查看详情；点击迷雾边缘探索新地。</div></div>` +
       `<div class="map-grid" style="grid-template-columns:repeat(${N},1fr)">${cells}</div>` +
       `<div id="tileDetail"></div>`;
-    Icon.render(container);
+    Icon.render(container); decorateIcons(container);
 
     $$('.map-cell.explored', container).forEach((cell) => {
       cell.addEventListener('click', () => showTile(container, tiles, +cell.dataset.x, +cell.dataset.y));
@@ -5365,11 +5913,12 @@ window.Chat = Chat;
     if (!box) return;
     const resHtml = res.length ? res.map((r) => `<div class="dim-source"><span>${r.name}</span><span>×${r.qty}</span></div>`).join('')
       : '<div class="faint" style="font-size:var(--font-size-xs)">此地暂无可采资源。</div>';
+    const type = iconName(get(t, '类型', '地块')) || '地块';
     box.innerHTML =
       `<div class="card tile-detail">
         <div class="building__head">
-          <span class="ic building__icon" data-i="${tileIcon(get(t, '类型', ''))}" style="color:var(--color-primary)"></span>
-          <span class="building__name">${get(t, '类型', '地块')} · (${x},${y})</span>
+          ${replaceableIcon({ target: `map:${x},${y}`, shared: `map-name:${type}`, fallback: tileIcon(type), label: `${type} (${x},${y})`, targetLabel: '仅当前坐标', sharedLabel: `所有同名地块“${type}”`, group: '地图', className: 'ic building__icon' })}
+          <span class="building__name">${esc(type)} · (${x},${y})</span>
           <span class="pill">本季已采 ${cnt}</span>
         </div>
         <p class="card__sub" style="line-height:1.7;margin:4px 0 8px">${get(t, '描述', '')}</p>
@@ -5377,7 +5926,7 @@ window.Chat = Chat;
         <div>${resHtml}</div>
         <button class="btn btn--primary btn--sm btn--block" data-gather="${x},${y}" style="margin-top:8px"><span class="ic btn__icon" data-i="bag"></span>前往采集</button>
       </div>`;
-    Icon.render(box);
+    Icon.render(box); decorateIcons(box);
     $('[data-gather]', box).addEventListener('click', () => {
       intend(`采集：(${x},${y})`);
       burst(window.innerWidth / 2, window.innerHeight * 0.7);
@@ -5538,12 +6087,14 @@ window.Chat = Chat;
 
   /* ---- 农牧 ---- */
   function farmDetail(key, plot, farm, magic) {
-    const p = plot || {}, state = p.状态 || '荒地', crop = p.作物 || '';
+    const p = plot || {}, state = p.状态 || '荒地', crop = iconName(p.作物 || '');
     const days = num(p.剩余天数, 0), ripe = state === '种植中' && days <= 0;
     const pct = state === '种植中' && crop ? clamp(100 - days * 18, 5, 100) : 0;
+    const fallback = ripe ? 'ripe' : state === '荒地' ? 'stone' : crop ? itemIcon(crop) : magic ? 'magicfarm' : 'garden';
+    const farmIcon = replaceableIcon({ target: `farm:${magic ? 'magic' : 'normal'}:${key}`, shared: crop ? `crop:${crop}` : '', fallback, label: `${magic ? '魔法' : '普通'}田格 ${key}${crop ? ` · ${crop}` : ''}`, targetLabel: '仅当前田格', sharedLabel: `所有同名作物“${crop}”`, group: crop ? '作物' : '农牧', className: 'ic' });
     return `<div class="crop-plot" data-plot-detail="${key}">
       <div class="crop-plot__head">
-        <span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'carrot'}" style="--ic:18px;color:${ripe ? 'var(--color-primary)' : 'var(--color-success)'}"></span>
+        ${farmIcon}
         <span class="crop-plot__name">田格 (${key}) · ${state}${crop ? ' · ' + crop : ''}</span>
         <span class="ic status-icon ${p.今日已浇水 ? '已浇水' : '未浇水'}" data-i="${p.今日已浇水 ? 'water' : 'herb'}" title="${p.今日已浇水 ? '已浇水' : '未浇水'}"></span>
         ${p.已施肥 ? '<span class="ic status-icon 已施肥" data-i="fertilize" title="已施肥"></span>' : ''}
@@ -5580,8 +6131,10 @@ window.Chat = Chat;
     for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
       const key = `${x},${y}`, p = records[key] || { x, y, 状态: '荒地' };
       inRange.add(key);
-      const state = p.状态 || '荒地', crop = p.作物 || '', ripe = state === '种植中' && num(p.剩余天数, 0) <= 0;
-      cells.push(`<button class="farm-cell ${magic ? 'is-magic' : ''} ${state === '种植中' ? 'is-planted' : state === '已开垦' ? 'is-tilled' : 'is-wild'} ${ripe ? 'is-ripe' : ''}" type="button" data-plot="${key}" aria-label="田格${key}，${state}${crop ? '，' + crop : ''}"><span class="farm-cell__coord">${x},${y}</span><span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'garden'}"></span><span class="farm-cell__name">${crop || state}</span></button>`);
+      const state = p.状态 || '荒地', crop = iconName(p.作物 || ''), ripe = state === '种植中' && num(p.剩余天数, 0) <= 0;
+      const fallback = ripe ? 'ripe' : state === '荒地' ? 'stone' : crop ? itemIcon(crop) : magic ? 'magicfarm' : 'garden';
+      const icon = replaceableIcon({ target: `farm:${magic ? 'magic' : 'normal'}:${key}`, shared: crop ? `crop:${crop}` : '', fallback, label: `${magic ? '魔法' : '普通'}田格 ${key}${crop ? ` · ${crop}` : ''}`, targetLabel: '仅当前田格', sharedLabel: `所有同名作物“${crop}”`, group: crop ? '作物' : '农牧', className: 'farm-cell__icon', wrapper: 'span' });
+      cells.push(`<button class="farm-cell ${magic ? 'is-magic' : ''} ${state === '种植中' ? 'is-planted' : state === '已开垦' ? 'is-tilled' : 'is-wild'} ${ripe ? 'is-ripe' : ''}" type="button" data-plot="${key}" aria-label="田格${key}，${esc(state)}${crop ? '，' + esc(crop) : ''}"><span class="farm-cell__coord">${x},${y}</span>${icon}<span class="farm-cell__name">${esc(crop || state)}</span></button>`);
     }
     const overflow = entries(records).filter(([key]) => !inRange.has(key));
     return { width, height, records, cells, overflow };
@@ -5602,23 +6155,31 @@ window.Chat = Chat;
         html += `<div class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>点击田格查看状态与农事操作；坐标从 (0,0) 开始。</div></div>`;
         html += `<div class="farm-grid-scroll"><div class="farm-grid" style="grid-template-columns:repeat(${grid.width},minmax(64px,1fr));min-width:${grid.width * 70}px">${grid.cells.join('')}</div></div><div id="farmDetail"></div>`;
         if (grid.overflow.length) html += panelH('范围外田格', `${grid.overflow.length}`) + `<div class="farm-overflow">${grid.overflow.map(([key, p]) => farmDetail(key, p, farm, magic)).join('')}</div>`;
-        container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+        container.innerHTML = html; Icon.render(container); decorateIcons(container); bindFarmActions(container);
         $$('.farm-cell', container).forEach((cell) => cell.addEventListener('click', () => {
           $$('.farm-cell', container).forEach((x) => x.classList.toggle('is-active', x === cell));
           const detail = $('#farmDetail', container); detail.innerHTML = farmDetail(cell.dataset.plot, grid.records[cell.dataset.plot], farm, magic);
-          Icon.render(detail); bindFarmActions(detail);
+          Icon.render(detail); decorateIcons(detail); bindFarmActions(detail);
         }));
       }
     } else if (tab === 'seeds') {
       const seeds = entries(get(farm, '种子图鉴', {}));
       html += panelH('种子图鉴', seeds.length);
-      html += seeds.length ? `<div class="seed-catalog">${seeds.map(([name, seed]) => `<article class="seed-card"><div class="building__head"><span class="ic building__icon" data-i="grain"></span><span class="building__name">${name}</span><span class="pill ${seed.类型 === '魔法' ? 'pill--mint' : ''}">${seed.类型 || '普通'}</span></div><div class="card__sub">季节 · ${(seed.可种季节 || []).join('、') || '未限定'}　生长 · ${num(seed.生长天数, 0)} 日　种子价 · ${num(seed.种子价, 0)}</div><div class="quest-card__desc">产出 · ${seed.产出 || '—'}　获取 · ${seed.获取方式 || '—'}</div><div class="card__sub">连续收获 · ${seed.可连续收获 ? `是 / 间隔 ${num(seed.收获间隔天数, 0)} 日 / 上限 ${num(seed.收获次数上限, 1)}${seed.永续 ? ' / 永续' : ''}` : '否'}</div>${seed.特殊条件 ? `<div class="card__sub">条件 · ${seed.特殊条件}</div>` : ''}${seed.产出效果 ? `<div class="card__sub">效果 · ${seed.产出效果}</div>` : ''}${seed.描述 ? `<p class="quest-card__desc">${seed.描述}</p>` : ''}<button class="btn btn--sm" data-seed-use="${name}">用于播种</button></article>`).join('')}</div>` : emptyState('grain', '种子图鉴为空', '获得种子资料后会在这里记录。');
-      container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+      html += seeds.length ? `<div class="seed-catalog">${seeds.map(([name, seed]) => {
+        const cropName = cropIconName(name);
+        const seedIcon = replaceableIcon({ target: `crop:${cropName}`, fallback: itemIcon(cropName), label: `${cropName}种子及同名作物`, targetLabel: `应用于“${cropName}”种子及所有同名作物`, group: '作物', className: 'ic building__icon' });
+        return `<article class="seed-card"><div class="building__head">${seedIcon}<span class="building__name">${esc(name)}</span><span class="pill ${seed.类型 === '魔法' ? 'pill--mint' : ''}">${esc(seed.类型 || '普通')}</span></div><div class="card__sub">季节 · ${esc((seed.可种季节 || []).join('、') || '未限定')}　生长 · ${num(seed.生长天数, 0)} 日　种子价 · ${num(seed.种子价, 0)}</div><div class="quest-card__desc">产出 · ${esc(seed.产出 || '—')}　获取 · ${esc(seed.获取方式 || '—')}</div><div class="card__sub">连续收获 · ${seed.可连续收获 ? `是 / 间隔 ${num(seed.收获间隔天数, 0)} 日 / 上限 ${num(seed.收获次数上限, 1)}${seed.永续 ? ' / 永续' : ''}` : '否'}</div>${seed.特殊条件 ? `<div class="card__sub">条件 · ${esc(seed.特殊条件)}</div>` : ''}${seed.产出效果 ? `<div class="card__sub">效果 · ${esc(seed.产出效果)}</div>` : ''}${seed.描述 ? `<p class="quest-card__desc">${esc(seed.描述)}</p>` : ''}<button class="btn btn--sm" data-seed-use="${esc(name)}">用于播种</button></article>`;
+      }).join('')}</div>` : emptyState('grain', '种子图鉴为空', '获得种子资料后会在这里记录。');
+      container.innerHTML = html; Icon.render(container); decorateIcons(container); bindFarmActions(container);
     } else {
       const comp = get(farm, '堆肥箱', {}), live = entries(get(farm, '畜牧', {}));
       html += panelH('堆肥箱') + `<div class="card"><div class="row row--between"><span class="card__sub">状态 · ${(comp && comp.状态) || '空'}</span><span class="card__sub">倒计时 · <span class="num">${num(comp && comp.倒计时, 0)}</span></span></div></div>`;
-      html += panelH('畜牧', `${live.length}`) + (live.length ? live.map(([name, l]) => { const hp = clamp(num(get(l, '健康度', 0), 0), 0, 100), col = hp >= 50 ? 'var(--color-success)' : 'var(--color-danger)'; return `<div class="livestock-card"><div class="building__head"><span class="ic building__icon" data-i="garden"></span><span class="building__name">${name}</span></div><div class="row row--between"><span class="card__sub">饲料 · ${num(get(l, '饲料倒计时', 0), 0)} 日</span><span class="card__sub">产出 · ${num(get(l, '产出倒计时', 0), 0)} 日</span></div><div class="stat-line"><span class="stat-line__label">健康 ${hp}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${hp}%;background:${col}"></div></div></div><button class="btn btn--sm" data-care-livestock="${name}">照料</button></div>`; }).join('') : emptyState('garden', '无牲畜', '建造畜牧设施后将显示于此。'));
-      container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+      html += panelH('畜牧', `${live.length}`) + (live.length ? live.map(([name, l]) => {
+        const hp = clamp(num(get(l, '健康度', 0), 0), 0, 100), col = hp >= 50 ? 'var(--color-success)' : 'var(--color-danger)', livestockName = iconName(name);
+        const fallback = /鸡|禽/.test(livestockName) ? 'chicken' : /鸭/.test(livestockName) ? 'duck' : /牛/.test(livestockName) ? 'cow' : /羊/.test(livestockName) ? 'sheep' : /猪/.test(livestockName) ? 'pig' : /蜂/.test(livestockName) ? 'beehive' : 'barn';
+        return `<div class="livestock-card"><div class="building__head">${replaceableIcon({ target: `livestock:${livestockName}`, fallback, label: livestockName, targetLabel: `所有同名畜牧“${livestockName}”`, group: '农牧', className: 'ic building__icon' })}<span class="building__name">${esc(name)}</span></div><div class="row row--between"><span class="card__sub">饲料 · ${num(get(l, '饲料倒计时', 0), 0)} 日</span><span class="card__sub">产出 · ${num(get(l, '产出倒计时', 0), 0)} 日</span></div><div class="stat-line"><span class="stat-line__label">健康 ${hp}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${hp}%;background:${col}"></div></div></div><button class="btn btn--sm" data-care-livestock="${esc(name)}">照料</button></div>`;
+      }).join('') : emptyState('garden', '无牲畜', '建造畜牧设施后将显示于此。'));
+      container.innerHTML = html; Icon.render(container); decorateIcons(container); bindFarmActions(container);
     }
     $$('[data-farm-tab]', container).forEach((button) => button.addEventListener('click', () => { UI.farmTab = button.dataset.farmTab; renderFarm(container, Render.state); }));
   }
@@ -5707,8 +6268,35 @@ window.Chat = Chat;
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   let mobilePage = 'ledger';
   let wasImmersive = false;
+  let viewportFrame = 0;
+  let composerFocused = false;
+  let keyboardWasOpen = false;
+  let mobileBaselineHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
 
   function isMobileViewport() { return window.innerWidth < 900; }
+
+  function syncMobileViewport() {
+    viewportFrame = 0;
+    const visual = window.visualViewport;
+    const height = visual && Number(visual.height) > 0 ? Number(visual.height) : window.innerHeight;
+    document.documentElement.style.setProperty('--mobile-viewport-height', Math.round(height) + 'px');
+    const activeStory = Host.immersive && isMobileViewport() && mobilePage === 'story';
+    if (!composerFocused) mobileBaselineHeight = Math.max(mobileBaselineHeight, window.innerHeight || 0, height);
+    const layoutHeight = Math.max(mobileBaselineHeight, window.innerHeight || 0, document.documentElement.clientHeight || 0, height);
+    const reduced = visual ? layoutHeight - height > Math.max(120, layoutHeight * 0.18) : composerFocused;
+    const keyboardOpen = activeStory && composerFocused && reduced;
+    document.body.classList.toggle('is-mobile-keyboard-open', keyboardOpen);
+    if (keyboardOpen && !keyboardWasOpen) {
+      const composer = document.getElementById('composer');
+      if (composer && composer.scrollIntoView) composer.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    keyboardWasOpen = keyboardOpen;
+  }
+
+  function queueMobileViewportSync() {
+    if (viewportFrame) return;
+    viewportFrame = requestAnimationFrame(syncMobileViewport);
+  }
 
   function setMobilePage(name) {
     mobilePage = name === 'story' ? 'story' : 'ledger';
@@ -5719,6 +6307,7 @@ window.Chat = Chat;
       button.classList.toggle('is-active', on);
       button.setAttribute('aria-selected', on ? 'true' : 'false');
     });
+    queueMobileViewportSync();
   }
 
   function syncMobileImmersiveState(resetOnEnter) {
@@ -5726,7 +6315,11 @@ window.Chat = Chat;
     const switcher = $('[data-mobile-page-switcher]');
     if (switcher) switcher.hidden = !active;
     if (active) setMobilePage(resetOnEnter ? 'ledger' : mobilePage);
-    else document.body.classList.remove('mobile-page--ledger', 'mobile-page--story');
+    else {
+      document.body.classList.remove('mobile-page--ledger', 'mobile-page--story', 'is-mobile-keyboard-open');
+      keyboardWasOpen = false;
+    }
+    queueMobileViewportSync();
     wasImmersive = Host.immersive;
   }
 
@@ -6252,6 +6845,7 @@ window.Chat = Chat;
   /* ---------- 初始化 ---------- */
   async function init() {
     Icon.render(document);
+    if (window.IconPicker) await IconPicker.init();
 
     // 等待 MVU 就绪
     await MVU.init();
@@ -6295,7 +6889,17 @@ window.Chat = Chat;
     $$('[data-mobile-page]').forEach((button) => button.addEventListener('click', () => setMobilePage(button.dataset.mobilePage)));
     const mobileExit = $('[data-mobile-exit]');
     if (mobileExit) mobileExit.addEventListener('click', () => Host.setImmersive(false));
-    window.addEventListener('resize', () => syncMobileImmersiveState(false));
+    window.addEventListener('resize', () => { syncMobileImmersiveState(false); queueMobileViewportSync(); });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', queueMobileViewportSync);
+      window.visualViewport.addEventListener('scroll', queueMobileViewportSync);
+    }
+    const composerInput = $('#composerInput');
+    if (composerInput) {
+      composerInput.addEventListener('focus', () => { composerFocused = true; queueMobileViewportSync(); });
+      composerInput.addEventListener('blur', () => { composerFocused = false; setTimeout(queueMobileViewportSync, 80); });
+    }
+    queueMobileViewportSync();
     const setBtn = $('#settingsBtn'); if (setBtn) setBtn.addEventListener('click', openSettings);
 
     // 底栏

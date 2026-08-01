@@ -50,6 +50,13 @@
   const num = (v, d = 0) => { const n = Number(v); return isNaN(n) ? d : n; };
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const entries = (o) => (o && typeof o === 'object' ? Object.entries(o) : []);
+  function esc(value) { return String(value == null ? '' : value).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]); }
+  function iconName(value) { return String(value == null ? '' : value).trim().replace(/\s+/g, ' ').slice(0, 160); }
+  function cropIconName(value) { return iconName(value).replace(/种子$/u, '').trim(); }
+  function replaceableIcon({ target, shared = '', fallback = 'sparkle', label, targetLabel = '仅当前项目', sharedLabel = '', group = '通用', className = 'ic', wrapper = 'span' }) {
+    return `<${wrapper} class="${className}" data-icon-target="${esc(target)}"${shared ? ` data-icon-shared="${esc(shared)}"` : ''} data-icon-fallback="${esc(fallback)}" data-icon-label="${esc(label)}" data-icon-target-label="${esc(targetLabel)}"${sharedLabel ? ` data-icon-shared-label="${esc(sharedLabel)}"` : ''} data-icon-preset-group="${esc(group)}"><span class="icon-slot" data-icon-slot data-i="${esc(fallback)}"></span></${wrapper}>`;
+  }
+  function decorateIcons(root) { if (window.IconPicker) IconPicker.decorate(root); }
   const HAS_LODASH = (typeof _ !== 'undefined') && _ && typeof _.get === 'function';
   function get(o, p, d) {
     if (HAS_LODASH) { const r = _.get(o, p); return r === undefined ? d : r; }
@@ -504,7 +511,9 @@
         if (explored.has(key)) {
           const t = tiles[key];
           const center = x === 0 && y === 0;
-          cells += `<div class="map-cell explored ${center ? 'center' : ''}" data-x="${x}" data-y="${y}" title="${get(t, '类型', '地块')} (${x},${y})"><span class="ic" data-i="${tileIcon(get(t, '类型', ''))}"></span></div>`;
+          const type = iconName(get(t, '类型', '地块')) || '地块';
+          const mapIcon = replaceableIcon({ target: `map:${x},${y}`, shared: `map-name:${type}`, fallback: tileIcon(type), label: `${type} (${x},${y})`, targetLabel: '仅当前坐标', sharedLabel: `所有同名地块“${type}”`, group: '地图' });
+          cells += `<div class="map-cell explored ${center ? 'center' : ''}" data-x="${x}" data-y="${y}" title="${esc(type)} (${x},${y})">${mapIcon}</div>`;
         } else {
           const adj = neighbors(x, y);
           cells += `<div class="map-cell fog ${adj ? 'adjacent' : ''}" data-x="${x}" data-y="${y}">${adj ? '<span class="faint" style="font-size:8px">?</span>' : ''}</div>`;
@@ -517,7 +526,7 @@
       `<div class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>点击已探明地块查看详情；点击迷雾边缘探索新地。</div></div>` +
       `<div class="map-grid" style="grid-template-columns:repeat(${N},1fr)">${cells}</div>` +
       `<div id="tileDetail"></div>`;
-    Icon.render(container);
+    Icon.render(container); decorateIcons(container);
 
     $$('.map-cell.explored', container).forEach((cell) => {
       cell.addEventListener('click', () => showTile(container, tiles, +cell.dataset.x, +cell.dataset.y));
@@ -537,11 +546,12 @@
     if (!box) return;
     const resHtml = res.length ? res.map((r) => `<div class="dim-source"><span>${r.name}</span><span>×${r.qty}</span></div>`).join('')
       : '<div class="faint" style="font-size:var(--font-size-xs)">此地暂无可采资源。</div>';
+    const type = iconName(get(t, '类型', '地块')) || '地块';
     box.innerHTML =
       `<div class="card tile-detail">
         <div class="building__head">
-          <span class="ic building__icon" data-i="${tileIcon(get(t, '类型', ''))}" style="color:var(--color-primary)"></span>
-          <span class="building__name">${get(t, '类型', '地块')} · (${x},${y})</span>
+          ${replaceableIcon({ target: `map:${x},${y}`, shared: `map-name:${type}`, fallback: tileIcon(type), label: `${type} (${x},${y})`, targetLabel: '仅当前坐标', sharedLabel: `所有同名地块“${type}”`, group: '地图', className: 'ic building__icon' })}
+          <span class="building__name">${esc(type)} · (${x},${y})</span>
           <span class="pill">本季已采 ${cnt}</span>
         </div>
         <p class="card__sub" style="line-height:1.7;margin:4px 0 8px">${get(t, '描述', '')}</p>
@@ -549,7 +559,7 @@
         <div>${resHtml}</div>
         <button class="btn btn--primary btn--sm btn--block" data-gather="${x},${y}" style="margin-top:8px"><span class="ic btn__icon" data-i="bag"></span>前往采集</button>
       </div>`;
-    Icon.render(box);
+    Icon.render(box); decorateIcons(box);
     $('[data-gather]', box).addEventListener('click', () => {
       intend(`采集：(${x},${y})`);
       burst(window.innerWidth / 2, window.innerHeight * 0.7);
@@ -710,12 +720,14 @@
 
   /* ---- 农牧 ---- */
   function farmDetail(key, plot, farm, magic) {
-    const p = plot || {}, state = p.状态 || '荒地', crop = p.作物 || '';
+    const p = plot || {}, state = p.状态 || '荒地', crop = iconName(p.作物 || '');
     const days = num(p.剩余天数, 0), ripe = state === '种植中' && days <= 0;
     const pct = state === '种植中' && crop ? clamp(100 - days * 18, 5, 100) : 0;
+    const fallback = ripe ? 'ripe' : state === '荒地' ? 'stone' : crop ? itemIcon(crop) : magic ? 'magicfarm' : 'garden';
+    const farmIcon = replaceableIcon({ target: `farm:${magic ? 'magic' : 'normal'}:${key}`, shared: crop ? `crop:${crop}` : '', fallback, label: `${magic ? '魔法' : '普通'}田格 ${key}${crop ? ` · ${crop}` : ''}`, targetLabel: '仅当前田格', sharedLabel: `所有同名作物“${crop}”`, group: crop ? '作物' : '农牧', className: 'ic' });
     return `<div class="crop-plot" data-plot-detail="${key}">
       <div class="crop-plot__head">
-        <span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'carrot'}" style="--ic:18px;color:${ripe ? 'var(--color-primary)' : 'var(--color-success)'}"></span>
+        ${farmIcon}
         <span class="crop-plot__name">田格 (${key}) · ${state}${crop ? ' · ' + crop : ''}</span>
         <span class="ic status-icon ${p.今日已浇水 ? '已浇水' : '未浇水'}" data-i="${p.今日已浇水 ? 'water' : 'herb'}" title="${p.今日已浇水 ? '已浇水' : '未浇水'}"></span>
         ${p.已施肥 ? '<span class="ic status-icon 已施肥" data-i="fertilize" title="已施肥"></span>' : ''}
@@ -752,8 +764,10 @@
     for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
       const key = `${x},${y}`, p = records[key] || { x, y, 状态: '荒地' };
       inRange.add(key);
-      const state = p.状态 || '荒地', crop = p.作物 || '', ripe = state === '种植中' && num(p.剩余天数, 0) <= 0;
-      cells.push(`<button class="farm-cell ${magic ? 'is-magic' : ''} ${state === '种植中' ? 'is-planted' : state === '已开垦' ? 'is-tilled' : 'is-wild'} ${ripe ? 'is-ripe' : ''}" type="button" data-plot="${key}" aria-label="田格${key}，${state}${crop ? '，' + crop : ''}"><span class="farm-cell__coord">${x},${y}</span><span class="ic" data-i="${state === '荒地' ? 'stone' : crop ? 'wheat' : 'garden'}"></span><span class="farm-cell__name">${crop || state}</span></button>`);
+      const state = p.状态 || '荒地', crop = iconName(p.作物 || ''), ripe = state === '种植中' && num(p.剩余天数, 0) <= 0;
+      const fallback = ripe ? 'ripe' : state === '荒地' ? 'stone' : crop ? itemIcon(crop) : magic ? 'magicfarm' : 'garden';
+      const icon = replaceableIcon({ target: `farm:${magic ? 'magic' : 'normal'}:${key}`, shared: crop ? `crop:${crop}` : '', fallback, label: `${magic ? '魔法' : '普通'}田格 ${key}${crop ? ` · ${crop}` : ''}`, targetLabel: '仅当前田格', sharedLabel: `所有同名作物“${crop}”`, group: crop ? '作物' : '农牧', className: 'farm-cell__icon', wrapper: 'span' });
+      cells.push(`<button class="farm-cell ${magic ? 'is-magic' : ''} ${state === '种植中' ? 'is-planted' : state === '已开垦' ? 'is-tilled' : 'is-wild'} ${ripe ? 'is-ripe' : ''}" type="button" data-plot="${key}" aria-label="田格${key}，${esc(state)}${crop ? '，' + esc(crop) : ''}"><span class="farm-cell__coord">${x},${y}</span>${icon}<span class="farm-cell__name">${esc(crop || state)}</span></button>`);
     }
     const overflow = entries(records).filter(([key]) => !inRange.has(key));
     return { width, height, records, cells, overflow };
@@ -774,23 +788,31 @@
         html += `<div class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>点击田格查看状态与农事操作；坐标从 (0,0) 开始。</div></div>`;
         html += `<div class="farm-grid-scroll"><div class="farm-grid" style="grid-template-columns:repeat(${grid.width},minmax(64px,1fr));min-width:${grid.width * 70}px">${grid.cells.join('')}</div></div><div id="farmDetail"></div>`;
         if (grid.overflow.length) html += panelH('范围外田格', `${grid.overflow.length}`) + `<div class="farm-overflow">${grid.overflow.map(([key, p]) => farmDetail(key, p, farm, magic)).join('')}</div>`;
-        container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+        container.innerHTML = html; Icon.render(container); decorateIcons(container); bindFarmActions(container);
         $$('.farm-cell', container).forEach((cell) => cell.addEventListener('click', () => {
           $$('.farm-cell', container).forEach((x) => x.classList.toggle('is-active', x === cell));
           const detail = $('#farmDetail', container); detail.innerHTML = farmDetail(cell.dataset.plot, grid.records[cell.dataset.plot], farm, magic);
-          Icon.render(detail); bindFarmActions(detail);
+          Icon.render(detail); decorateIcons(detail); bindFarmActions(detail);
         }));
       }
     } else if (tab === 'seeds') {
       const seeds = entries(get(farm, '种子图鉴', {}));
       html += panelH('种子图鉴', seeds.length);
-      html += seeds.length ? `<div class="seed-catalog">${seeds.map(([name, seed]) => `<article class="seed-card"><div class="building__head"><span class="ic building__icon" data-i="grain"></span><span class="building__name">${name}</span><span class="pill ${seed.类型 === '魔法' ? 'pill--mint' : ''}">${seed.类型 || '普通'}</span></div><div class="card__sub">季节 · ${(seed.可种季节 || []).join('、') || '未限定'}　生长 · ${num(seed.生长天数, 0)} 日　种子价 · ${num(seed.种子价, 0)}</div><div class="quest-card__desc">产出 · ${seed.产出 || '—'}　获取 · ${seed.获取方式 || '—'}</div><div class="card__sub">连续收获 · ${seed.可连续收获 ? `是 / 间隔 ${num(seed.收获间隔天数, 0)} 日 / 上限 ${num(seed.收获次数上限, 1)}${seed.永续 ? ' / 永续' : ''}` : '否'}</div>${seed.特殊条件 ? `<div class="card__sub">条件 · ${seed.特殊条件}</div>` : ''}${seed.产出效果 ? `<div class="card__sub">效果 · ${seed.产出效果}</div>` : ''}${seed.描述 ? `<p class="quest-card__desc">${seed.描述}</p>` : ''}<button class="btn btn--sm" data-seed-use="${name}">用于播种</button></article>`).join('')}</div>` : emptyState('grain', '种子图鉴为空', '获得种子资料后会在这里记录。');
-      container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+      html += seeds.length ? `<div class="seed-catalog">${seeds.map(([name, seed]) => {
+        const cropName = cropIconName(name);
+        const seedIcon = replaceableIcon({ target: `crop:${cropName}`, fallback: itemIcon(cropName), label: `${cropName}种子及同名作物`, targetLabel: `应用于“${cropName}”种子及所有同名作物`, group: '作物', className: 'ic building__icon' });
+        return `<article class="seed-card"><div class="building__head">${seedIcon}<span class="building__name">${esc(name)}</span><span class="pill ${seed.类型 === '魔法' ? 'pill--mint' : ''}">${esc(seed.类型 || '普通')}</span></div><div class="card__sub">季节 · ${esc((seed.可种季节 || []).join('、') || '未限定')}　生长 · ${num(seed.生长天数, 0)} 日　种子价 · ${num(seed.种子价, 0)}</div><div class="quest-card__desc">产出 · ${esc(seed.产出 || '—')}　获取 · ${esc(seed.获取方式 || '—')}</div><div class="card__sub">连续收获 · ${seed.可连续收获 ? `是 / 间隔 ${num(seed.收获间隔天数, 0)} 日 / 上限 ${num(seed.收获次数上限, 1)}${seed.永续 ? ' / 永续' : ''}` : '否'}</div>${seed.特殊条件 ? `<div class="card__sub">条件 · ${esc(seed.特殊条件)}</div>` : ''}${seed.产出效果 ? `<div class="card__sub">效果 · ${esc(seed.产出效果)}</div>` : ''}${seed.描述 ? `<p class="quest-card__desc">${esc(seed.描述)}</p>` : ''}<button class="btn btn--sm" data-seed-use="${esc(name)}">用于播种</button></article>`;
+      }).join('')}</div>` : emptyState('grain', '种子图鉴为空', '获得种子资料后会在这里记录。');
+      container.innerHTML = html; Icon.render(container); decorateIcons(container); bindFarmActions(container);
     } else {
       const comp = get(farm, '堆肥箱', {}), live = entries(get(farm, '畜牧', {}));
       html += panelH('堆肥箱') + `<div class="card"><div class="row row--between"><span class="card__sub">状态 · ${(comp && comp.状态) || '空'}</span><span class="card__sub">倒计时 · <span class="num">${num(comp && comp.倒计时, 0)}</span></span></div></div>`;
-      html += panelH('畜牧', `${live.length}`) + (live.length ? live.map(([name, l]) => { const hp = clamp(num(get(l, '健康度', 0), 0), 0, 100), col = hp >= 50 ? 'var(--color-success)' : 'var(--color-danger)'; return `<div class="livestock-card"><div class="building__head"><span class="ic building__icon" data-i="garden"></span><span class="building__name">${name}</span></div><div class="row row--between"><span class="card__sub">饲料 · ${num(get(l, '饲料倒计时', 0), 0)} 日</span><span class="card__sub">产出 · ${num(get(l, '产出倒计时', 0), 0)} 日</span></div><div class="stat-line"><span class="stat-line__label">健康 ${hp}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${hp}%;background:${col}"></div></div></div><button class="btn btn--sm" data-care-livestock="${name}">照料</button></div>`; }).join('') : emptyState('garden', '无牲畜', '建造畜牧设施后将显示于此。'));
-      container.innerHTML = html; Icon.render(container); bindFarmActions(container);
+      html += panelH('畜牧', `${live.length}`) + (live.length ? live.map(([name, l]) => {
+        const hp = clamp(num(get(l, '健康度', 0), 0), 0, 100), col = hp >= 50 ? 'var(--color-success)' : 'var(--color-danger)', livestockName = iconName(name);
+        const fallback = /鸡|禽/.test(livestockName) ? 'chicken' : /鸭/.test(livestockName) ? 'duck' : /牛/.test(livestockName) ? 'cow' : /羊/.test(livestockName) ? 'sheep' : /猪/.test(livestockName) ? 'pig' : /蜂/.test(livestockName) ? 'beehive' : 'barn';
+        return `<div class="livestock-card"><div class="building__head">${replaceableIcon({ target: `livestock:${livestockName}`, fallback, label: livestockName, targetLabel: `所有同名畜牧“${livestockName}”`, group: '农牧', className: 'ic building__icon' })}<span class="building__name">${esc(name)}</span></div><div class="row row--between"><span class="card__sub">饲料 · ${num(get(l, '饲料倒计时', 0), 0)} 日</span><span class="card__sub">产出 · ${num(get(l, '产出倒计时', 0), 0)} 日</span></div><div class="stat-line"><span class="stat-line__label">健康 ${hp}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${hp}%;background:${col}"></div></div></div><button class="btn btn--sm" data-care-livestock="${esc(name)}">照料</button></div>`;
+      }).join('') : emptyState('garden', '无牲畜', '建造畜牧设施后将显示于此。'));
+      container.innerHTML = html; Icon.render(container); decorateIcons(container); bindFarmActions(container);
     }
     $$('[data-farm-tab]', container).forEach((button) => button.addEventListener('click', () => { UI.farmTab = button.dataset.farmTab; renderFarm(container, Render.state); }));
   }

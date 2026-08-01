@@ -83,6 +83,12 @@ ok(/body\.is-immersive\.mobile-page--story\s+\.page--left[\s\S]*display:\s*none/
   '剧情页状态隐藏经营页');
 ok(!/body\.is-immersive\s+\.book\s*\{[^}]*flex-wrap:\s*wrap[^}]*height:\s*auto/.test(CSS),
   '手机沉浸不再上下堆叠双页');
+ok(/height:\s*var\(--mobile-viewport-height,\s*100dvh\)/.test(CSS), '手机沉浸高度由 VisualViewport CSS 变量驱动并回退 100dvh');
+ok(/body\.is-immersive\.mobile-page--story\s+\.page--right\s*\{[^}]*min-height:\s*0/.test(CSS), '手机剧情页保持纵向弹性且允许正文收缩');
+ok(/body\.is-immersive\.mobile-page--story\s+\.dock\s*\{[^}]*display:\s*grid/.test(CSS), '手机剧情 dock 使用稳定网格而非任意换行');
+ok(/body\.is-immersive\.is-mobile-keyboard-open\s+\.dock\s*\{[^}]*display:\s*none/.test(CSS), '软键盘打开时隐藏状态与快捷栏');
+ok(/body\.is-immersive\.is-mobile-keyboard-open\s+\.hud/.test(CSS), '软键盘打开时 HUD 使用紧凑样式');
+ok(!/body\.is-immersive\.is-mobile-keyboard-open\s+\.composer\s*\{[^}]*(position:\s*(fixed|absolute))/.test(CSS), '键盘模式 composer 仍在正常布局流');
 
 console.log('\n[4] 滚动条已按主题定制');
 ok(/\.journal__stream::-webkit-scrollbar-thumb/.test(CSS), '对话流滚动条已定制');
