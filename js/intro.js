@@ -178,7 +178,23 @@ const Intro = (function () {
     return book;
   }
 
+  function enterGame() {
+    const prologue = document.getElementById('prologue');
+    if (prologue) prologue.hidden = true;
+    document.body.classList.remove('is-title', 'is-prologue');
+    document.body.classList.add('is-game');
+    const book = unlockBook();
+    if (book) {
+      book.setAttribute('tabindex', '-1');
+      try { book.focus({ preventScroll: true }); } catch (error) { book.focus(); }
+      book.addEventListener('blur', () => book.removeAttribute('tabindex'), { once: true });
+    }
+    return book;
+  }
+
   function revealExperience() {
+    document.body.classList.remove('is-prologue');
+    document.body.classList.add('is-game');
     const book = unlockBook();
     removeTitle(book);
     window.dispatchEvent(new CustomEvent('pastoral:intro-ready', { detail: { mode: 'resume' } }));
@@ -264,9 +280,18 @@ const Intro = (function () {
     quest.appendChild(paragraph(questText.replace(/（报酬：[^）]+）$/, ''), 'prologue-quest__description'));
     quest.appendChild(element('p', 'prologue-quest__reward', rewardMatch ? rewardMatch[1] : '声望+3'));
     measure.appendChild(quest);
+    if (window.Host && Host.inTavern) {
+      const enter = element('button', 'prologue-enter', '进入旅店');
+      enter.type = 'button';
+      enter.dataset.prologueEnter = '';
+      enter.addEventListener('click', enterGame);
+      measure.appendChild(enter);
+      document.body.classList.remove('is-title', 'is-game');
+      document.body.classList.add('is-prologue');
+    }
     root.appendChild(measure);
 
-    unlockBook();
+    if (!(window.Host && Host.inTavern)) unlockBook();
     removeTitle(heading);
     const detail = { mode: 'prologue', reason: decision && decision.reason || 'floor-zero', floor: decision && decision.floor != null ? decision.floor : null };
     window.dispatchEvent(new CustomEvent('pastoral:intro-ready', { detail }));
@@ -299,12 +324,13 @@ const Intro = (function () {
   function init() {
     if (initialized) return;
     initialized = true;
+    document.body.classList.add('is-title');
     const button = document.getElementById('titleStart');
     if (!button) return;
     button.setAttribute('aria-busy', 'false');
     button.addEventListener('click', start);
   }
 
-  return { OPENING_TEXT, chapters, detectEntry, init, start, renderPrologue, revealExperience };
+  return { OPENING_TEXT, chapters, detectEntry, init, start, renderPrologue, revealExperience, enterGame };
 })();
 window.Intro = Intro;

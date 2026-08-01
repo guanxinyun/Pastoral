@@ -19,6 +19,7 @@ function load(options = {}) {
   win.matchMedia = () => ({ matches: false, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} });
   win.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
   win.getLastMessageId = options.lastId;
+  win.Host = { inTavern: !!options.inTavern };
   let writeCalls = 0, slashCalls = 0, mvuWriteCalls = 0;
   win.setChatMessages = () => { writeCalls++; throw new Error('序章不应写聊天'); };
   win.deleteChatMessages = () => { writeCalls++; throw new Error('序章不应删聊天'); };
@@ -81,10 +82,24 @@ function load(options = {}) {
     ok(doc.getElementById('prologue').textContent.includes('又或者，你有自己的想法。'), '结尾自由行动提示存在');
     const calls = scene.calls();
     ok(calls.writeCalls === 0 && calls.slashCalls === 0 && calls.mvuWriteCalls === 0, '序章不写聊天、不触发生成、不写 MVU');
-    ok(!doc.getElementById('book').hasAttribute('inert') && doc.getElementById('book').getAttribute('aria-hidden') !== 'true', '序章后正式界面可用');
+    ok(!doc.getElementById('book').hasAttribute('inert') && doc.getElementById('book').getAttribute('aria-hidden') !== 'true', '独立预览中序章后正式界面可用');
   }
 
-  console.log('\n[4] 零层围栏不能覆盖强制文本');
+  console.log('\n[4] 酒馆序章与正式界面互斥');
+  const tavern = load({ lastId: () => 0, inTavern: true });
+  if (tavern.win.Intro) {
+    tavern.win.Intro.init();
+    await tavern.win.Intro.start();
+    const enter = tavern.doc.querySelector('[data-prologue-enter]');
+    ok(tavern.doc.body.classList.contains('is-prologue'), '酒馆新开局进入独立序章视图');
+    ok(tavern.doc.getElementById('book').hasAttribute('inert') && tavern.doc.getElementById('book').getAttribute('aria-hidden') === 'true', '酒馆阅读序章时正式界面保持锁定');
+    ok(!!enter && enter.tagName === 'BUTTON', '酒馆序章提供进入旅店按钮');
+    enter && enter.dispatchEvent(new tavern.win.MouseEvent('click', { bubbles: true }));
+    ok(tavern.doc.body.classList.contains('is-game') && !tavern.doc.body.classList.contains('is-prologue'), '点击后切换到正式游戏视图');
+    ok(tavern.doc.getElementById('prologue').hidden && !tavern.doc.getElementById('book').hasAttribute('inert'), '进入游戏后隐藏序章并解锁双页书');
+  }
+
+  console.log('\n[5] 零层围栏不能覆盖强制文本');
   const fenced = load({ lastId: () => 0 });
   fenced.win.getChatMessages = () => [{ message_id: 0, message: '```\n```' }];
   if (fenced.win.Intro) {

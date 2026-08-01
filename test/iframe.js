@@ -81,6 +81,12 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   cdoc.getElementById('titleStart').dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
   await wait(100);
   ok(!cdoc.getElementById('book').hasAttribute('inert') && cdoc.getElementById('prologue').hidden, '已有楼层从标题直接恢复正式界面');
+  const embeddedSwitcher = cdoc.querySelector('[data-mobile-page-switcher]');
+  const embeddedStoryTab = cdoc.querySelector('[data-mobile-page="story"]');
+  ok(embeddedSwitcher && !embeddedSwitcher.hidden && cdoc.body.classList.contains('mobile-page--ledger'), '窄酒馆 iframe 非全屏也启用单页经营视图');
+  embeddedStoryTab && embeddedStoryTab.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
+  ok(cdoc.body.classList.contains('mobile-page--story'), '窄酒馆 iframe 非全屏可切换剧情页');
+  cdoc.querySelector('[data-mobile-page="ledger"]').dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
 
   console.log('\n[1] 第 0 层接管其余聊天楼层');
   const style = pdoc.getElementById('pastoral-host-takeover');
@@ -88,6 +94,9 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   const css = style ? style.textContent : '';
   ok(/#chat > \.mes:not\(\[mesid="0"\]\)/.test(css), '接管样式隐藏第 1 层及以后聊天楼层');
   ok(!/#send_form[\s\S]*display:\s*none/.test(css), '接管样式保留原生输入区');
+  ok(iframe.classList.contains('pastoral-host-frame'), '宿主 iframe 带有界布局标记');
+  ok(/iframe\.pastoral-host-frame[\s\S]*height:\s*clamp\(/.test(css), '父酒馆强制宿主 iframe 使用有界高度');
+  ok(/iframe\.pastoral-host-frame[\s\S]*max-height:\s*calc\(100dvh/.test(css), '宿主 iframe 不超过酒馆可视高度');
 
   const mes1 = pdoc.querySelector('.mes[mesid="1"]');
   const mes0 = pdoc.querySelector('.mes[mesid="0"]');
@@ -126,7 +135,7 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   ok(!iframe.classList.contains('pastoral-immersive'), '退出：iframe 去沉浸类');
   ok(!pdoc.body.classList.contains('pastoral-immersive-lock'), '退出：父页解锁滚动');
   ok(!cdoc.body.classList.contains('is-immersive'), '退出：卡内类已移除');
-  ok(!cdoc.body.classList.contains('mobile-page--ledger') && !cdoc.body.classList.contains('mobile-page--story'), '退出：手机单页状态已清除');
+  ok(cdoc.body.classList.contains('mobile-page--ledger') !== cdoc.body.classList.contains('mobile-page--story'), '退出全屏后窄酒馆 iframe 仍保持一个单页视图');
   ok(btn.getAttribute('aria-pressed') === 'false', '退出：aria-pressed=false');
 
   console.log('\n[3] iframe 内对话流仍正常');

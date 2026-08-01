@@ -70,6 +70,17 @@ const Host = (function () {
   display: none !important;
 }
 
+/* 第 0 层宿主 iframe 始终限制在酒馆可视范围内，切断自动高度正反馈。 */
+iframe.pastoral-host-frame:not(.${IMMERSIVE_CLASS}) {
+  display: block !important;
+  width: 100% !important;
+  height: clamp(560px, 78dvh, 900px) !important;
+  min-height: 0 !important;
+  max-height: calc(100dvh - 96px) !important;
+  overflow: hidden !important;
+  border: 0 !important;
+}
+
 /* 沉浸模式：只将当前页面 iframe 钉满视口 */
 iframe.${IMMERSIVE_CLASS} {
   position: fixed !important;
@@ -164,9 +175,16 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
     if (!isHost) { selfDestruct(); return false; }
     if (inTavern) {
       injectTakeover();
+      const frame = selfFrame();
+      if (frame) frame.classList.add('pastoral-host-frame');
       // 酒馆可能在切换聊天后重建 DOM，补注一次
-      setTimeout(injectTakeover, 1500);
+      setTimeout(() => {
+        injectTakeover();
+        const currentFrame = selfFrame();
+        if (currentFrame) currentFrame.classList.add('pastoral-host-frame');
+      }, 1500);
       watchFullscreenExit();
+      document.documentElement.classList.add('in-tavern');
       document.body.classList.add('in-tavern');
     } else {
       document.body.classList.add('standalone');

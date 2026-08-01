@@ -105,5 +105,14 @@ ok(/--color-title-sky:/.test(CSS) && /--color-parchment-warm:/.test(CSS), '标�
 ok(/\.book\s*\{[^}]*box-shadow:\s*var\(--shadow-book\)/.test(CSS), '正式双页书使用统一高端层次阴影');
 ok(/\.card:hover[^{]*\{[^}]*transform:\s*translateY/.test(CSS), '正式卡片具有细腻悬停反馈');
 
+console.log('\n[6] 酒馆 iframe 有界布局');
+ok(/html\.in-tavern\s*\{[^}]*height:\s*100%[^}]*overflow:\s*hidden/.test(CSS), '酒馆子文档锁定为单个 iframe 视口');
+ok(/body\.in-tavern\s*\{[^}]*height:\s*100%[^}]*overflow:\s*hidden/.test(CSS), '酒馆 body 不再向外撑高');
+ok(/body\.in-tavern\s+\.title-screen\s*\{[^}]*height:\s*100%[^}]*min-height:\s*0/.test(CSS), '酒馆标题不使用 dvh 参与高度反馈');
+ok(/body\.in-tavern\.is-prologue\s+\.prologue\s*\{[^}]*width:\s*calc\(100%\s*-\s*24px\)[^}]*height:\s*calc\(100%\s*-\s*24px\)[^}]*margin:\s*12px auto[^}]*overflow-y:\s*auto/.test(CSS), '酒馆序章在留白视口内滚动');
+ok(/body\.in-tavern\.is-game\s+\.book\s*\{[^}]*width:\s*calc\(100%\s*-\s*24px\)[^}]*height:\s*calc\(100%\s*-\s*24px\)[^}]*margin:\s*12px auto/.test(CSS), '酒馆书页在单视口内保留两侧留白');
+ok(/body\.in-tavern\.is-prologue\s+\.book[\s\S]*display:\s*none/.test(CSS), '酒馆序章与正式界面互斥显示');
+ok(/body\.in-tavern\.is-game\s+\.prologue[\s\S]*display:\s*none/.test(CSS), '进入正式界面后序章不再占位');
+
 console.log(failed ? `\n✗ ${failed} 项失败` : '\n✓ 全部通过');
 process.exit(failed ? 1 : 0);

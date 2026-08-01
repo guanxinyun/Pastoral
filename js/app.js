@@ -26,7 +26,7 @@
     const visual = window.visualViewport;
     const height = visual && Number(visual.height) > 0 ? Number(visual.height) : window.innerHeight;
     document.documentElement.style.setProperty('--mobile-viewport-height', Math.round(height) + 'px');
-    const activeStory = Host.immersive && isMobileViewport() && mobilePage === 'story';
+    const activeStory = (Host.immersive || Host.inTavern) && isMobileViewport() && mobilePage === 'story';
     if (!composerFocused) mobileBaselineHeight = Math.max(mobileBaselineHeight, window.innerHeight || 0, height);
     const layoutHeight = Math.max(mobileBaselineHeight, window.innerHeight || 0, document.documentElement.clientHeight || 0, height);
     const reduced = visual ? layoutHeight - height > Math.max(120, layoutHeight * 0.18) : composerFocused;
@@ -57,7 +57,7 @@
   }
 
   function syncMobileImmersiveState(resetOnEnter) {
-    const active = Host.immersive && isMobileViewport();
+    const active = (Host.immersive || Host.inTavern) && isMobileViewport();
     const switcher = $('[data-mobile-page-switcher]');
     if (switcher) switcher.hidden = !active;
     if (active) setMobilePage(resetOnEnter ? 'ledger' : mobilePage);
@@ -83,7 +83,7 @@
     $$('.panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === name));
     // 面板由 display:none 转 block 时自动重放 inkBleed 翻页动效；立即渲染该面板
     Render.panel(name, Render.state, true);
-    if (Host.immersive && isMobileViewport()) setMobilePage('ledger');
+    if ((Host.immersive || Host.inTavern) && isMobileViewport()) setMobilePage('ledger');
   }
 
   /* ---------- 主题 ---------- */
