@@ -26,10 +26,6 @@ const Settings = (function () {
   const variablePresetDefaults = () => ({
     mode: 'none',
     presetName: '',
-    // 有预设时怎么组装：
-    // compile —— 读预设编译成 generateRaw 消息列表，末尾强制追加任务消息，保证送达
-    // inject  —— 保持 generate + preset_name 完全保真，任务消息走 injects，落点由酒馆决定
-    assembly: 'compile',
     // 世界书"按深度插入"条目与作者注释默认屏蔽：酒馆默认会带上它们，
     // 但它们不是变量更新规则，只会污染计算。三种模式一致生效。
     blockDepthEntries: true,
@@ -80,7 +76,8 @@ const Settings = (function () {
     const preset = merge(variablePresetDefaults(), object(value));
     preset.mode = ['none', 'current', 'fixed'].includes(preset.mode) ? preset.mode : 'none';
     preset.presetName = String(preset.presetName == null ? '' : preset.presetName).trim();
-    preset.assembly = preset.assembly === 'inject' ? 'inject' : 'compile';
+    // 旧版本曾暴露 compile/inject 选择；两条通道在不同宿主行为不一致，迁移时删除。
+    delete preset.assembly;
     preset.blockDepthEntries = preset.blockDepthEntries !== false;
     const temperature = Number(preset.temperature);
     preset.temperature = Number.isFinite(temperature) ? Math.min(2, Math.max(0, temperature)) : 0;
