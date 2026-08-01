@@ -562,13 +562,18 @@ const Chat = (function () {
 
     const ta = document.getElementById('composerInput');
     const btn = document.getElementById('composerSend');
+    // 触屏设备：回车=换行，发送只走发送键；桌面端保留 Enter 发送 / Shift+Enter 换行
+    const coarsePointer = window.matchMedia ? window.matchMedia('(hover: none) and (pointer: coarse)') : null;
+    const isTouch = () => !!(coarsePointer && coarsePointer.matches);
     if (ta) {
+      if (isTouch()) ta.setAttribute('placeholder', '写下你的行动……（回车换行，点右侧发送）');
       ta.addEventListener('input', () => autoGrow(ta));
       ta.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        // 输入法合成中（如中文候选确认）不触发发送
+        if (e.isComposing || e.keyCode === 229) return;
+        if (e.key === 'Enter' && !e.shiftKey && !isTouch()) {
           e.preventDefault();
-          const v = ta.value;
-          handleUnifiedRequest(v);
+          handleUnifiedRequest(ta.value);
         }
       });
     }
