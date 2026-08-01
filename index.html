@@ -6939,13 +6939,6 @@ const Intro = (function () {
     values.forEach((value) => container.appendChild(paragraph(value, typeof classFor === 'function' ? classFor(value) : classFor)));
   }
 
-  async function persistFloorZeroOpening(decision) {
-    if (!decision || decision.reason !== 'floor-zero' || !(window.Host && Host.inTavern)) return false;
-    if (typeof setChatMessages !== 'function') throw new Error('当前环境无法覆盖第 0 楼开局文本');
-    await setChatMessages([{ message_id: 0, message: OPENING_MESSAGE }], { refresh: 'none' });
-    return true;
-  }
-
   function renderPrologue(decision) {
     const root = document.getElementById('prologue');
     if (!root) throw new Error('缺少序章挂载点');
@@ -7051,10 +7044,7 @@ const Intro = (function () {
     try {
       const decision = await detectEntry();
       window.dispatchEvent(new CustomEvent('pastoral:intro-start', { detail: decision }));
-      if (decision.mode === 'prologue') {
-        await persistFloorZeroOpening(decision);
-        renderPrologue(decision);
-      }
+      if (decision.mode === 'prologue') renderPrologue(decision);
       else { revealExperience(); ready = true; }
       return decision.mode;
     } catch (error) {
@@ -7076,7 +7066,7 @@ const Intro = (function () {
     button.addEventListener('click', start);
   }
 
-  return { OPENING_TEXT, OPENING_MESSAGE, chapters, detectEntry, init, start, persistFloorZeroOpening, renderPrologue, revealExperience, enterGame };
+  return { OPENING_TEXT, OPENING_MESSAGE, chapters, detectEntry, init, start, renderPrologue, revealExperience, enterGame };
 })();
 window.Intro = Intro;
 

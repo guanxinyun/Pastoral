@@ -243,7 +243,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   /* ---------- 1a. 只有零楼时强制完整序章 ---------- */
   console.log('\n[1a] 只有零楼时强制序章');
   {
-    const chat = [{ message_id: 0, role: 'assistant', name: '暮归旅店', is_hidden: false, message: '```\n```' }];
+    const originalMessage = '```\n```';
+    const chat = [{ message_id: 0, role: 'assistant', name: '暮归旅店', is_hidden: false, message: originalMessage }];
     const { win, doc, calls } = load(0, { chat });
     let readyEvents = 0;
     win.addEventListener('pastoral:intro-ready', () => readyEvents++);
@@ -255,8 +256,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const prologueText = doc.getElementById('prologue').textContent;
     ok(/第一年.*春季第1天/.test(prologueText) && /霍根·星摇/.test(prologueText) && /声望\+3/.test(prologueText), '零楼围栏被完整内置序章替代');
     ok(doc.querySelectorAll('[data-prologue-chapter="letter"]').length === 1 && readyEvents === 1, '快速双击只生成一个序章并发出一次就绪事件');
-    ok(calls.set.length === 1 && calls.set[0].length === 1 && calls.set[0][0].message_id === 0
-      && calls.set[0][0].message === win.Intro.OPENING_MESSAGE, '强制序章只覆盖一次第 0 楼完整排版正文');
+    ok(calls.set.length === 0, '强制序章不覆盖第 0 楼');
+    ok(chat[0].message === originalMessage, '第 0 楼原消息保持不变');
     ok(calls.del.length === 0 && calls.slash.length === 0, '强制序章不删除楼层也不触发模型');
   }
 
