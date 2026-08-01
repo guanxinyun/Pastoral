@@ -1223,7 +1223,6 @@ body.is-immersive .journal__stream {
 .set-notice { margin-top: var(--space-3); margin-bottom: 0; }
 .preset-card { gap: var(--space-3); }
 .preset-context[hidden], [data-preset-fixed][hidden] { display: none; }
-[data-preset-assembly][hidden], [data-assembly-note][hidden] { display: none; }
 .preset-context { display: grid; gap: var(--space-2); }
 .preset-context__grid { display: grid; grid-template-columns: 1fr; gap: var(--space-2); }
 .preset-check { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: var(--space-2) var(--space-3); color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-deep); cursor: pointer; transition: color var(--t-base), border-color var(--t-base), background var(--t-base); }
@@ -2920,10 +2919,6 @@ const Settings = (function () {
   const variablePresetDefaults = () => ({
     mode: 'none',
     presetName: '',
-    // 有预设时怎么组装：
-    // compile —— 读预设编译成 generateRaw 消息列表，末尾强制追加任务消息，保证送达
-    // inject  —— 保持 generate + preset_name 完全保真，任务消息走 injects，落点由酒馆决定
-    assembly: 'compile',
     // 世界书"按深度插入"条目与作者注释默认屏蔽：酒馆默认会带上它们，
     // 但它们不是变量更新规则，只会污染计算。三种模式一致生效。
     blockDepthEntries: true,
@@ -2974,7 +2969,8 @@ const Settings = (function () {
     const preset = merge(variablePresetDefaults(), object(value));
     preset.mode = ['none', 'current', 'fixed'].includes(preset.mode) ? preset.mode : 'none';
     preset.presetName = String(preset.presetName == null ? '' : preset.presetName).trim();
-    preset.assembly = preset.assembly === 'inject' ? 'inject' : 'compile';
+    // 旧版本曾暴露 compile/inject 选择；两条通道在不同宿主行为不一致，迁移时删除。
+    delete preset.assembly;
     preset.blockDepthEntries = preset.blockDepthEntries !== false;
     const temperature = Number(preset.temperature);
     preset.temperature = Number.isFinite(temperature) ? Math.min(2, Math.max(0, temperature)) : 0;
@@ -3404,6 +3400,8 @@ const ApiEngine = (function () {
   ];
   let sequence = 0;
   let lastFailure = null;
+  // 只串行“保存现场→切换→发起→恢复”这几步；API 网络等待不在锁内。
+  let presetLaunchTail = Promise.resolve();
 
   function now() { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); }
   function log(prefix, stage, detail) { console.info(prefix, stage, detail || ''); }
@@ -3466,6 +3464,37 @@ const ApiEngine = (function () {
     const max = limit || 160;
     return flat.length > max ? flat.slice(0, max) + '…' : flat;
   }
+
+  function fingerprint(text) {
+    let hash = 2166136261;
+    const value = String(text || '');
+    for (let i = 0; i < value.length; i++) {
+      hash ^= value.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16).padStart(8, '0');
+  }
+
+  function safeVersion(name) {
+    try { return typeof window[name] === 'function' ? String(window[name]()) : 'unknown'; }
+    catch (e) { return 'unknown'; }
+  }
+
+  function requestDiagnostic(snapshot, task, detail) {
+    const value = Object.assign({
+      stage: snapshot.kind,
+      mode: snapshot.mode,
+      targetPreset: snapshot.mode === 'fixed' ? snapshot.presetName : (snapshot.mode === 'current' ? 'in_use' : 'none'),
+      taskCount: 1,
+      taskFingerprint: fingerprint(task),
+      tavernHelperVersion: safeVersion('getTavernHelperVersion'),
+      tavernVersion: safeVersion('getTavernVersion')
+    }, detail || {});
+    console.info('[Pastoral][VariableRequest]', value);
+    window.dispatchEvent(new CustomEvent('pastoral:variable-request', { detail: value }));
+    return value;
+  }
+
   function status(stage, message, loading, detail) {
     window.dispatchEvent(new CustomEvent('pastoral:api-status', { detail: Object.assign({ stage, message, loading: !!loading }, detail || {}) }));
   }
@@ -3520,13 +3549,15 @@ const ApiEngine = (function () {
       return role + ' #' + m.message_id + ':\n' + Extract.stripUpdateVariable(m.message || '');
     }).join('\n\n');
     const config = context.config || Settings.load();
-    const kind = context.purpose === 'endday' ? 'endday' : 'normal';
-    const guide = context.rules || updateGuide(kind, config);
+    const snapshot = context.snapshot;
+    const kind = snapshot ? snapshot.kind : (context.purpose === 'endday' ? 'endday' : 'normal');
+    const guide = context.rules || (snapshot ? snapshot.guide : updateGuide(kind, config));
     const format = outputFormat();
     const extra = buildAdditionalContext(context);
     const calculated = context.calculated
       ? '【脚本已确定事实（不得重算或重复应用）】\n' + JSON.stringify(context.calculated)
       : '';
+    const stageFacts = String(context.stageFacts || '').trim();
     const stage = kind === 'endday' ? '归寝日结' : '日常更新';
     return [
       '你是暮归旅店的变量计算引擎，不续写剧情。',
@@ -3536,6 +3567,7 @@ const ApiEngine = (function () {
       '【最近三层正文】\n' + (history || '（无）'),
       '【主生成前当前变量数据】\n' + JSON.stringify(context.baseline && context.baseline.stat_data || {}),
       calculated,
+      stageFacts ? '【阶段执行事实】\n' + stageFacts : '',
       extra ? '【附加信息】\n' + extra : '',
       '【输出要求】\n必须输出且只输出一个完整的 <UpdateVariable><Analysis>...</Analysis><JSONPatch>[...]</JSONPatch></UpdateVariable> 标签；JSONPatch 必须是合法 JSON 数组，无变化时输出 []。不得输出 lodash 命令或 Markdown 代码围栏。归寝日结不得覆盖脚本已确定事实。'
     ].filter(Boolean).join('\n\n');
@@ -3563,6 +3595,62 @@ const ApiEngine = (function () {
     const key = kind === 'endday' ? 'endday' : 'normal';
     const value = config && config.variablePresets && config.variablePresets[key];
     return value && typeof value === 'object' ? value : { mode: 'none', presetName: '', context: {} };
+  }
+
+  /** 冻结单个阶段所需的全部配置，后续不得重新读取另一阶段设置。 */
+  function createStageSnapshot(kind, config) {
+    const key = kind === 'endday' ? 'endday' : 'normal';
+    const cfg = config || Settings.load();
+    const selected = variablePresetConfig(key, cfg);
+    const mode = ['none', 'current', 'fixed'].includes(selected.mode) ? selected.mode : 'none';
+    const context = Object.freeze(Object.assign({}, selected.context || {}));
+    return Object.freeze({
+      kind: key,
+      mode,
+      presetName: mode === 'current' ? 'in_use' : String(selected.presetName || '').trim(),
+      context,
+      blockDepthEntries: selected.blockDepthEntries !== false,
+      temperature: Number.isFinite(Number(selected.temperature)) ? Number(selected.temperature) : 0,
+      guide: updateGuide(key, cfg)
+    });
+  }
+
+  /**
+   * 短事务：切到固定预设发起 generate，立即恢复原预设，再在锁外等待网络结果。
+   * 同时恢复 in_use 现场，避免玩家尚未保存的预设编辑因切换而丢失。
+   */
+  function launchWithFixedPreset(targetPreset, generateConfig) {
+    let responsePromise;
+    const launch = async () => {
+      if (typeof getLoadedPresetName !== 'function' || typeof getPreset !== 'function'
+        || typeof loadPreset !== 'function' || typeof replacePreset !== 'function'
+        || typeof generate !== 'function') {
+        throw new Error('当前环境缺少固定预设短事务所需接口');
+      }
+      const originalName = String(getLoadedPresetName() || '').trim();
+      if (!originalName) throw new Error('无法确定当前加载的酒馆预设');
+      const originalLive = clone(getPreset('in_use'));
+      let switched = false;
+      let launchError = null;
+      try {
+        if (!loadPreset(targetPreset)) throw new Error('切换目标预设“' + targetPreset + '”失败');
+        switched = true;
+        // 这里只取得 Promise，不等待网络回复。
+        responsePromise = Promise.resolve(generate(generateConfig));
+      } catch (e) {
+        launchError = e;
+      } finally {
+        if (switched) {
+          if (!loadPreset(originalName)) throw new Error('恢复原预设“' + originalName + '”失败');
+          await replacePreset('in_use', originalLive, { render: 'none' });
+        }
+      }
+      if (launchError) throw launchError;
+    };
+    const transaction = presetLaunchTail.then(launch, launch);
+    // 锁只等恢复完成；失败也吞入 tail，不能永久卡住后续短事务。
+    presetLaunchTail = transaction.catch(() => {});
+    return transaction.then(() => responsePromise).then((network) => network);
   }
 
   function availablePresetNames() {
@@ -3685,73 +3773,42 @@ const ApiEngine = (function () {
     return out;
   }
 
-  /**
-   * 解析本次变量请求的预设策略。
-   * - none：完全不使用酒馆预设，走 generateRaw + ordered_prompts
-   * - current/fixed + compile：读预设编译成 generateRaw 消息列表，任务消息强制在末位
-   * - current/fixed + inject：generate + preset_name，任务消息走 injects
-   * - fixed 预设已删除时本次降级为 none
-   */
+  /** 固定预设不存在时降级为 none；current 与 fixed 都只通过 user_input 发送一次任务。 */
   function resolvePreset(kind, config) {
-    const selected = variablePresetConfig(kind, config);
-    // 深度注入屏蔽与采样参数对三种模式一致生效。
-    const shared = {
-      context: selected.context || {},
-      blockDepthEntries: selected.blockDepthEntries !== false,
-      temperature: selected.temperature,
-      assembly: selected.assembly === 'inject' ? 'inject' : 'compile'
-    };
-    if (selected.mode === 'current') return Object.assign({ mode: 'current', presetName: 'in_use' }, shared);
-    if (selected.mode === 'fixed') {
-      if (availablePresetNames().includes(selected.presetName)) {
-        return Object.assign({ mode: 'fixed', presetName: selected.presetName }, shared);
-      }
+    const snapshot = createStageSnapshot(kind, config);
+    if (snapshot.mode === 'fixed' && !availablePresetNames().includes(snapshot.presetName)) {
       if (typeof toast === 'function') {
-        toast('warn', '变量预设不存在', '“' + selected.presetName + '”已不存在，本次改用不带预设。');
+        toast('warn', '变量预设不存在', '“' + snapshot.presetName + '”已不存在，本次改用不带预设。');
       }
+      return Object.freeze(Object.assign({}, snapshot, { mode: 'none', presetName: '' }));
     }
-    return Object.assign({ mode: 'none', presetName: '' }, shared);
+    return snapshot;
   }
 
-  async function generateVariable(config, kind, settings) {
-    const preset = resolvePreset(kind, settings);
-    const overrides = buildOverrides(preset);
-    // 采样参数只在走自定义 API 时能覆盖；跟随主 API 时保持原样。
+  async function generateVariable(config, snapshot) {
+    const overrides = buildOverrides(snapshot);
     const base = Object.assign({}, config);
-    if (base.custom_api) base.custom_api = Object.assign({}, samplingOverrides(preset), base.custom_api);
+    // 任务只能通过 user_input 一条通道发送；彻底删除宿主行为不一致的 injects。
+    delete base.injects;
+    delete base.preset_name;
+    if (base.custom_api) base.custom_api = Object.assign({}, samplingOverrides(snapshot), base.custom_api);
     if (overrides) base.overrides = Object.assign({}, overrides, base.overrides);
-    if (preset.mode === 'none') {
-      // generateRaw 才能完全绕开酒馆预设；只发我们指定的占位符和本次任务提示。
+    if (snapshot.mode === 'none') {
       if (typeof generateRaw !== 'function') throw new Error('当前环境缺少 generateRaw，无法发送不带预设的变量请求');
+      requestDiagnostic(snapshot, base.user_input, { transport: 'generateRaw', switched: false, restored: true });
       return generateRaw(Object.assign(base, {
         max_chat_history: base.max_chat_history == null ? 0 : base.max_chat_history,
-        ordered_prompts: orderedPrompts(preset.context)
+        ordered_prompts: orderedPrompts(snapshot.context)
       }));
     }
-    if (preset.assembly === 'inject') {
-      // 保真路径：预设的提示词、settings、in_chat 深度条目全部由酒馆组装。
-      if (typeof generate !== 'function') throw new Error('当前环境不支持按酒馆预设生成');
-      // max_chat_history: 0 会把唯一能承载注入的聊天区截断掉，预设模式必须留出该区域。
-      const history = base.max_chat_history === 0 || base.max_chat_history == null ? 1 : base.max_chat_history;
-      return generate(Object.assign(base, {
-        preset_name: preset.presetName,
-        max_chat_history: history,
-        injects: [{
-          role: 'system',
-          content: base.user_input,
-          position: 'in_chat',
-          depth: 0,
-          // 任务文本不得进入世界书绿灯扫描文本，否则会激活无关条目。
-          should_scan: false
-        }].concat(Array.isArray(base.injects) ? base.injects : [])
-      }));
+    if (typeof generate !== 'function') throw new Error('当前环境不支持酒馆预设生成');
+    if (snapshot.mode === 'fixed') {
+      const result = await launchWithFixedPreset(snapshot.presetName, base);
+      requestDiagnostic(snapshot, base.user_input, { transport: 'generate-switched', switched: true, restored: true });
+      return result;
     }
-    // compile 路径：任务消息作为数组字面对象，结构上不可能丢失。
-    if (typeof generateRaw !== 'function') throw new Error('当前环境缺少 generateRaw，无法编译预设消息列表');
-    return generateRaw(Object.assign(base, {
-      max_chat_history: base.max_chat_history == null ? 0 : base.max_chat_history,
-      ordered_prompts: compilePreset(preset.presetName, preset, base.user_input)
-    }));
+    requestDiagnostic(snapshot, base.user_input, { transport: 'generate-current', switched: false, restored: true });
+    return generate(base);
   }
 
   /** 只讲格式、不重述规则的纠正提示，附上模型自己刚才的输出。 */
@@ -3771,7 +3828,8 @@ const ApiEngine = (function () {
     const api = Object.assign({}, cfg.secondApi, { url: normalizeUrl(cfg.secondApi && cfg.secondApi.url) });
     const issues = inspectApi(api);
     if (issues.length) throw new Error('第二 API 配置有问题：' + issues.join('；'));
-    const prompt = buildPrompt(Object.assign({}, context, { config: cfg }));
+    const snapshot = resolvePreset(context.purpose, cfg);
+    const prompt = buildPrompt(Object.assign({}, context, { config: cfg, snapshot }));
     const target = hostOf(api.url);
     let failure;
     for (let attempt = 0; attempt <= api.maxRetries; attempt++) {
@@ -3793,7 +3851,7 @@ const ApiEngine = (function () {
             should_silence: true,
             max_chat_history: 0,
             custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
-          }, context.purpose, cfg), api.timeout, id));
+          }, snapshot), api.timeout, id));
           updateTag = Extract.salvageUpdateVariable(raw);
           if (updateTag) { repaired = pass > 0; break; }
           log(PREFIX_SECOND, '格式不合规', { id, pass: pass + 1, received: snippet(raw) });
@@ -3844,22 +3902,38 @@ const ApiEngine = (function () {
       if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
       lastFailure = null;
       status('变量更新完成', `已写回第 ${messageId} 楼`, false, { id: generated.id, messageId, purpose: context.purpose });
-      return { ok: true, source: generated.source, summary: generated.summary, messageId };
+      return {
+        stage: context.purpose === 'endday' ? 'endday' : 'normal',
+        stageId: 'endday:' + messageId + ':' + (context.purpose === 'endday' ? 'endday' : 'normal'),
+        ok: true,
+        source: generated.source,
+        summary: generated.summary,
+        error: null,
+        messageId
+      };
     } catch (e) {
       lastFailure = Object.assign({}, context, { messageId });
       error(PREFIX_SECOND, '降级保留主模型变量', e);
       if (typeof toast === 'function') toast('error', '第二 API 失败', (e && e.message || String(e)) + '；已保留主模型结果，可手动重试。');
-      return { ok: false, source: 'main', error: e, messageId };
+      return {
+        stage: context.purpose === 'endday' ? 'endday' : 'normal',
+        stageId: 'endday:' + messageId + ':' + (context.purpose === 'endday' ? 'endday' : 'normal'),
+        ok: false,
+        source: 'second',
+        error: e,
+        messageId
+      };
     }
   }
 
   async function callMainApiForDaily(context) {
     if (typeof generate !== 'function' && typeof generateRaw !== 'function') throw new Error('当前环境不支持主 API 静默日结');
-    const prompt = buildPrompt(Object.assign({}, context, { purpose: 'endday' }));
+    const cfg = Settings.load();
+    const snapshot = resolvePreset('endday', cfg);
+    const prompt = buildPrompt(Object.assign({}, context, { purpose: 'endday', config: cfg, snapshot }));
     const id = 'pastoral-daily-main-' + (++sequence);
     const started = now();
     log(PREFIX_MAIN, '日结开始', { messageId: context.messageId });
-    const cfg = Settings.load();
     let raw = '', updateTag = '';
     for (let pass = 0; pass < 2; pass++) {
       const passId = pass === 0 ? id : id + '-repair';
@@ -3870,7 +3944,7 @@ const ApiEngine = (function () {
         should_stream: false,
         should_silence: true,
         max_chat_history: 0
-      }, 'endday', cfg), 30000, passId, '主 API 日结'));
+      }, snapshot), 30000, passId, '主 API 日结'));
       updateTag = Extract.salvageUpdateVariable(raw);
       if (updateTag) break;
       log(PREFIX_MAIN, '日结格式不合规', { pass: pass + 1, received: snippet(raw) });
@@ -3908,27 +3982,63 @@ const ApiEngine = (function () {
         const generated = await ApiEngine.callSecondApiForVariable(Object.assign({}, context, { messageId, purpose: 'endday' }));
         await applyUpdate(messageId, message.message || '', context.baseline, generated);
         if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
-        return { ok: true, source: 'second', summary: generated.summary, messageId };
+        return {
+          stage: 'endday',
+          stageId: 'endday:' + messageId + ':endday',
+          ok: true,
+          source: 'second',
+          summary: generated.summary,
+          error: null,
+          messageId
+        };
       } catch (secondError) {
         error(PREFIX_SECOND, '归寝日结失败', secondError);
         if (typeof toast === 'function') {
           toast('error', '第二 API 日结失败', (secondError && secondError.message || String(secondError)) + '；已保留确定性结算，可在设置中重试。');
         }
         lastFailure = Object.assign({}, context, { messageId, purpose: 'endday' });
-        return { ok: false, source: 'second', error: secondError, messageId };
+        return {
+          stage: 'endday',
+          stageId: 'endday:' + messageId + ':endday',
+          ok: false,
+          source: 'second',
+          error: secondError,
+          messageId
+        };
       }
     }
     try {
       // 主剧情的 MVU 已由酒馆处理，单 API 日结从此刻最新快照继续计算。
       const baseline = MVU.getDataSnapshot ? MVU.getDataSnapshot() : context.baseline;
-      const generated = await callMainApiForDaily({ baseline, messageId, purpose: 'endday', calculated: context.calculated });
+      const generated = await callMainApiForDaily({
+        baseline,
+        messageId,
+        purpose: 'endday',
+        calculated: context.calculated,
+        stageFacts: context.stageFacts
+      });
       await appendDailyUpdate(messageId, message.message || '', baseline, generated);
       if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
-      return { ok: true, source: 'main', summary: generated.summary, messageId };
+      return {
+        stage: 'endday',
+        stageId: 'endday:' + messageId + ':endday',
+        ok: true,
+        source: 'main',
+        summary: generated.summary,
+        error: null,
+        messageId
+      };
     } catch (e) {
       error(PREFIX_MAIN, '日结失败', e);
       if (typeof toast === 'function') toast('error', '每日结算失败', e && e.message || String(e));
-      return { ok: false, source: 'main', error: e, messageId };
+      return {
+        stage: 'endday',
+        stageId: 'endday:' + messageId + ':endday',
+        ok: false,
+        source: 'main',
+        error: e,
+        messageId
+      };
     }
   }
 
@@ -3948,7 +4058,9 @@ const ApiEngine = (function () {
 
   async function testSecondApi(candidate) {
     if (typeof generate !== 'function' && typeof generateRaw !== 'function') throw new Error('当前环境缺少变量生成接口，未发送请求');
-    const api = Object.assign({}, Settings.load().secondApi, candidate || {});
+    const cfg = Settings.load();
+    const snapshot = resolvePreset('normal', cfg);
+    const api = Object.assign({}, cfg.secondApi, candidate || {});
     api.url = normalizeUrl(api.url);
     const issues = inspectApi(api);
     if (issues.length) throw new Error('未发送请求：' + issues.join('；'));
@@ -3965,7 +4077,7 @@ const ApiEngine = (function () {
         should_silence: true,
         max_chat_history: 0,
         custom_api: { apiurl: api.url, key: api.key, model: api.model, source: 'openai' }
-      }, 'normal', Settings.load()), Math.max(1000, Number(api.timeout) || 30000), id, '第二 API 测试'));
+      }, snapshot), Math.max(1000, Number(api.timeout) || 30000), id, '第二 API 测试'));
       const elapsedMs = Math.round(now() - started);
       status('第二 API 测试成功', `${target} · ${elapsedMs}ms · ${snippet(raw, 80) || '收到空文本'}`, false, { id, target, elapsedMs, purpose: 'test' });
       log(PREFIX_SECOND, '连接测试完成', { id, target, elapsedMs });
@@ -3984,6 +4096,8 @@ const ApiEngine = (function () {
 
   return {
     LEGACY_PRESET_NAME,
+    createStageSnapshot,
+    launchWithFixedPreset,
     availablePresetNames,
     orderedPrompts,
     compilePreset,
@@ -4409,8 +4523,11 @@ const Chat = (function () {
       const messageId = await waitForMainReply(beforeId, token, startCycle, true);
       console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
       let calculated = null, settledData = null, pendingFirstWrite = null;
+      let normalStage = purpose === 'endday' && mode !== 'multi'
+        ? { stage: 'normal', stageId: 'endday:' + messageId + ':normal', ok: true, source: 'main-story', error: null }
+        : null;
       if (purpose === 'endday' && mode === 'multi' && window.ApiEngine) {
-        await ApiEngine.processAfterMain({ baseline, messageId, purpose: 'normal', calculated: null });
+        normalStage = await ApiEngine.processAfterMain({ baseline, messageId, purpose: 'normal', calculated: null });
       }
       if (window.MVU) {
         if (purpose === 'endday' && typeof MVU.settleForWrite === 'function') {
@@ -4439,7 +4556,17 @@ const Chat = (function () {
         let outcome = null;
         if (purpose === 'endday') {
           setRequestStatus('归寝日结', mode === 'multi' ? '正在由第二 API 执行跨日变量更新…' : '正在由当前主 API 执行跨日变量更新…', true);
-          outcome = await ApiEngine.processEndday({ baseline: window.MVU ? MVU.getDataSnapshot() : baseline, messageId, purpose, calculated });
+          const stageFacts = normalStage && normalStage.ok === false
+            ? '日常变量阶段失败；不得猜测、补算或重复执行日常即时变化。错误：'
+              + String(normalStage.error && normalStage.error.message || normalStage.error || '未知错误')
+            : '';
+          outcome = await ApiEngine.processEndday({
+            baseline: window.MVU ? MVU.getDataSnapshot() : baseline,
+            messageId,
+            purpose,
+            calculated,
+            stageFacts
+          });
         } else if (mode === 'multi') {
           setRequestStatus('第二 API', '正在计算本轮变量更新…', true);
           outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose, calculated });
@@ -4451,10 +4578,19 @@ const Chat = (function () {
             try { await MVU.enforceAndWrite(settledData, messageId); }
             catch (error) { writeError = error; }
           }
-          const updateError = writeError
-            ? '最终 MVU 写回失败：' + (writeError.message || writeError)
-            : (outcome && outcome.error ? String(outcome.error.message || outcome.error) : '');
-          const complete = !!(outcome && outcome.ok) && !writeError;
+          const errors = [
+            normalStage && normalStage.error
+              ? '日常阶段：' + String(normalStage.error.message || normalStage.error)
+              : '',
+            outcome && outcome.error
+              ? '归寝阶段：' + String(outcome.error.message || outcome.error)
+              : '',
+            writeError
+              ? '最终 MVU 写回失败：' + String(writeError.message || writeError)
+              : ''
+          ].filter(Boolean);
+          const updateError = errors.join('；');
+          const complete = !!(normalStage && normalStage.ok) && !!(outcome && outcome.ok) && !writeError;
           if (pendingFirstWrite && window.MVU && typeof MVU.enforceAndWrite === 'function') {
             pendingFirstWrite.then(
               () => MVU.enforceAndWrite(settledData, messageId),
@@ -5673,20 +5809,6 @@ window.Chat = Chat;
       mode.value = setting.mode;
       card.appendChild(h('label', { class: 'set-field' }, [h('span', { class: 'set-field__label' }, '预设模式'), mode]));
 
-      // 预设的占位符枚举里没有 user_input，所以有预设时必须显式决定任务消息怎么送达。
-      const assembly = h('select', { class: 'set-input', name: kind + 'Assembly', 'aria-label': title + '组装方式' }, [
-        h('option', { value: 'compile' }, '编译成消息列表（保证送达）'),
-        h('option', { value: 'inject' }, '保真 + 注入（可能丢失）')
-      ]);
-      assembly.value = setting.assembly === 'inject' ? 'inject' : 'compile';
-      const assemblyField = h('label', { class: 'set-field', 'data-preset-assembly': kind }, [
-        h('span', { class: 'set-field__label' }, '组装方式'),
-        h('span', { class: 'faint set-help' }, '酒馆预设里没有“用户输入”这个槽位，所以任务消息的送达方式必须显式指定。'),
-        assembly
-      ]);
-      card.appendChild(assemblyField);
-      const assemblyNote = h('p', { class: 'faint set-help', 'data-assembly-note': kind });
-      card.appendChild(assemblyNote);
       const missingPreset = setting.presetName && !presetNames.includes(setting.presetName)
         ? [h('option', { value: setting.presetName }, setting.presetName + '（已不存在，请重新选择）')]
         : [];
@@ -5732,44 +5854,9 @@ window.Chat = Chat;
       const effective = h('p', { class: 'faint set-help preset-effective', 'data-preset-effective': kind });
       card.appendChild(effective);
 
-      const compiledPreview = h('pre', { class: 'prompt-preview', 'data-assembly-preview': kind, hidden: '' });
-      const previewBtn = h('button', { class: 'btn btn--ghost btn--sm', type: 'button', 'data-preview-assembly': kind }, '预览本阶段组装结果');
-      previewBtn.addEventListener('click', () => {
-        const draft = {
-          mode: mode.value,
-          presetName: fixed.querySelector('select').value,
-          assembly: assembly.value,
-          blockDepthEntries: blockDepth.checked,
-          context: {}
-        };
-        Object.keys(contextLabels).forEach((key) => {
-          const input = card.querySelector('[name="' + kind + 'Context_' + key + '"]');
-          draft.context[key] = !!(input && input.checked);
-        });
-        try {
-          const task = ApiEngine.buildPrompt({
-            purpose: kind,
-            baseline: window.MVU && MVU.getDataSnapshot ? MVU.getDataSnapshot() : { stat_data: {} },
-            calculated: kind === 'endday' ? { 说明: '预览占位，实际由脚本结算填入' } : null
-          });
-          compiledPreview.textContent = describeAssembly(draft, task);
-          compiledPreview.hidden = false;
-          compiledPreview.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        } catch (e) { toast('error', '无法生成组装预览', e && e.message || String(e)); }
-      });
-      card.appendChild(h('div', { class: 'settings-actions' }, previewBtn));
-      card.appendChild(compiledPreview);
-
       const sync = () => {
         fixed.hidden = mode.value !== 'fixed';
         context.hidden = mode.value !== 'none';
-        assemblyField.hidden = mode.value === 'none';
-        assemblyNote.hidden = mode.value === 'none';
-        if (mode.value !== 'none') {
-          assemblyNote.textContent = assembly.value === 'inject'
-            ? '⚠ 保真：预设的提示词、参数与深度条目完全由酒馆组装，任务消息以 depth 0 注入聊天区。落点由酒馆决定，若该预设没有启用聊天历史条目，任务消息仍可能不进入请求。'
-            : '读取该预设，按原顺序把启用的提示词条目编译成消息列表，末尾强制追加变量更新任务。任务消息不可能丢失；代价是预设的 squash_system_messages、角色名前缀、reasoning_effort 等设置不生效，in_chat 深度条目改为相对位置。';
-        }
         const checkedContext = Object.keys(contextLabels).filter((key) => {
           const input = card.querySelector('[name="' + kind + 'Context_' + key + '"]');
           return input && input.checked;
@@ -5779,15 +5866,17 @@ window.Chat = Chat;
           parts.push('本次只发送：本项目更新指导 + 输出格式 + 最近三层正文 + 当前变量快照');
           if (checkedContext.length) parts.push('额外携带：' + checkedContext.join('、'));
           else parts.push('不携带任何角色卡或世界书内容');
+        } else if (mode.value === 'current') {
+          parts.push('使用酒馆当前预设');
+          parts.push('任务只发送一次（通过 user_input）');
         } else {
-          parts.push(mode.value === 'current' ? '使用酒馆当前预设' : '使用固定预设');
-          parts.push(assembly.value === 'inject' ? '预设完全保真，任务消息以 depth 0 注入' : '预设编译成消息列表，任务消息强制置于末位');
+          parts.push('短暂切换到固定预设并发起请求，然后立即切回且不等待 API 回复');
+          parts.push('任务只发送一次（通过 user_input）');
         }
         parts.push(blockDepth.checked ? '已屏蔽深度注入与作者注释' : '⚠ 放行深度注入与作者注释');
         effective.textContent = '实际发送：' + parts.join('；') + '。';
       };
       mode.addEventListener('change', sync);
-      assembly.addEventListener('change', sync);
       blockDepth.addEventListener('change', sync);
       card.querySelectorAll('[name^="' + kind + 'Context_"]').forEach((input) => input.addEventListener('change', sync));
       sync();
@@ -5808,7 +5897,6 @@ window.Chat = Chat;
         return {
           mode: presetForm.elements[kind + 'PresetMode'].value,
           presetName: presetForm.elements[kind + 'PresetName'].value,
-          assembly: presetForm.elements[kind + 'Assembly'].value,
           blockDepthEntries: !!presetForm.elements[kind + 'BlockDepth'].checked,
           temperature: presetForm.elements[kind + 'Temperature'].value,
           context
@@ -5829,45 +5917,6 @@ window.Chat = Chat;
     backdrop.appendChild(pop); document.body.appendChild(backdrop);
     Icon.render(pop);
     backdrop.addEventListener('mousedown', (e) => { if (e.target === backdrop) close(); });
-  }
-
-  /** 把本阶段的组装结果渲染成可核验的清单：序号、角色、来源、字符数。 */
-  function describeAssembly(preset, task) {
-    const line = (index, role, source, size) => `${String(index).padStart(2, ' ')}. [${role}] ${source} · ${size} 字`;
-    if (preset.mode === 'none') {
-      const list = ApiEngine.orderedPrompts(preset.context);
-      const rows = list.map((item, i) => (item === 'user_input'
-        ? line(i + 1, 'user', '本项目变量更新任务', task.length)
-        : line(i + 1, 'system', '酒馆占位符 ' + item, '由酒馆填充')));
-      return ['不带预设 · generateRaw', ''].concat(rows, ['', '任务消息位置：第 ' + list.length + ' 条（末位，由 user_input 占位符承载）']).join('\n');
-    }
-    if (preset.assembly === 'inject') {
-      return [
-        '保真 + 注入 · generate(preset_name=' + (preset.mode === 'current' ? 'in_use' : preset.presetName) + ')',
-        '',
-        '预设的提示词条目、生成参数与 in_chat 深度条目全部由酒馆组装，此处无法逐条列出。',
-        '',
-        '注入的任务消息：',
-        '  role: system',
-        '  position: in_chat, depth: 0',
-        '  should_scan: false（不参与世界书绿灯扫描）',
-        '  长度: ' + task.length + ' 字',
-        '',
-        '⚠ 落点由酒馆决定。若该预设没有启用聊天历史条目，任务消息仍可能不进入最终请求。',
-        '如需结构性保证，改用「编译成消息列表」。'
-      ].join('\n');
-    }
-    const name = preset.mode === 'current' ? 'in_use' : preset.presetName;
-    let compiled;
-    try { compiled = ApiEngine.compilePreset(name, preset, task); }
-    catch (e) { return '无法编译预设「' + name + '」：' + (e && e.message || e); }
-    const rows = compiled.map((item, i) => (typeof item === 'string'
-      ? line(i + 1, 'system', '酒馆占位符 ' + item, '由酒馆填充')
-      : line(i + 1, item.role, item.content === task ? '本项目变量更新任务' : '预设提示词条目', item.content.length)));
-    return ['编译成消息列表 · generateRaw（预设：' + name + '）', ''].concat(rows, [
-      '',
-      '任务消息位置：第 ' + compiled.length + ' 条（末位，数组字面对象，酒馆无法丢弃）'
-    ]).join('\n');
   }
 
   function h(tag, attrs = {}, children = []) {
