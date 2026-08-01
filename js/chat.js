@@ -398,8 +398,11 @@ const Chat = (function () {
       const messageId = await waitForMainReply(beforeId, token, startCycle, true);
       console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
       let calculated = null, settledData = null, pendingFirstWrite = null;
+      let normalStage = purpose === 'endday' && mode !== 'multi'
+        ? { stage: 'normal', stageId: 'endday:' + messageId + ':normal', ok: true, source: 'main-story', error: null }
+        : null;
       if (purpose === 'endday' && mode === 'multi' && window.ApiEngine) {
-        await ApiEngine.processAfterMain({ baseline, messageId, purpose: 'normal', calculated: null });
+        normalStage = await ApiEngine.processAfterMain({ baseline, messageId, purpose: 'normal', calculated: null });
       }
       if (window.MVU) {
         if (purpose === 'endday' && typeof MVU.settleForWrite === 'function') {
@@ -428,7 +431,17 @@ const Chat = (function () {
         let outcome = null;
         if (purpose === 'endday') {
           setRequestStatus('归寝日结', mode === 'multi' ? '正在由第二 API 执行跨日变量更新…' : '正在由当前主 API 执行跨日变量更新…', true);
-          outcome = await ApiEngine.processEndday({ baseline: window.MVU ? MVU.getDataSnapshot() : baseline, messageId, purpose, calculated });
+          const stageFacts = normalStage && normalStage.ok === false
+            ? '日常变量阶段失败；不得猜测、补算或重复执行日常即时变化。错误：'
+              + String(normalStage.error && normalStage.error.message || normalStage.error || '未知错误')
+            : '';
+          outcome = await ApiEngine.processEndday({
+            baseline: window.MVU ? MVU.getDataSnapshot() : baseline,
+            messageId,
+            purpose,
+            calculated,
+            stageFacts
+          });
         } else if (mode === 'multi') {
           setRequestStatus('第二 API', '正在计算本轮变量更新…', true);
           outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose, calculated });
@@ -440,10 +453,19 @@ const Chat = (function () {
             try { await MVU.enforceAndWrite(settledData, messageId); }
             catch (error) { writeError = error; }
           }
-          const updateError = writeError
-            ? '最终 MVU 写回失败：' + (writeError.message || writeError)
-            : (outcome && outcome.error ? String(outcome.error.message || outcome.error) : '');
-          const complete = !!(outcome && outcome.ok) && !writeError;
+          const errors = [
+            normalStage && normalStage.error
+              ? '日常阶段：' + String(normalStage.error.message || normalStage.error)
+              : '',
+            outcome && outcome.error
+              ? '归寝阶段：' + String(outcome.error.message || outcome.error)
+              : '',
+            writeError
+              ? '最终 MVU 写回失败：' + String(writeError.message || writeError)
+              : ''
+          ].filter(Boolean);
+          const updateError = errors.join('；');
+          const complete = !!(normalStage && normalStage.ok) && !!(outcome && outcome.ok) && !writeError;
           if (pendingFirstWrite && window.MVU && typeof MVU.enforceAndWrite === 'function') {
             pendingFirstWrite.then(
               () => MVU.enforceAndWrite(settledData, messageId),

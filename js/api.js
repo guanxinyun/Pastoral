@@ -180,6 +180,7 @@ const ApiEngine = (function () {
     const calculated = context.calculated
       ? '【脚本已确定事实（不得重算或重复应用）】\n' + JSON.stringify(context.calculated)
       : '';
+    const stageFacts = String(context.stageFacts || '').trim();
     const stage = kind === 'endday' ? '归寝日结' : '日常更新';
     return [
       '你是暮归旅店的变量计算引擎，不续写剧情。',
@@ -189,6 +190,7 @@ const ApiEngine = (function () {
       '【最近三层正文】\n' + (history || '（无）'),
       '【主生成前当前变量数据】\n' + JSON.stringify(context.baseline && context.baseline.stat_data || {}),
       calculated,
+      stageFacts ? '【阶段执行事实】\n' + stageFacts : '',
       extra ? '【附加信息】\n' + extra : '',
       '【输出要求】\n必须输出且只输出一个完整的 <UpdateVariable><Analysis>...</Analysis><JSONPatch>[...]</JSONPatch></UpdateVariable> 标签；JSONPatch 必须是合法 JSON 数组，无变化时输出 []。不得输出 lodash 命令或 Markdown 代码围栏。归寝日结不得覆盖脚本已确定事实。'
     ].filter(Boolean).join('\n\n');
@@ -523,12 +525,27 @@ const ApiEngine = (function () {
       if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
       lastFailure = null;
       status('变量更新完成', `已写回第 ${messageId} 楼`, false, { id: generated.id, messageId, purpose: context.purpose });
-      return { ok: true, source: generated.source, summary: generated.summary, messageId };
+      return {
+        stage: context.purpose === 'endday' ? 'endday' : 'normal',
+        stageId: 'endday:' + messageId + ':' + (context.purpose === 'endday' ? 'endday' : 'normal'),
+        ok: true,
+        source: generated.source,
+        summary: generated.summary,
+        error: null,
+        messageId
+      };
     } catch (e) {
       lastFailure = Object.assign({}, context, { messageId });
       error(PREFIX_SECOND, '降级保留主模型变量', e);
       if (typeof toast === 'function') toast('error', '第二 API 失败', (e && e.message || String(e)) + '；已保留主模型结果，可手动重试。');
-      return { ok: false, source: 'main', error: e, messageId };
+      return {
+        stage: context.purpose === 'endday' ? 'endday' : 'normal',
+        stageId: 'endday:' + messageId + ':' + (context.purpose === 'endday' ? 'endday' : 'normal'),
+        ok: false,
+        source: 'second',
+        error: e,
+        messageId
+      };
     }
   }
 
@@ -588,27 +605,63 @@ const ApiEngine = (function () {
         const generated = await ApiEngine.callSecondApiForVariable(Object.assign({}, context, { messageId, purpose: 'endday' }));
         await applyUpdate(messageId, message.message || '', context.baseline, generated);
         if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
-        return { ok: true, source: 'second', summary: generated.summary, messageId };
+        return {
+          stage: 'endday',
+          stageId: 'endday:' + messageId + ':endday',
+          ok: true,
+          source: 'second',
+          summary: generated.summary,
+          error: null,
+          messageId
+        };
       } catch (secondError) {
         error(PREFIX_SECOND, '归寝日结失败', secondError);
         if (typeof toast === 'function') {
           toast('error', '第二 API 日结失败', (secondError && secondError.message || String(secondError)) + '；已保留确定性结算，可在设置中重试。');
         }
         lastFailure = Object.assign({}, context, { messageId, purpose: 'endday' });
-        return { ok: false, source: 'second', error: secondError, messageId };
+        return {
+          stage: 'endday',
+          stageId: 'endday:' + messageId + ':endday',
+          ok: false,
+          source: 'second',
+          error: secondError,
+          messageId
+        };
       }
     }
     try {
       // 主剧情的 MVU 已由酒馆处理，单 API 日结从此刻最新快照继续计算。
       const baseline = MVU.getDataSnapshot ? MVU.getDataSnapshot() : context.baseline;
-      const generated = await callMainApiForDaily({ baseline, messageId, purpose: 'endday', calculated: context.calculated });
+      const generated = await callMainApiForDaily({
+        baseline,
+        messageId,
+        purpose: 'endday',
+        calculated: context.calculated,
+        stageFacts: context.stageFacts
+      });
       await appendDailyUpdate(messageId, message.message || '', baseline, generated);
       if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
-      return { ok: true, source: 'main', summary: generated.summary, messageId };
+      return {
+        stage: 'endday',
+        stageId: 'endday:' + messageId + ':endday',
+        ok: true,
+        source: 'main',
+        summary: generated.summary,
+        error: null,
+        messageId
+      };
     } catch (e) {
       error(PREFIX_MAIN, '日结失败', e);
       if (typeof toast === 'function') toast('error', '每日结算失败', e && e.message || String(e));
-      return { ok: false, source: 'main', error: e, messageId };
+      return {
+        stage: 'endday',
+        stageId: 'endday:' + messageId + ':endday',
+        ok: false,
+        source: 'main',
+        error: e,
+        messageId
+      };
     }
   }
 

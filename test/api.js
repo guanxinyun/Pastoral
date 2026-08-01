@@ -482,9 +482,62 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     win.MVU.enforceAndWrite = async () => { stages.push('enforce'); };
     await win.Chat.handleUnifiedRequest('归寝入眠', { kind: 'endday' });
     ok(stages.join('>') === 'normal>settle>initial-write>endday>enforce', '多 API 归寝严格执行日常→脚本→首次写回→归寝→事实锁定');
+
+    // 日常与归寝必须分别读取自己的阶段配置，固定预设短切 A 后再短切 B。
+    const stagePresets = [];
+    win.Settings.load = () => ({
+      apiMode: 'multi',
+      prompts: { normal: 'NORMAL_GUIDE_A', endday: 'ENDDAY_GUIDE_B' },
+      variablePresets: {
+        normal: { mode: 'fixed', presetName: '日常A', context: {} },
+        endday: { mode: 'fixed', presetName: '归寝B', context: {} }
+      },
+      secondApi: { url: 'x', key: 'k', model: 'm', timeout: 1000, maxRetries: 0 }
+    });
+    win.ApiEngine.processAfterMain = async (context) => {
+      const snapshot = win.ApiEngine.createStageSnapshot('normal', win.Settings.load());
+      stagePresets.push(context.purpose + ':' + snapshot.presetName);
+      return { ok: true, stage: 'normal', source: 'second', error: null };
+    };
+    win.ApiEngine.processEndday = async (context) => {
+      const snapshot = win.ApiEngine.createStageSnapshot('endday', win.Settings.load());
+      stagePresets.push(context.purpose + ':' + snapshot.presetName + ':' + String(context.stageFacts || ''));
+      return { ok: true, stage: 'endday', source: 'second', summary: '完成', error: null };
+    };
+    win.MVU.enforceAndWrite = async () => {};
+    await win.Chat.handleUnifiedRequest('分阶段预设归寝', { kind: 'endday' });
+    ok(stagePresets[0] === 'normal:日常A' && stagePresets[1].startsWith('endday:归寝B:'),
+      '多 API 归寝严格使用日常 A 与归寝 B 两份独立设置');
     const summaries = [];
     win.addEventListener('pastoral:daily-summary', (e) => summaries.push(e.detail));
+
+    // 多 API 日常失败仍继续确定性与归寝，但必须向归寝传递禁止补算事实并标记部分完成。
+    const failureStages = [];
+    win.ApiEngine.processAfterMain = async () => {
+      failureStages.push('normal-failed');
+      return { ok: false, stage: 'normal', source: 'second', error: new Error('日常模型失败') };
+    };
+    win.ApiEngine.processEndday = async (context) => {
+      failureStages.push('endday:' + String(context.stageFacts || ''));
+      return { ok: true, stage: 'endday', source: 'second', summary: '归寝完成', error: null };
+    };
+    win.MVU.settleForWrite = () => { failureStages.push('settle'); return { data: { stat_data: { settled: true } }, report: {}, calculated: { dimensions: {}, total: 0 } }; };
+    win.MVU.writeWithTimeout = async () => ({ ok: true });
+    win.MVU.enforceAndWrite = async () => { failureStages.push('enforce'); };
+    await win.Chat.handleUnifiedRequest('日常失败仍归寝', { kind: 'endday' });
+    const partial = summaries[summaries.length - 1];
+    ok(failureStages[0] === 'normal-failed' && failureStages.includes('settle')
+      && failureStages.some((x) => /^endday:/.test(x)) && failureStages.includes('enforce'),
+    '日常阶段失败后仍继续确定性结算、归寝与事实锁定');
+    ok(failureStages.some((x) => /日常变量阶段失败.*不得猜测.*补算/.test(x)), '归寝阶段收到日常失败禁止补算事实');
+    ok(partial && partial.updateOk === false && /日常阶段.*日常模型失败/.test(partial.updateError),
+      '日常阶段失败使最终账簿明确标为部分完成');
+
     stages.length = 0;
+    win.ApiEngine.processAfterMain = async () => ({ ok: true, stage: 'normal', source: 'second', error: null });
+    win.MVU.settleForWrite = () => { stages.push('settle'); return { data: { stat_data: { settled: true } }, report: {}, calculated: { dimensions: {}, total: 0 } }; };
+    win.MVU.writeWithTimeout = async () => ({ ok: true });
+    win.MVU.enforceAndWrite = async () => { stages.push('enforce'); };
     win.ApiEngine.processEndday = async () => { stages.push('endday'); return { ok: false, source: 'main', error: new Error('日结模型失败') }; };
     await win.Chat.handleUnifiedRequest('再次归寝', { kind: 'endday' });
     ok(stages.includes('settle') && stages.includes('enforce') && summaries.some((x) => x.updateOk === false && /日结模型失败/.test(x.updateError)), '额外 AI 失败时仍保留确定性结算并触发账簿');
