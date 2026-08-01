@@ -95,6 +95,8 @@ ok(/\.journal__stream::-webkit-scrollbar-thumb/.test(CSS), '对话流滚动条�
 
 console.log('\n[5] 标题、序章与全面视觉契约');
 ok(/\.title-screen\s*\{[^}]*min-height:\s*100svh/.test(CSS), '标题占据沉浸视口');
+ok(!/\.title-screen__scene\s*>\s*span\s*\{[^}]*inset:\s*0/.test(CSS), '标题场景通用层不覆盖各景物定位');
+ok(/\.title-screen__inn\s*\{[^}]*right:\s*13%[^}]*bottom:\s*12%/.test(CSS), '旅店定位在山谷右下方');
 ok(/\.prologue__measure\s*\{[^}]*max-width:\s*72ch/.test(CSS), '序章阅读宽度限制为 72ch');
 ok(/\.bub__body\s*>\s*\*\s*\{[^}]*max-width:\s*(66ch|72ch)/.test(CSS), '正式正文阅读宽度受限');
 ok(/min-height:\s*44px/.test(CSS), '交互控件包含 44px 触控目标');

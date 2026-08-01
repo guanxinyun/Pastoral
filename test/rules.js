@@ -32,7 +32,15 @@ ok(/_.*只读/.test(format), '保留只读字段限制');
 console.log('\n[Builtin guides in HTML]');
 {
   const { JSDOM } = require('jsdom');
-  require(path.join(__dirname, '..', 'tools', 'gen-rules.js')).build();
+  const generator = require(path.join(__dirname, '..', 'tools', 'gen-rules.js'));
+  const generatedPath = path.join(__dirname, '..', 'js', 'rules.js');
+  generator.build();
+  const stableTime = new Date('2001-02-03T04:05:06.000Z');
+  fs.utimesSync(generatedPath, stableTime, stableTime);
+  const before = fs.statSync(generatedPath).mtimeMs;
+  generator.build();
+  const after = fs.statSync(generatedPath).mtimeMs;
+  ok(after === before, '相同规则内容不会重复写入并触发 dev 监听');
   const dom = new JSDOM('<!doctype html>', { runScripts: 'dangerously', url: 'http://localhost/' });
   dom.window.eval(fs.readFileSync(path.join(__dirname, '..', 'js', 'rules.js'), 'utf8'));
   const R = dom.window.Rules;

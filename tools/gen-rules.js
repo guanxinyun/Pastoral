@@ -86,7 +86,9 @@ const Rules = (function () {
 window.Rules = Rules;
 `;
   fs.mkdirSync(path.join(root, 'js'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'js', 'rules.js'), out);
+  const outputPath = path.join(root, 'js', 'rules.js');
+  const current = fs.existsSync(outputPath) ? fs.readFileSync(outputPath, 'utf8') : '';
+  if (current !== out) fs.writeFileSync(outputPath, out);
   return out.length;
 }
 

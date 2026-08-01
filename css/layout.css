@@ -18,23 +18,24 @@
   transition: opacity 420ms var(--ease-ink), transform 420ms var(--ease-page), filter 420ms var(--ease-ink);
 }
 .title-screen.is-leaving { opacity: 0; transform: translateY(-12px) scale(1.01); filter: blur(3px); pointer-events: none; }
-.title-screen__scene, .title-screen__scene > span { position: absolute; inset: 0; pointer-events: none; }
-.title-screen__sky {
+.title-screen__scene { position: absolute; inset: 0; pointer-events: none; }
+.title-screen__scene > span { position: absolute; pointer-events: none; }
+.title-screen__sky { inset: 0;
   background:
     radial-gradient(circle at 73% 17%, hsl(41 80% 78% / .95) 0 2.4%, hsl(41 84% 66% / .2) 4% 17%, transparent 32%),
     linear-gradient(177deg, var(--color-title-sky) 0%, hsl(214 40% 26%) 38%, var(--color-title-horizon) 72%, hsl(39 68% 66%) 100%);
 }
-.title-screen__mountains--far { top: 32%; clip-path: polygon(0 54%,8% 35%,17% 52%,27% 22%,38% 51%,51% 17%,62% 48%,74% 28%,87% 54%,100% 35%,100% 100%,0 100%); background: hsl(211 38% 19% / .78); }
-.title-screen__mountains--near { top: 45%; clip-path: polygon(0 43%,12% 25%,23% 48%,36% 16%,48% 46%,64% 23%,77% 49%,90% 20%,100% 44%,100% 100%,0 100%); background: hsl(166 25% 13% / .9); }
-.title-screen__lake { top: 60%; background: linear-gradient(180deg, hsl(205 36% 27% / .8), hsl(165 31% 10% / .92)), repeating-linear-gradient(177deg, transparent 0 11px, hsl(41 74% 69% / .12) 12px 13px); clip-path: polygon(5% 15%,100% 0,100% 100%,0 100%); }
-.title-screen__mist { top: 53%; height: 28%; background: radial-gradient(ellipse at center, hsl(42 44% 87% / .19), transparent 67%); filter: blur(12px); }
+.title-screen__mountains--far { inset: 32% 0 0; clip-path: polygon(0 54%,8% 35%,17% 52%,27% 22%,38% 51%,51% 17%,62% 48%,74% 28%,87% 54%,100% 35%,100% 100%,0 100%); background: hsl(211 38% 19% / .78); }
+.title-screen__mountains--near { inset: 45% 0 0; clip-path: polygon(0 43%,12% 25%,23% 48%,36% 16%,48% 46%,64% 23%,77% 49%,90% 20%,100% 44%,100% 100%,0 100%); background: hsl(166 25% 13% / .9); }
+.title-screen__lake { inset: 60% 0 0; background: linear-gradient(180deg, hsl(205 36% 27% / .8), hsl(165 31% 10% / .92)), repeating-linear-gradient(177deg, transparent 0 11px, hsl(41 74% 69% / .12) 12px 13px); clip-path: polygon(5% 15%,100% 0,100% 100%,0 100%); }
+.title-screen__mist { inset: 53% 0 auto; height: 28%; background: radial-gradient(ellipse at center, hsl(42 44% 87% / .19), transparent 67%); filter: blur(12px); }
 .title-screen__mist--two { top: 62%; transform: translateX(-12%); opacity: .62; }
-.title-screen__tree { right: auto; width: 58%; background: radial-gradient(ellipse at 21% 45%, hsl(154 42% 5% / .98) 0 18%, transparent 45%), linear-gradient(74deg, transparent 0 25%, hsl(151 33% 5%) 26% 31%, transparent 32%); }
-.title-screen__inn { inset: auto 13% 12%; width: min(340px, 38vw); height: min(210px, 25vw); background: hsl(28 42% 11%); clip-path: polygon(4% 35%,48% 3%,96% 35%,90% 35%,90% 100%,10% 100%,10% 35%); filter: drop-shadow(0 18px 24px hsl(0 0% 0% / .45)); }
+.title-screen__tree { inset: 0 auto 0 0; width: 58%; background: radial-gradient(ellipse at 21% 45%, hsl(154 42% 5% / .98) 0 18%, transparent 45%), linear-gradient(74deg, transparent 0 25%, hsl(151 33% 5%) 26% 31%, transparent 32%); }
+.title-screen__inn { right: 13%; bottom: 12%; width: min(340px, 38vw); height: min(210px, 25vw); background: hsl(28 42% 11%); clip-path: polygon(4% 35%,48% 3%,96% 35%,90% 35%,90% 100%,10% 100%,10% 35%); filter: drop-shadow(0 18px 24px hsl(0 0% 0% / .45)); }
 .title-screen__inn::before { content: ""; position: absolute; inset: 30% 10% 0; background: repeating-linear-gradient(90deg, transparent 0 19%, hsl(33 32% 18%) 20% 23%); }
 .title-screen__inn i { position: absolute; z-index: 2; width: 9%; aspect-ratio: .75; bottom: 28%; background: hsl(42 90% 68%); box-shadow: 0 0 22px hsl(42 90% 64% / .7); }
 .title-screen__inn i:nth-child(1) { left: 27%; } .title-screen__inn i:nth-child(2) { left: 47%; } .title-screen__inn i:nth-child(3) { right: 27%; }
-.title-screen__fireflies { background-image: radial-gradient(circle at 12% 72%, hsl(46 95% 75%) 0 1px, transparent 2px), radial-gradient(circle at 22% 61%, hsl(46 95% 75%) 0 1.5px, transparent 2.5px), radial-gradient(circle at 66% 74%, hsl(46 95% 75%) 0 1px, transparent 2px), radial-gradient(circle at 78% 55%, hsl(46 95% 75%) 0 1px, transparent 2px), radial-gradient(circle at 87% 69%, hsl(46 95% 75%) 0 1.5px, transparent 2.5px); filter: drop-shadow(0 0 5px hsl(46 95% 70%)); }
+.title-screen__fireflies { inset: 0; background-image: radial-gradient(circle at 12% 72%, hsl(46 95% 75%) 0 1px, transparent 2px), radial-gradient(circle at 22% 61%, hsl(46 95% 75%) 0 1.5px, transparent 2.5px), radial-gradient(circle at 66% 74%, hsl(46 95% 75%) 0 1px, transparent 2px), radial-gradient(circle at 78% 55%, hsl(46 95% 75%) 0 1px, transparent 2px), radial-gradient(circle at 87% 69%, hsl(46 95% 75%) 0 1.5px, transparent 2.5px); filter: drop-shadow(0 0 5px hsl(46 95% 70%)); }
 .title-screen__content { position: relative; z-index: 3; width: min(680px, calc(100% - 40px)); padding: clamp(28px, 6vw, 64px); text-align: center; text-shadow: 0 3px 24px hsl(211 70% 4% / .76); }
 .title-screen__eyebrow { margin-bottom: var(--space-5); color: hsl(42 62% 82%); font-family: var(--font-kai); font-size: var(--font-size-xs); letter-spacing: .26em; text-transform: uppercase; }
 .title-screen h1 { max-width: 12ch; margin-inline: auto; color: inherit; font-size: clamp(2.4rem, 8vw, 5.2rem); font-weight: 600; line-height: 1.12; letter-spacing: .08em; }
