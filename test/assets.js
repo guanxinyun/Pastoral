@@ -24,6 +24,8 @@ function ok(cond, label) { console.log((cond ? '  ✓ ' : '  ✗ ') + label); if
   const render = fs.readFileSync(path.join(__dirname, '..', 'js', 'render.js'), 'utf8');
   ok(/data-avatar-upload/.test(render) && /accept="image\/\*"/.test(render), '员工卡提供 image/* 头像上传入口');
   ok(/data-avatar-remove/.test(render), '员工卡提供移除头像操作');
+  ok(/data-staff-toggle/.test(render) && /aria-expanded/.test(render), '员工卡提供可访问的详情展开按钮');
+  ok(/data-staff-detail/.test(render) && /expandedStaff/.test(render), '员工详情与展开状态可跨重绘保持');
 
   console.log(failed ? `\n✗ ${failed} 项失败` : '\n✓ 全部通过');
   process.exit(failed ? 1 : 0);

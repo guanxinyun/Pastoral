@@ -12,6 +12,7 @@
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const NS = 'http://www.w3.org/2000/svg';
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const expandedStaff = new Set();
 
   /* ---------- 通用 DOM ---------- */
   function h(tag, attrs = {}, children = []) {
@@ -558,41 +559,52 @@
   /* ---- 员工 ---- */
   function renderStaff(container, s) {
     const staff = entries(get(s, '旅店.员工', {}));
+    const names = new Set(staff.map(([name]) => name));
+    Array.from(expandedStaff).forEach((name) => { if (!names.has(name)) expandedStaff.delete(name); });
     if (!staff.length) { container.innerHTML = emptyState('person', '尚无雇员', '经由招募渠道寻访帮手。'); Icon.render(container); return; }
     container.innerHTML = panelH('员工名册', `${staff.length}`) + staff.map(([name, m], i) => {
       const attr = get(m, '属性', {}), st = get(m, '状态', {}), job = get(m, '职业信息', {}), gem = get(m, '心之宝石', {});
       const skills = get(m, '技能', []) || [];
       const axes = ['技艺', '悟性', '体力', '亲和', '专注'];
-      const vals = axes.map((k) => num(attr[k], 0));
       const morale = clamp(num(get(st, '士气', 0), 0), 0, 100);
       const loyal = clamp(num(get(st, '忠诚度', 0), 0), 0, 100);
       const ener = clamp(num(get(st, '精力', 0), 0), 0, 100);
       const light = (gem.闪光圣岩 || []), dark = (gem.暗影原石 || []);
-      return `<div class="staff-card ${morale < 30 ? 'low-morale' : ''}">
-        <div class="staff-card__head">
-          <div class="staff-avatar-wrap">
-            <div class="staff-avatar" data-avatar-name="${name}">${(name || '?').slice(0, 1)}</div>
-            <label class="staff-avatar__upload" data-tip="上传头像"><span class="sr-only">为 ${name} 上传头像</span><input type="file" accept="image/*" data-avatar-upload="${name}"><span class="ic" data-i="plus"></span></label>
-            <button class="staff-avatar__remove" type="button" data-avatar-remove="${name}" data-tip="移除头像" aria-label="移除 ${name} 的头像"><span class="ic" data-i="close"></span></button>
-          </div>
-          <div style="flex:1"><div class="staff-card__name">${name}</div><div class="staff-card__role">${get(job, '职业', '帮工')} · <span class="class-badge">${get(job, '阶级', 'T1')}</span></div></div>
-          <svg class="mini-radar" id="radarStaff${i}" viewBox="0 0 50 50"></svg>
+      const detailId = `staffDetail${i}`;
+      const expanded = expandedStaff.has(name);
+      return `<article class="staff-card ${morale < 30 ? 'low-morale' : ''}" data-staff-card="${name}">
+        <div class="staff-card__summary-row">
+          <div class="staff-avatar-wrap"><div class="staff-avatar" data-avatar-name="${name}">${(name || '?').slice(0, 1)}</div></div>
+          <button class="staff-card__toggle ${expanded ? 'is-expanded' : ''}" type="button" data-staff-toggle="${name}" aria-expanded="${expanded}" aria-controls="${detailId}">
+            <span><span class="staff-card__name">${name}</span><span class="staff-card__role">${get(job, '职业', '帮工')} · <span class="class-badge">${get(job, '阶级', 'T1')}</span></span></span>
+            <span class="ic staff-card__chevron" data-i="chevronD" aria-hidden="true"></span>
+          </button>
         </div>
-        <div class="staff-card__stats">
+        <div class="staff-card__stats staff-card__quick-stats">
           <div class="stat-line"><span class="stat-line__label">精力 ${ener}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${ener}%;background:var(--color-primary)"></div></div></div>
           <div class="stat-line"><span class="stat-line__label">士气 ${morale}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${morale}%;background:var(--color-success)"></div></div></div>
           <div class="stat-line"><span class="stat-line__label">忠诚 ${loyal}</span><div class="stat-line__bar"><div class="stat-line__fill" style="width:${loyal}%;background:var(--color-accent)"></div></div></div>
         </div>
-        <div class="row" style="gap:4px;flex-wrap:wrap;margin-top:6px">
-          <span class="pill">日薪 ${num(get(job, '日薪', 0), 0)} 银</span>
-          ${skills.map((sk) => `<span class="pill pill--mint">${sk}</span>`).join('')}
+        <div class="staff-card__detail" id="${detailId}" data-staff-detail="${name}" ${expanded ? '' : 'hidden'}>
+          <div class="staff-card__detail-head">
+            <svg class="mini-radar" id="radarStaff${i}" viewBox="0 0 50 50"></svg>
+            <div class="staff-card__axes">${axes.map((key) => `<span>${key} <strong>${num(attr[key], 0)}</strong></span>`).join('')}</div>
+          </div>
+          <div class="row staff-card__tags">
+            <span class="pill">日薪 ${Money.formatCopper(num(get(job, '日薪', 0), 0))}</span>
+            ${skills.map((skill) => `<span class="pill pill--mint">${skill}</span>`).join('')}
+          </div>
+          ${(light.length || dark.length) ? `<div class="row staff-card__tags">
+            ${light.map((x) => `<span class="gem-tag gem-tag--light">◈ ${x}</span>`).join('')}
+            ${dark.map((x) => `<span class="gem-tag gem-tag--dark">◈ ${x}</span>`).join('')}
+          </div>` : ''}
+          ${get(m, '描述', '') ? `<div class="card__sub staff-card__description">${m.描述}</div>` : ''}
+          <div class="staff-card__avatar-actions">
+            <label class="btn btn--ghost btn--sm staff-avatar__upload-inline"><span class="sr-only">为 ${name} 上传头像</span><input type="file" accept="image/*" data-avatar-upload="${name}"><span class="ic" data-i="plus"></span>上传头像</label>
+            <button class="btn btn--ghost btn--sm" type="button" data-avatar-remove="${name}" aria-label="移除 ${name} 的头像"><span class="ic" data-i="close"></span>移除头像</button>
+          </div>
         </div>
-        ${(light.length || dark.length) ? `<div class="row" style="gap:4px;flex-wrap:wrap;margin-top:4px">
-          ${light.map((x) => `<span class="gem-tag gem-tag--light">◈ ${x}</span>`).join('')}
-          ${dark.map((x) => `<span class="gem-tag gem-tag--dark">◈ ${x}</span>`).join('')}
-        </div>` : ''}
-        ${get(m, '描述', '') ? `<div class="card__sub" style="margin-top:4px;line-height:1.6">${m.描述}</div>` : ''}
-      </div>`;
+      </article>`;
     }).join('');
     Icon.render(container);
     staff.forEach(([name, m], i) => {
@@ -602,11 +614,19 @@
       });
       const svg = $(`#radarStaff${i}`, container); if (!svg) return;
       const attr = get(m, '属性', {});
-      const axes = ['技艺', '悟性', '体力', '亲和', '专注'].map((k) => ({ name: k }));
-      const vals = axes.map(() => 0);
-      const realVals = ['技艺', '悟性', '体力', '亲和', '专注'].map((k) => num(attr[k], 0));
+      const axes = ['技艺', '悟性', '体力', '亲和', '专注'].map((key) => ({ name: key }));
+      const realVals = ['技艺', '悟性', '体力', '亲和', '专注'].map((key) => num(attr[key], 0));
       drawRadar(svg, axes, realVals, Math.max(15, ...realVals, 1), { size: 50, pad: 4, labelPad: 0, showLabels: false, showVals: false, vertexR: 1.6, dur: 600 });
     });
+    $$('[data-staff-toggle]', container).forEach((button) => button.addEventListener('click', () => {
+      const name = button.dataset.staffToggle;
+      const detail = document.getElementById(button.getAttribute('aria-controls'));
+      const expanded = button.getAttribute('aria-expanded') !== 'true';
+      button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      button.classList.toggle('is-expanded', expanded);
+      if (detail) detail.hidden = !expanded;
+      if (expanded) expandedStaff.add(name); else expandedStaff.delete(name);
+    }));
     $$('[data-avatar-upload]', container).forEach((input) => input.addEventListener('change', async () => {
       const file = input.files && input.files[0]; if (!file) return;
       if (!String(file.type || '').startsWith('image/')) { toast('warn', '头像格式不支持', '请选择图片文件。'); return; }
@@ -804,6 +824,7 @@
   const Render = {
     state: {},
     raw: '',
+    expandedStaff,
 
     hud(s) { try { renderHud(s); } catch (e) { console.error('hud', e); } },
 
