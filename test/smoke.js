@@ -30,6 +30,7 @@ function makeChat() {
 function load(floor, opts = {}) {
   const chat = opts.chat || makeChat();
   const calls = { slash: [], set: [], del: [], mvuGet: [] };
+  const mvuFloors = opts.mvuFloors || null;
 
   const dom = new JSDOM(HTML, {
     runScripts: 'dangerously',
@@ -65,7 +66,10 @@ function load(floor, opts = {}) {
       win.waitGlobalInitialized = async () => {};
       win.formatAsTavernRegexedString = (t) => t;
       win.Mvu = {
-        getMvuData: (options) => { calls.mvuGet.push(options); return { stat_data: null, marker: 'latest-snapshot' }; },
+        getMvuData: (options) => {
+          calls.mvuGet.push(options);
+          return mvuFloors ? mvuFloors[options.message_id] : { stat_data: win.SAMPLE_STATE || { 旅店: { 资金: 50000 } }, marker: 'latest-snapshot' };
+        },
         replaceMvuData: async () => true
       };
       win.getPresetNames = () => ['剧情预设', '变量专用'];
@@ -229,6 +233,20 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const sent = calls.slash.join(' | ');
     ok(/\/send 推门远望/.test(sent), '/send 已发出：' + sent);
     ok(/\/trigger/.test(sent), '/trigger 已发出');
+  }
+
+  /* ---------- 1b. 生成中新楼 MVU 为空时保持上一楼 ---------- */
+  console.log('\n[1b] 等待主模型时保持上一楼 MVU');
+  {
+    const chat = makeChat().concat({ message_id: 3, role: 'user', name: '我', is_hidden: false, message: '新的行动' });
+    const { win } = load(0, { chat, mvuFloors: {
+      2: { stat_data: { 旅店: { 资金: 23456 } }, marker: 'previous-valid' },
+      3: { stat_data: null }
+    } });
+    await wait(600);
+    const snapshot = win.MVU.getDataSnapshot();
+    ok(snapshot.marker === 'previous-valid' && snapshot.stat_data.旅店.资金 === 23456,
+      '最新楼未初始化时保持上一楼有效 MVU');
   }
 
   /* ---------- 2. 非 0 楼自我销毁 ---------- */

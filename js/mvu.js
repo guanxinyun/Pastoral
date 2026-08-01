@@ -90,6 +90,8 @@ const MVU = {
 
   api: null,
   initError: null,
+  lastValidSnapshot: null,
+  lastValidMessageId: null,
 
   async init() {
     if (typeof waitGlobalInitialized !== 'function') return;
@@ -118,14 +120,43 @@ const MVU = {
     return JSON.parse(JSON.stringify(value));
   },
 
-  /** 取 lastMessageId 对应的完整 MvuData 独立快照。 */
+  isValidData(data) {
+    return !!data && typeof data === 'object' && !Array.isArray(data)
+      && !!data.stat_data && typeof data.stat_data === 'object'
+      && !Array.isArray(data.stat_data) && Object.keys(data.stat_data).length > 0;
+  },
+
+  rememberValid(data, messageId) {
+    if (!this.isValidData(data)) return null;
+    this.lastValidSnapshot = this.clone(data);
+    this.lastValidMessageId = messageId;
+    return this.clone(this.lastValidSnapshot);
+  },
+
+  /** 取最新有效的完整 MvuData 独立快照；最新楼未初始化时保持上一楼状态。 */
   getDataSnapshot() {
-    try {
-      if (this.ready && this.api) {
-        const data = this.api.getMvuData({ type: 'message', message_id: this.latestMessageId() });
-        if (data) return this.clone(data);
+    if (this.ready && this.api) {
+      const rawLatest = this.latestMessageId();
+      const latest = Number(rawLatest);
+      const target = Number.isInteger(latest) && latest >= 0 ? latest : rawLatest;
+      try {
+        const data = this.api.getMvuData({ type: 'message', message_id: target });
+        const remembered = this.rememberValid(data, target);
+        if (remembered) return remembered;
+      } catch (e) { /* try cache or earlier floors */ }
+
+      if (this.lastValidSnapshot) return this.clone(this.lastValidSnapshot);
+
+      if (Number.isInteger(latest) && latest >= 0) {
+        for (let id = latest - 1; id >= 0; id--) {
+          try {
+            const candidate = this.api.getMvuData({ type: 'message', message_id: id });
+            const remembered = this.rememberValid(candidate, id);
+            if (remembered) return remembered;
+          } catch (e) { /* continue to earlier floor */ }
+        }
       }
-    } catch (e) { /* fall through */ }
+    }
     return { stat_data: this.clone(window.SAMPLE_STATE) };
   },
 
@@ -168,7 +199,9 @@ const MVU = {
       if (typeof getLastMessageId !== 'function') return false;
       throw new Error('MVU 写回接口未就绪' + (this.initError ? '：' + (this.initError.message || this.initError) : ''));
     }
-    await this.api.replaceMvuData(data, { type: 'message', message_id: messageId == null ? this.latestMessageId() : messageId });
+    const target = messageId == null ? this.latestMessageId() : messageId;
+    await this.api.replaceMvuData(data, { type: 'message', message_id: target });
+    this.rememberValid(data, target);
     return true;
   },
 
