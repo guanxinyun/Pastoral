@@ -282,14 +282,14 @@
       ]);
       card.appendChild(context);
 
-      // 三种模式共用：酒馆默认会把世界书按深度插入的条目和作者注释带进任何请求。
+      // 三种模式共用；默认沿用酒馆注入，玩家可按阶段主动屏蔽。
       const blockDepth = h('input', { type: 'checkbox', name: kind + 'BlockDepth', value: '1' });
-      blockDepth.checked = setting.blockDepthEntries !== false;
+      blockDepth.checked = setting.blockDepthEntries === true;
       card.appendChild(h('label', { class: 'preset-check preset-check--wide' }, [
         blockDepth,
         h('div', {}, [
           h('span', {}, '屏蔽世界书按深度注入条目与作者注释'),
-          h('span', { class: 'faint set-help' }, '酒馆默认会把它们塞进每个请求，包括不带预设时。变量计算不需要它们，取消勾选才会放行。')
+          h('span', { class: 'faint set-help' }, '默认沿用酒馆对深度世界书条目与作者注释的处理；勾选后才强制关闭。此项与普通聊天历史开关相互独立。')
         ])
       ]));
       const temperature = h('input', {
@@ -324,7 +324,7 @@
           parts.push('切换到固定预设，等待约 1 秒后发起请求，再保留约 2 秒提示词捕获窗口后切回；不等待 API 回复完成');
           parts.push('任务只发送一次（通过 user_input）');
         }
-        parts.push(blockDepth.checked ? '已屏蔽深度注入与作者注释' : '⚠ 放行深度注入与作者注释');
+        parts.push(blockDepth.checked ? '已屏蔽深度注入与作者注释' : '沿用酒馆深度注入与作者注释');
         effective.textContent = '实际发送：' + parts.join('；') + '。';
       };
       mode.addEventListener('change', sync);

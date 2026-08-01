@@ -236,7 +236,7 @@ const ApiEngine = (function () {
       mode,
       presetName: mode === 'current' ? 'in_use' : String(selected.presetName || '').trim(),
       context,
-      blockDepthEntries: selected.blockDepthEntries !== false,
+      blockDepthEntries: selected.blockDepthEntries === true,
       temperature: Number.isFinite(Number(selected.temperature)) ? Number(selected.temperature) : 0,
       guide: updateGuide(key, cfg)
     });
@@ -296,11 +296,7 @@ const ApiEngine = (function () {
       .concat(['user_input']);
   }
 
-  /**
-   * 关键：`overrides.chat_history.with_depth_entries` 默认为 true，
-   * 所以世界书"按深度插入"的条目和作者注释即使走 generateRaw + ordered_prompts 也会被带进来。
-   * 这里显式清空未选用的上下文，让变量请求真正只发本项目的指导与正文。
-   */
+  /** 普通上下文与深度注入独立控制；只有玩家显式勾选时才屏蔽深度条目和作者注释。 */
   function buildOverrides(preset) {
     const selected = (preset && preset.context) || {};
     const usingPreset = preset && preset.mode !== 'none';
@@ -312,13 +308,13 @@ const ApiEngine = (function () {
         if (selected[key] !== true) overrides[placeholder] = '';
       });
     }
-    // 三种模式都屏蔽深度注入与作者注释：它们不属于"变量更新规则"，只会污染计算。
-    if (preset && preset.blockDepthEntries !== false) {
-      overrides.chat_history = { with_depth_entries: false, author_note: '' };
+    const chatHistory = {};
+    if (preset && preset.blockDepthEntries === true) {
+      chatHistory.with_depth_entries = false;
+      chatHistory.author_note = '';
     }
-    if (!usingPreset && selected.chatHistory !== true) {
-      overrides.chat_history = Object.assign({ with_depth_entries: false, author_note: '' }, overrides.chat_history, { prompts: [] });
-    }
+    if (!usingPreset && selected.chatHistory !== true) chatHistory.prompts = [];
+    if (Object.keys(chatHistory).length) overrides.chat_history = chatHistory;
     return Object.keys(overrides).length ? overrides : null;
   }
 

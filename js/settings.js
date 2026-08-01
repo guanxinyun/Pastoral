@@ -6,6 +6,7 @@ const Settings = (function () {
   'use strict';
 
   const KEY = 'mrfz_settings';
+  const SETTINGS_VERSION = 2;
   // 内置指导来自 js/rules.js（由 tools/gen-rules.js 生成），不再读取世界书。
   const BUILTIN_GUIDE = {
     normal: (window.Rules && Rules.DEFAULT_GUIDE && Rules.DEFAULT_GUIDE.normal) || '根据最新剧情执行常规变量更新。',
@@ -26,9 +27,8 @@ const Settings = (function () {
   const variablePresetDefaults = () => ({
     mode: 'none',
     presetName: '',
-    // 世界书"按深度插入"条目与作者注释默认屏蔽：酒馆默认会带上它们，
-    // 但它们不是变量更新规则，只会污染计算。三种模式一致生效。
-    blockDepthEntries: true,
+    // 默认沿用酒馆对世界书深度条目与作者注释的处理；玩家可按阶段主动屏蔽。
+    blockDepthEntries: false,
     // 变量计算要稳定复现，默认不继承剧情预设的高温。
     temperature: 0,
     context: Object.assign({}, VARIABLE_CONTEXT_DEFAULTS)
@@ -72,13 +72,25 @@ const Settings = (function () {
     catch (e) { return {}; }
   }
 
+  function migrate(value) {
+    const source = merge({}, object(value));
+    if (Number(source.variablePresetSettingsVersion) >= SETTINGS_VERSION) return source;
+    const presets = object(source.variablePresets);
+    source.variablePresets = merge(presets, {
+      normal: merge(object(presets.normal), { blockDepthEntries: false }),
+      endday: merge(object(presets.endday), { blockDepthEntries: false })
+    });
+    source.variablePresetSettingsVersion = SETTINGS_VERSION;
+    return source;
+  }
+
   function normalizeVariablePreset(value) {
     const preset = merge(variablePresetDefaults(), object(value));
     preset.mode = ['none', 'current', 'fixed'].includes(preset.mode) ? preset.mode : 'none';
     preset.presetName = String(preset.presetName == null ? '' : preset.presetName).trim();
     // 旧版本曾暴露 compile/inject 选择；两条通道在不同宿主行为不一致，迁移时删除。
     delete preset.assembly;
-    preset.blockDepthEntries = preset.blockDepthEntries !== false;
+    preset.blockDepthEntries = preset.blockDepthEntries === true;
     const temperature = Number(preset.temperature);
     preset.temperature = Number.isFinite(temperature) ? Math.min(2, Math.max(0, temperature)) : 0;
     preset.context = merge(VARIABLE_CONTEXT_DEFAULTS, object(preset.context));
@@ -104,10 +116,18 @@ const Settings = (function () {
     return cfg;
   }
 
-  function load() { return normalize(raw()); }
+  function load() {
+    const source = raw();
+    const next = normalize(migrate(source));
+    if (!(Number(source.variablePresetSettingsVersion) >= SETTINGS_VERSION)) {
+      try { localStorage.setItem(KEY, JSON.stringify(next)); }
+      catch (e) { console.warn('[Pastoral][Settings]', '迁移设置写回失败', e); }
+    }
+    return next;
+  }
 
   function save(patch) {
-    const next = normalize(merge(raw(), patch));
+    const next = normalize(merge(migrate(raw()), patch));
     try { localStorage.setItem(KEY, JSON.stringify(next)); }
     catch (e) { throw new Error('设置保存失败：' + (e && e.message || e)); }
     return next;
@@ -132,6 +152,6 @@ const Settings = (function () {
     return !!(String(api.url || '').trim() && String(api.key || '').trim() && String(api.model || '').trim());
   }
 
-  return { KEY, DEFAULTS, DEFAULT_PROMPTS, VARIABLE_CONTEXT_DEFAULTS, load, save, normalize, promptFor, builtinGuide, isSecondApiComplete };
+  return { KEY, SETTINGS_VERSION, DEFAULTS, DEFAULT_PROMPTS, VARIABLE_CONTEXT_DEFAULTS, load, save, normalize, promptFor, builtinGuide, isSecondApiComplete };
 })();
 window.Settings = Settings;

@@ -16,6 +16,11 @@ if (fs.existsSync(sourcePath)) {
   win.eval(fs.readFileSync(sourcePath, 'utf8'));
 
   const cfg = win.Settings.load();
+  ok(cfg.variablePresetSettingsVersion === 2, '旧设置加载时迁移到版本 2');
+  ok(cfg.variablePresets.normal.blockDepthEntries === false
+    && cfg.variablePresets.endday.blockDepthEntries === false, '旧设置首次迁移统一改为默认放行深度注入');
+  const migratedRaw = JSON.parse(win.localStorage.getItem('mrfz_settings'));
+  ok(migratedRaw.variablePresetSettingsVersion === 2 && migratedRaw.legacy === 7, '迁移持久化并保留未知字段');
   ok(cfg.apiMode === 'single', '默认单 API 模式');
   ok(cfg.secondApi.timeout === 30000 && cfg.secondApi.maxRetries === 3, '默认超时 30000ms / 重试 3 次');
   ok(cfg.secondApi.model === 'old-model' && cfg.legacy === 7, '读取时保留旧字段并深度合并默认值');
@@ -70,24 +75,24 @@ if (fs.existsSync(sourcePath)) {
   const { window: win } = dom;
   win.eval(fs.readFileSync(sourcePath, 'utf8'));
   const S = win.Settings;
-  const fresh = S.normalize({});
-  ok(fresh.variablePresets.normal.blockDepthEntries === true && fresh.variablePresets.endday.blockDepthEntries === true,
-    '默认屏蔽世界书深度注入条目与作者注释');
+  const fresh = S.normalize({ variablePresetSettingsVersion: 2 });
+  ok(fresh.variablePresets.normal.blockDepthEntries === false && fresh.variablePresets.endday.blockDepthEntries === false,
+    '版本 2 默认放行世界书深度注入条目与作者注释');
   ok(fresh.variablePresets.normal.temperature === 0 && fresh.variablePresets.endday.temperature === 0, '默认采样温度为 0');
-  const explicit = S.normalize({ variablePresets: {
+  const explicit = S.normalize({ variablePresetSettingsVersion: 2, variablePresets: {
     normal: { blockDepthEntries: false, temperature: 0.7 },
     endday: { blockDepthEntries: true, temperature: 9 }
   } });
   ok(explicit.variablePresets.normal.blockDepthEntries === false, '可显式放行深度注入条目');
   ok(explicit.variablePresets.normal.temperature === 0.7, '保留合法采样温度');
   ok(explicit.variablePresets.endday.temperature === 2, '越界采样温度收敛到上限 2');
-  const broken = S.normalize({ variablePresets: { normal: { temperature: 'hot', blockDepthEntries: 'yes' } } });
+  const broken = S.normalize({ variablePresetSettingsVersion: 2, variablePresets: { normal: { temperature: 'hot', blockDepthEntries: 'yes' } } });
   ok(broken.variablePresets.normal.temperature === 0, '非法温度归一化为 0');
-  ok(broken.variablePresets.normal.blockDepthEntries === true, '非布尔屏蔽值归一化为默认屏蔽');
+  ok(broken.variablePresets.normal.blockDepthEntries === false, '非布尔屏蔽值归一化为默认放行');
   const roundTrip = S.save({ variablePresets: { normal: { blockDepthEntries: false, temperature: 0.3 } } });
   ok(roundTrip.variablePresets.normal.blockDepthEntries === false && roundTrip.variablePresets.normal.temperature === 0.3,
     '两项新设置可持久化');
-  ok(roundTrip.variablePresets.endday.blockDepthEntries === true, '只改普通阶段不影响归寝阶段');
+  ok(roundTrip.variablePresets.endday.blockDepthEntries === false, '只改普通阶段不影响归寝阶段默认放行');
   ok(S.load().variablePresets.normal.temperature === 0.3, '重新读取时温度保持已保存值');
 }
 

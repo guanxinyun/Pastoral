@@ -270,12 +270,12 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(createdPresets.length === 0, '不再向玩家预设列表写入内部空白预设');
     ok(!win.ApiEngine.availablePresetNames().includes('【Pastoral 内部】空白变量更新'), '遗留内部预设不出现在可选列表中');
 
-    // 酒馆默认 with_depth_entries=true，会把世界书按深度注入条目和作者注释带进任何请求。
     const firstOverrides = rawConfigs[0].overrides || {};
-    ok(firstOverrides.chat_history && firstOverrides.chat_history.with_depth_entries === false,
-      'none 模式屏蔽世界书按深度注入的条目');
-    ok(firstOverrides.chat_history && firstOverrides.chat_history.author_note === '', 'none 模式清空作者注释');
-    ok(JSON.stringify(firstOverrides.chat_history.prompts) === '[]', '未勾选聊天历史时聊天历史被清空');
+    ok(firstOverrides.chat_history && JSON.stringify(firstOverrides.chat_history.prompts) === '[]',
+      '未勾选普通聊天历史时仍清空 prompts');
+    ok(firstOverrides.chat_history.with_depth_entries === undefined
+      && firstOverrides.chat_history.author_note === undefined,
+      '默认沿用酒馆的深度条目与作者注释');
     ok(firstOverrides.char_description === '' && firstOverrides.world_info_before === '' && firstOverrides.world_info_after === ''
       && firstOverrides.persona_description === '' && firstOverrides.scenario === '' && firstOverrides.char_personality === ''
       && firstOverrides.dialogue_examples === '', 'none 模式清空全部未勾选占位符，杜绝角色卡与世界书残留');
@@ -283,19 +283,26 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       && rawConfigs[0].custom_api.frequency_penalty === 'unset' && rawConfigs[0].custom_api.presence_penalty === 'unset',
       '变量请求不继承剧情预设的采样参数');
 
-    settingsState.variablePresets.normal = { mode: 'none', presetName: '', context: Object.assign({}, noContext, { chatHistory: true, charDescription: true }) };
+    settingsState.variablePresets.normal = { mode: 'none', presetName: '', blockDepthEntries: false, context: Object.assign({}, noContext, { chatHistory: true, charDescription: true }) };
     rawConfigs.length = 0; attempts = 2;
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
     ok(JSON.stringify(rawConfigs[0].ordered_prompts) === JSON.stringify(['char_description', 'chat_history', 'user_input']), '勾选的上下文按酒馆默认顺序追加');
     const pickedOverrides = rawConfigs[0].overrides || {};
-    ok(pickedOverrides.char_description === undefined && pickedOverrides.chat_history.prompts === undefined,
+    ok(pickedOverrides.char_description === undefined && (!pickedOverrides.chat_history || pickedOverrides.chat_history.prompts === undefined),
       '勾选的上下文不被清空');
-    ok(pickedOverrides.chat_history.with_depth_entries === false, '即使勾选聊天历史也仍屏蔽深度注入条目');
+    ok(!pickedOverrides.chat_history || (pickedOverrides.chat_history.with_depth_entries === undefined
+      && pickedOverrides.chat_history.author_note === undefined), '勾选聊天历史时默认仍沿用深度注入');
+
+    settingsState.variablePresets.normal.blockDepthEntries = true;
+    rawConfigs.length = 0; attempts = 2;
+    await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
+    ok(rawConfigs[0].overrides.chat_history.with_depth_entries === false
+      && rawConfigs[0].overrides.chat_history.author_note === '', '显式勾选时才屏蔽深度条目与作者注释');
 
     console.log('\n[3b] 单一任务通道与固定预设切换');
     const requestDiagnostics = [];
     win.addEventListener('pastoral:variable-request', (e) => requestDiagnostics.push(e.detail));
-    settingsState.variablePresets.endday = { mode: 'current', presetName: '', context: allContext };
+    settingsState.variablePresets.endday = { mode: 'current', presetName: '', blockDepthEntries: false, context: allContext };
     configs.length = 0; rawConfigs.length = 0; attempts = 2;
     win.generate = async (config) => { configs.push(config); return okReply; };
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'endday' });
@@ -304,8 +311,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(/玩家归寝要求/.test(configs[0].user_input), 'current 模式仅通过 user_input 发送归寝任务');
     ok(requestDiagnostics.some((d) => d.stage === 'endday' && d.mode === 'current'
       && d.transport === 'generate-current' && d.taskCount === 1), 'current 请求发出安全诊断');
-    ok(configs[0].overrides && configs[0].overrides.chat_history.with_depth_entries === false,
-      'current 模式继续屏蔽世界书深度注入条目');
+    ok(!configs[0].overrides || !configs[0].overrides.chat_history
+      || configs[0].overrides.chat_history.with_depth_entries === undefined,
+      'current 模式默认沿用世界书深度注入');
 
     settingsState.variablePresets.normal = { mode: 'fixed', presetName: '变量专用', context: allContext };
     configs.length = 0; rawConfigs.length = 0; transactionEvents.length = 0;

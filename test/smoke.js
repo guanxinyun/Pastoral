@@ -117,23 +117,21 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     normalFixed.value = '变量专用';
     // 深度注入屏蔽对三种模式都要有，所以不能藏在 none 专属的上下文区域里。
     const blockDepth = doc.querySelector('[name="normalBlockDepth"]');
-    ok(!!blockDepth && blockDepth.checked, '预设页提供深度注入屏蔽开关且默认开启');
+    ok(!!blockDepth && !blockDepth.checked, '预设页提供深度注入屏蔽开关且默认不勾选');
     ok(!blockDepth.closest('[data-preset-context]'), '深度注入屏蔽独立于 none 专属上下文区域，固定预设模式下同样可见');
     ok(!!doc.querySelector('[name="normalTemperature"]') && doc.querySelector('[name="normalTemperature"]').value === '0',
       '预设页提供采样温度且默认 0');
     const effective = doc.querySelector('[data-preset-effective="normal"]');
-    ok(effective && /已屏蔽深度注入/.test(effective.textContent), '预设页说明本次实际发送内容与屏蔽状态');
+    ok(effective && /沿用酒馆深度注入与作者注释/.test(effective.textContent), '预设页说明默认沿用酒馆注入');
     doc.getElementById('presetSettingsForm').dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
     let savedSettings = JSON.parse(win.localStorage.getItem('mrfz_settings'));
     ok(savedSettings.variablePresets.normal.mode === 'fixed' && savedSettings.variablePresets.normal.presetName === '变量专用', '变量预设设置保存到网页缓存');
-    ok(savedSettings.variablePresets.normal.blockDepthEntries === true && savedSettings.variablePresets.normal.temperature === 0,
-      '屏蔽开关与采样温度一并保存');
-    blockDepth.checked = false; blockDepth.dispatchEvent(new win.Event('change', { bubbles: true }));
-    ok(/放行深度注入/.test(effective.textContent), '取消屏蔽后说明文字立即改为放行提示');
-    doc.getElementById('presetSettingsForm').dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
-    ok(JSON.parse(win.localStorage.getItem('mrfz_settings')).variablePresets.normal.blockDepthEntries === false, '放行选择可持久化');
+    ok(savedSettings.variablePresets.normal.blockDepthEntries === false && savedSettings.variablePresets.normal.temperature === 0,
+      '默认放行与采样温度一并保存');
     blockDepth.checked = true; blockDepth.dispatchEvent(new win.Event('change', { bubbles: true }));
+    ok(/已屏蔽深度注入/.test(effective.textContent), '主动勾选后说明文字立即改为屏蔽');
     doc.getElementById('presetSettingsForm').dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true }));
+    ok(JSON.parse(win.localStorage.getItem('mrfz_settings')).variablePresets.normal.blockDepthEntries === true, '屏蔽选择可持久化');
 
     ok(!doc.querySelector('[name="normalAssembly"]') && !doc.querySelector('[name="enddayAssembly"]'),
       '界面不再提供跨宿主不一致的 compile/inject 组装开关');
