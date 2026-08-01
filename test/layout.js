@@ -117,7 +117,16 @@ ok(/html\.in-tavern\s*\{[^}]*height:\s*100%[^}]*overflow:\s*hidden/.test(CSS), '
 ok(/body\.in-tavern\s*\{[^}]*height:\s*100%[^}]*overflow:\s*hidden/.test(CSS), '酒馆 body 不再向外撑高');
 ok(/body\.in-tavern\s+\.title-screen\s*\{[^}]*height:\s*100%[^}]*min-height:\s*0/.test(CSS), '酒馆标题不使用 dvh 参与高度反馈');
 ok(/body\.in-tavern\.is-prologue\s+\.prologue\s*\{[^}]*width:\s*calc\(100%\s*-\s*24px\)[^}]*height:\s*calc\(100%\s*-\s*24px\)[^}]*margin:\s*12px auto[^}]*overflow-y:\s*auto/.test(CSS), '酒馆序章在留白视口内滚动');
-ok(/body\.in-tavern\.is-game\s+\.book\s*\{[^}]*width:\s*calc\(100%\s*-\s*24px\)[^}]*height:\s*calc\(100%\s*-\s*24px\)[^}]*margin:\s*12px auto/.test(CSS), '酒馆书页在单视口内保留两侧留白');
+ok(/\.book\s*\{[^}]*--book-edge-inline:\s*clamp\(16px,\s*2vw,\s*32px\)/.test(CSS),
+  '书本外壳定义响应式同色页缘');
+ok(/body\.in-tavern\.is-game\s+\.book\s*\{[^}]*width:\s*100%[^}]*max-width:\s*none[^}]*height:\s*100%[^}]*margin:\s*0[^}]*padding-inline:\s*var\(--book-edge-inline\)/.test(CSS),
+  '酒馆舞台铺满，桌面页缘位于书本内部');
+ok(/body\.is-immersive\s+\.book\s*\{[^}]*padding-inline:\s*var\(--book-edge-inline\)/.test(CSS),
+  '桌面沉浸模式仍保留书本轮廓');
+ok(/@media\s*\(max-width:\s*899px\)[\s\S]*body\.in-tavern\.is-game\s+\.book\s*,[\s\S]*body\.is-immersive\s+\.book\s*\{[^}]*padding-inline:\s*max\(0px,\s*env\(safe-area-inset-left\)\)\s+max\(0px,\s*env\(safe-area-inset-right\)\)/.test(CSS),
+  '手机移除装饰页缘，仅保留左右安全区');
+ok(!/body\.in-tavern\.is-game\s+\.book\s*\{[^}]*width:\s*calc\(100%\s*-\s*24px\)/.test(CSS),
+  '正式书本不再通过缩小外壳制造外部留白');
 ok(/body\.in-tavern\.is-prologue\s+\.book[\s\S]*display:\s*none/.test(CSS), '酒馆序章与正式界面互斥显示');
 ok(/body\.in-tavern\.is-game\s+\.prologue[\s\S]*display:\s*none/.test(CSS), '进入正式界面后序章不再占位');
 
