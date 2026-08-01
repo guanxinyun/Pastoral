@@ -219,6 +219,9 @@ const Extract = {
     // 智能解包纯布局容器
     this._unwrapStructural(temp);
 
+    // 保留段落感：把文本里的换行转成 <br>，避免 innerHTML 渲染时换行被折叠成一格空格
+    this._breakLines(temp);
+
     return temp.innerHTML.trim();
   },
 
@@ -227,6 +230,29 @@ const Extract = {
     wrappers.sort((a, b) => this._depth(b) - this._depth(a));
     wrappers.forEach(el => {
       if (this._isPureWrapper(el)) el.replaceWith(...el.childNodes);
+    });
+  },
+
+  /** 把文本节点里的换行转成 <br>，保留正文分段；<pre> 内原样保留 */
+  _breakLines(container) {
+    const textNodes = [];
+    (function walk(node) {
+      if (node.nodeType === 3) {
+        if (/\n/.test(node.nodeValue) && !(node.parentElement && node.parentElement.closest('pre'))) textNodes.push(node);
+        return;
+      }
+      if (node.nodeType === 1 && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
+        for (let i = 0; i < node.childNodes.length; i++) walk(node.childNodes[i]);
+      }
+    })(container);
+    textNodes.forEach((tn) => {
+      const parts = tn.nodeValue.split('\n');
+      const frag = document.createDocumentFragment();
+      parts.forEach((part, i) => {
+        if (i) frag.appendChild(document.createElement('br'));
+        if (part) frag.appendChild(document.createTextNode(part));
+      });
+      tn.replaceWith(frag);
     });
   },
 

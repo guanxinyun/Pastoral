@@ -211,7 +211,7 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
 
   console.log('\n[3] iframe 内对话流仍正常');
   const bubs = cdoc.querySelectorAll('#stream .bub:not(.bub--typing)');
-  ok(bubs.length === 3, 'iframe 内渲染 3 条气泡（实际 ' + bubs.length + '）');
+  ok(bubs.length === 2, 'iframe 内剧情页隐藏 0 楼，渲染其余 2 条气泡（实际 ' + bubs.length + '）');
   ok(cdoc.body.classList.contains('in-tavern'), 'in-tavern 标记');
 
   console.log('\n' + (errors.length ? '运行时错误：\n  ' + errors.join('\n  ') : '无运行时错误'));

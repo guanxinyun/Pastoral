@@ -182,9 +182,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     doc.querySelector('.settings-pop__close').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
 
     const bubs = doc.querySelectorAll('#stream .bub:not(.bub--typing)');
-    ok(bubs.length === 3, '抓取全局对话渲染 3 条气泡（实际 ' + bubs.length + '）');
+    ok(bubs.length === 2, '剧情页隐藏 0 楼，渲染其余 2 条气泡（实际 ' + bubs.length + '）');
     const ids = Array.from(bubs).map((b) => b.dataset.mid).join(',');
-    ok(ids === '0,1,2', '气泡与 message_id 对应：' + ids);
+    ok(ids === '1,2', '气泡与 message_id 对应：' + ids);
 
     // 状态快照来自 lastMessageId，而不是宿主 iframe 所在的 0 楼
     ok(calls.mvuGet.length > 0 && calls.mvuGet.every((o) => o.type === 'message' && o.message_id === 2),
@@ -342,13 +342,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     await wait(200);
     ok(calls.del.length === 1 && calls.del[0][0] === 2, 'deleteChatMessages 删除 message_id=2');
 
-    // 0 楼受保护
-    const b0 = doc.querySelector('.bub[data-mid="0"]');
-    b0.dispatchEvent(new win.MouseEvent('contextmenu', { bubbles: true, clientX: 40, clientY: 40 }));
-    await wait(60);
-    const m0 = doc.getElementById('bubMenu');
-    ok(m0.querySelectorAll('.bub-menu__item').length === 1, '0 楼仅允许复制');
-    ok(!!m0.querySelector('.bub-menu__note'), '0 楼有保护说明');
+    // 0 楼为界面宿主，剧情页隐藏不渲染
+    ok(!doc.querySelector('.bub[data-mid="0"]'), '0 楼在剧情页不渲染');
   }
 
   /* ---------- 5. Hash 机制：无变化不重绘 ---------- */

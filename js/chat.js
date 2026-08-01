@@ -124,7 +124,11 @@ const Chat = (function () {
     if (!box) return;
     const stick = nearBottom(box);
     box.innerHTML = '';
-    list.forEach((m) => box.appendChild(bubble(m)));
+    list.forEach((m) => {
+      // 第 0 楼是界面宿主源码，剧情页隐藏不渲染；独立预览无宿主时仍显示样例
+      if (hasApi() && Number(m.message_id) === 0) return;
+      box.appendChild(bubble(m));
+    });
     if (generating) {
       const t = document.createElement('div');
       t.className = 'bub bub--ai bub--typing';
