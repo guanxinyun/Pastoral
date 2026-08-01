@@ -107,9 +107,38 @@
   }
 
   /* ---------- 设置浮卡（轻量，非全屏覆层） ---------- */
-  function openSettings() {
+  function activateSettingsPage(root, name) {
+    const pageName = ['api', 'prompts', 'presets'].includes(name) ? name : 'api';
+    $$('.settings-tab', root).forEach((item) => {
+      const on = item.dataset.settingsTab === pageName;
+      item.classList.toggle('is-active', on);
+      item.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    $$('.settings-page', root).forEach((page) => {
+      const on = page.dataset.settingsPage === pageName;
+      page.classList.toggle('is-active', on);
+      page.hidden = !on;
+    });
+  }
+
+  function focusSettingsField(root, name) {
+    if (!name) return;
+    requestAnimationFrame(() => {
+      const field = root.querySelector('[name="' + name + '"]');
+      if (field && field.focus) field.focus();
+    });
+  }
+
+  function openSettings(options) {
+    const requested = options && typeof options === 'object' ? options : {};
     const existing = document.getElementById('settingsPop');
-    if (existing) { existing.remove(); return; }
+    if (existing) {
+      const backdrop = document.getElementById('settingsBackdrop');
+      if (!requested.page) { if (backdrop) backdrop.remove(); return; }
+      activateSettingsPage(existing, requested.page);
+      focusSettingsField(existing, requested.focus);
+      return;
+    }
     const cfg = Settings.load();
     const backdrop = h('div', { class: 'modal-backdrop settings-backdrop', id: 'settingsBackdrop' });
     const pop = h('section', { class: 'settings-pop', id: 'settingsPop', role: 'dialog', 'aria-modal': 'true', 'aria-label': '设置' });
@@ -384,14 +413,12 @@
     presetPage.appendChild(presetForm);
 
     pop.appendChild(apiPage); pop.appendChild(promptPage); pop.appendChild(presetPage);
-    $$('.settings-tab', pop).forEach((tab) => tab.addEventListener('click', () => {
-      const name = tab.dataset.settingsTab;
-      $$('.settings-tab', pop).forEach((item) => { const on = item === tab; item.classList.toggle('is-active', on); item.setAttribute('aria-selected', on ? 'true' : 'false'); });
-      $$('.settings-page', pop).forEach((page) => { const on = page.dataset.settingsPage === name; page.classList.toggle('is-active', on); page.hidden = !on; });
-    }));
+    $$('.settings-tab', pop).forEach((tab) => tab.addEventListener('click', () => activateSettingsPage(pop, tab.dataset.settingsTab)));
 
     backdrop.appendChild(pop); document.body.appendChild(backdrop);
+    if (requested.page) activateSettingsPage(pop, requested.page);
     Icon.render(pop);
+    focusSettingsField(pop, requested.focus);
     backdrop.addEventListener('mousedown', (e) => { if (e.target === backdrop) close(); });
   }
 
@@ -615,7 +642,8 @@
       composerInput.addEventListener('blur', () => { composerFocused = false; setTimeout(queueMobileViewportSync, 80); });
     }
     queueMobileViewportSync();
-    const setBtn = $('#settingsBtn'); if (setBtn) setBtn.addEventListener('click', openSettings);
+    const setBtn = $('#settingsBtn'); if (setBtn) setBtn.addEventListener('click', () => openSettings());
+    window.addEventListener('pastoral:open-settings', (event) => openSettings(event.detail || { page: 'api' }));
 
     // 底栏
     $$('.dock__btn').forEach((b) => b.addEventListener('click', () => dockAction(b.dataset.act)));

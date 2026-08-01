@@ -375,6 +375,19 @@ const Chat = (function () {
       toast('warn', '未连接酒馆', body);
       return false;
     }
+    const config = window.Settings ? Settings.load() : { secondApi: {} };
+    const issues = window.Settings && typeof Settings.secondApiIssues === 'function'
+      ? Settings.secondApiIssues(config)
+      : ['URL', 'API Key', '模型'];
+    if (issues.length) {
+      const api = config.secondApi || {};
+      const focus = !String(api.url || '').trim() ? 'secondApiUrl'
+        : (!String(api.key || '').trim() ? 'secondApiKey' : 'secondApiModel');
+      setRequestStatus('第二 API 未配置', '请先补全：' + issues.join('、'), false);
+      toast('error', '无法发送', '必须先配置第二 API：' + issues.join('、'));
+      window.dispatchEvent(new CustomEvent('pastoral:open-settings', { detail: { page: 'api', focus } }));
+      return false;
+    }
     const purpose = options && options.kind || composedKind || 'normal';
     composedKind = 'normal';
     const token = ++requestSeq;
@@ -382,7 +395,6 @@ const Chat = (function () {
     const startCycle = generationCycle;
     completedMessageId = null;
     const baseline = window.MVU && MVU.getDataSnapshot ? MVU.getDataSnapshot() : null;
-    const mode = window.Settings ? Settings.load().apiMode : 'single';
     setBusy(true);
     generating = true;
     lastHash = null;
@@ -398,10 +410,8 @@ const Chat = (function () {
       const messageId = await waitForMainReply(beforeId, token, startCycle, true);
       console.info('[Pastoral][MainAPI]', '完成', { messageId, purpose });
       let calculated = null, settledData = null, pendingFirstWrite = null;
-      let normalStage = purpose === 'endday' && mode !== 'multi'
-        ? { stage: 'normal', stageId: 'endday:' + messageId + ':normal', ok: true, source: 'main-story', error: null }
-        : null;
-      if (purpose === 'endday' && mode === 'multi' && window.ApiEngine) {
+      let normalStage = null;
+      if (purpose === 'endday' && window.ApiEngine) {
         normalStage = await ApiEngine.processAfterMain({ baseline, messageId, purpose: 'normal', calculated: null });
       }
       if (window.MVU) {
@@ -430,7 +440,7 @@ const Chat = (function () {
       if (window.ApiEngine) {
         let outcome = null;
         if (purpose === 'endday') {
-          setRequestStatus('归寝日结', mode === 'multi' ? '正在由第二 API 执行跨日变量更新…' : '正在由当前主 API 执行跨日变量更新…', true);
+          setRequestStatus('归寝日结', '正在由第二 API 执行跨日变量更新…', true);
           const stageFacts = normalStage && normalStage.ok === false
             ? '日常变量阶段失败；不得猜测、补算或重复执行日常即时变化。错误：'
               + String(normalStage.error && normalStage.error.message || normalStage.error || '未知错误')
@@ -442,9 +452,11 @@ const Chat = (function () {
             calculated,
             stageFacts
           });
-        } else if (mode === 'multi') {
+        } else {
           setRequestStatus('第二 API', '正在计算本轮变量更新…', true);
           outcome = await ApiEngine.processAfterMain({ baseline, messageId, purpose, calculated });
+          setRequestStatus(outcome && outcome.ok ? '变量更新完成' : '变量更新失败',
+            outcome && outcome.ok ? '主剧情与变量均已更新。' : String(outcome && outcome.error && outcome.error.message || '主剧情已保留，可在设置中重试第二 API。'), false);
         }
         if (purpose === 'endday' && settledData) {
           let writeError = null;
@@ -476,15 +488,11 @@ const Chat = (function () {
             summary: outcome && outcome.summary,
             // 没拿到结果时归为脚本结算，不冒充任何 API 的成功。
             source: (outcome && outcome.source) || 'script',
-            apiMode: mode,
             updateOk: complete,
             updateError
           }, calculated || {}) }));
           setRequestStatus(complete ? '归寝完成' : '归寝部分完成', complete ? '账簿已更新。' : updateError || '确定性结算已保留，但变量更新未完整完成。', false);
         }
-      }
-      if (purpose !== 'endday' && mode !== 'multi') {
-        setRequestStatus('主剧情完成', '回复与变量已由酒馆处理。', false);
       }
       const composer = document.getElementById('composerInput');
       if (composer && String(composer.value || '').trim() === body) { composer.value = ''; autoGrow(composer); }

@@ -231,7 +231,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     cancelEndday.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
     ok(ta.value === beforeEndday && calls.slash.length === 0, '取消归寝不修改输入且不发送');
 
-    // composer 发送 -> /send + /trigger
+    // composer 发送 -> /send + /trigger（第二 API 完整配置已通过前置校验）
+    win.Settings.save({ secondApi: { url: 'https://logic.example/v1', key: 'test-key', model: 'logic-model' } });
+    win.ApiEngine.processAfterMain = async () => ({ ok: true, source: 'second' });
     ta.value = '推门远望';
     doc.getElementById('composerSend').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
     await wait(300);

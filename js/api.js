@@ -221,7 +221,7 @@ const ApiEngine = (function () {
   function variablePresetConfig(kind, config) {
     const key = kind === 'endday' ? 'endday' : 'normal';
     const value = config && config.variablePresets && config.variablePresets[key];
-    return value && typeof value === 'object' ? value : { mode: 'none', presetName: '', context: {} };
+    return value && typeof value === 'object' ? value : { mode: 'current', presetName: '' };
   }
 
   /** 冻结单个阶段所需的全部配置，后续不得重新读取另一阶段设置。 */
@@ -229,13 +229,11 @@ const ApiEngine = (function () {
     const key = kind === 'endday' ? 'endday' : 'normal';
     const cfg = config || Settings.load();
     const selected = variablePresetConfig(key, cfg);
-    const mode = ['none', 'current', 'fixed'].includes(selected.mode) ? selected.mode : 'none';
-    const context = Object.freeze(Object.assign({}, selected.context || {}));
+    const mode = selected.mode === 'fixed' ? 'fixed' : 'current';
     return Object.freeze({
       kind: key,
       mode,
       presetName: mode === 'current' ? 'in_use' : String(selected.presetName || '').trim(),
-      context,
       blockDepthEntries: selected.blockDepthEntries === true,
       temperature: Number.isFinite(Number(selected.temperature)) ? Number(selected.temperature) : 0,
       guide: updateGuide(key, cfg)
@@ -296,26 +294,10 @@ const ApiEngine = (function () {
       .concat(['user_input']);
   }
 
-  /** 普通上下文与深度注入独立控制；只有玩家显式勾选时才屏蔽深度条目和作者注释。 */
+  /** 只有玩家显式勾选时才屏蔽深度条目和作者注释。 */
   function buildOverrides(preset) {
-    const selected = (preset && preset.context) || {};
-    const usingPreset = preset && preset.mode !== 'none';
-    const overrides = {};
-    // none 模式：未勾选的占位符一律置空，杜绝角色卡/世界书残留。
-    if (!usingPreset) {
-      CONTEXT_PLACEHOLDERS.forEach(([key, placeholder]) => {
-        if (placeholder === 'chat_history') return;
-        if (selected[key] !== true) overrides[placeholder] = '';
-      });
-    }
-    const chatHistory = {};
-    if (preset && preset.blockDepthEntries === true) {
-      chatHistory.with_depth_entries = false;
-      chatHistory.author_note = '';
-    }
-    if (!usingPreset && selected.chatHistory !== true) chatHistory.prompts = [];
-    if (Object.keys(chatHistory).length) overrides.chat_history = chatHistory;
-    return Object.keys(overrides).length ? overrides : null;
+    if (!(preset && preset.blockDepthEntries === true)) return null;
+    return { chat_history: { with_depth_entries: false, author_note: '' } };
   }
 
   /** 变量计算要稳定复现，不继承剧情预设的高温与惩罚参数。 */
@@ -398,14 +380,14 @@ const ApiEngine = (function () {
     return out;
   }
 
-  /** 固定预设不存在时降级为 none；current 与 fixed 都只通过 user_input 发送一次任务。 */
+  /** 固定预设不存在时安全回退当前预设；两种模式都只通过 user_input 发送一次任务。 */
   function resolvePreset(kind, config) {
     const snapshot = createStageSnapshot(kind, config);
     if (snapshot.mode === 'fixed' && !availablePresetNames().includes(snapshot.presetName)) {
       if (typeof toast === 'function') {
-        toast('warn', '变量预设不存在', '“' + snapshot.presetName + '”已不存在，本次改用不带预设。');
+        toast('warn', '变量预设不存在', '“' + snapshot.presetName + '”已不存在，本次改用酒馆当前预设。');
       }
-      return Object.freeze(Object.assign({}, snapshot, { mode: 'none', presetName: '' }));
+      return Object.freeze(Object.assign({}, snapshot, { mode: 'current', presetName: 'in_use' }));
     }
     return snapshot;
   }
@@ -418,14 +400,6 @@ const ApiEngine = (function () {
     delete base.preset_name;
     if (base.custom_api) base.custom_api = Object.assign({}, samplingOverrides(snapshot), base.custom_api);
     if (overrides) base.overrides = Object.assign({}, overrides, base.overrides);
-    if (snapshot.mode === 'none') {
-      if (typeof generateRaw !== 'function') throw new Error('当前环境缺少 generateRaw，无法发送不带预设的变量请求');
-      requestDiagnostic(snapshot, base.user_input, { transport: 'generateRaw', switched: false, restored: true });
-      return generateRaw(Object.assign(base, {
-        max_chat_history: base.max_chat_history == null ? 0 : base.max_chat_history,
-        ordered_prompts: orderedPrompts(snapshot.context)
-      }));
-    }
     if (typeof generate !== 'function') throw new Error('当前环境不支持酒馆预设生成');
     if (snapshot.mode === 'fixed') {
       const result = await launchWithFixedPreset(snapshot.presetName, base);
@@ -449,7 +423,6 @@ const ApiEngine = (function () {
 
   async function callSecondApiForVariable(context) {
     const cfg = Settings.load();
-    if (cfg.apiMode !== 'multi') throw new Error('当前未启用多 API 模式');
     const api = Object.assign({}, cfg.secondApi, { url: normalizeUrl(cfg.secondApi && cfg.secondApi.url) });
     const issues = inspectApi(api);
     if (issues.length) throw new Error('第二 API 配置有问题：' + issues.join('；'));
@@ -551,117 +524,35 @@ const ApiEngine = (function () {
     }
   }
 
-  async function callMainApiForDaily(context) {
-    if (typeof generate !== 'function' && typeof generateRaw !== 'function') throw new Error('当前环境不支持主 API 静默日结');
-    const cfg = Settings.load();
-    const snapshot = resolvePreset('endday', cfg);
-    const prompt = buildPrompt(Object.assign({}, context, { purpose: 'endday', config: cfg, snapshot }));
-    const id = 'pastoral-daily-main-' + (++sequence);
-    const started = now();
-    log(PREFIX_MAIN, '日结开始', { messageId: context.messageId });
-    let raw = '', updateTag = '';
-    for (let pass = 0; pass < 2; pass++) {
-      const passId = pass === 0 ? id : id + '-repair';
-      if (pass > 0) status('主 API 日结', '输出格式不合规，正在请求纠正…', true, { id: passId, purpose: 'endday', repair: true });
-      raw = textResult(await timeoutCall(() => generateVariable({
-        generation_id: passId,
-        user_input: pass === 0 ? prompt : repairPrompt(prompt, raw),
-        should_stream: false,
-        should_silence: true,
-        max_chat_history: 0
-      }, snapshot), 30000, passId, '主 API 日结'));
-      updateTag = Extract.salvageUpdateVariable(raw);
-      if (updateTag) break;
-      log(PREFIX_MAIN, '日结格式不合规', { pass: pass + 1, received: snippet(raw) });
-    }
-    if (!updateTag) {
-      throw new Error('当前主 API 两次都没给出合法 UpdateVariable（含 Analysis 与 JSONPatch 数组）。实际收到：' + snippet(raw));
-    }
-    log(PREFIX_MAIN, '日结完成', { elapsedMs: Math.round(now() - started) });
-    return { raw, updateTag, summary: Extract.stripUpdateVariable(raw).trim(), source: 'main' };
-  }
-
-  async function appendDailyUpdate(messageId, original, baseline, generated) {
-    if (typeof Mvu === 'undefined' || typeof Mvu.parseMessage !== 'function' || typeof Mvu.replaceMvuData !== 'function') {
-      throw new Error('MVU 接口未就绪');
-    }
-    const commands = Extract.patchToMvuCommands(generated.updateTag);
-    const parsed = await Mvu.parseMessage(commands, baseline);
-    if (!parsed) throw new Error('MVU 未解析出有效日结更新');
-    const addition = [generated.summary, generated.updateTag].filter(Boolean).join('\n\n');
-    const merged = String(original || '').trim() + (original ? '\n\n' : '') + addition;
-    if (typeof setChatMessages === 'function') {
-      await setChatMessages([{ message_id: messageId, message: merged }], { refresh: 'none' });
-    }
-    await Mvu.replaceMvuData(parsed, { type: 'message', message_id: messageId });
-  }
-
   async function processEndday(context) {
     const messageId = Number(context.messageId == null ? MVU.latestMessageId() : context.messageId);
     const message = messageById(messageId);
     if (!message) return { ok: false, skipped: true, reason: '找不到归寝剧情楼层' };
-    const cfg = Settings.load();
-    // 多 API 模式下归寝也必须由第二 API 完成；失败就报告失败，不静默改用主 API。
-    if (cfg.apiMode === 'multi') {
-      try {
-        const generated = await ApiEngine.callSecondApiForVariable(Object.assign({}, context, { messageId, purpose: 'endday' }));
-        await applyUpdate(messageId, message.message || '', context.baseline, generated);
-        if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
-        return {
-          stage: 'endday',
-          stageId: 'endday:' + messageId + ':endday',
-          ok: true,
-          source: 'second',
-          summary: generated.summary,
-          error: null,
-          messageId
-        };
-      } catch (secondError) {
-        error(PREFIX_SECOND, '归寝日结失败', secondError);
-        if (typeof toast === 'function') {
-          toast('error', '第二 API 日结失败', (secondError && secondError.message || String(secondError)) + '；已保留确定性结算，可在设置中重试。');
-        }
-        lastFailure = Object.assign({}, context, { messageId, purpose: 'endday' });
-        return {
-          stage: 'endday',
-          stageId: 'endday:' + messageId + ':endday',
-          ok: false,
-          source: 'second',
-          error: secondError,
-          messageId
-        };
-      }
-    }
     try {
-      // 主剧情的 MVU 已由酒馆处理，单 API 日结从此刻最新快照继续计算。
-      const baseline = MVU.getDataSnapshot ? MVU.getDataSnapshot() : context.baseline;
-      const generated = await callMainApiForDaily({
-        baseline,
-        messageId,
-        purpose: 'endday',
-        calculated: context.calculated,
-        stageFacts: context.stageFacts
-      });
-      await appendDailyUpdate(messageId, message.message || '', baseline, generated);
+      const generated = await ApiEngine.callSecondApiForVariable(Object.assign({}, context, { messageId, purpose: 'endday' }));
+      await applyUpdate(messageId, message.message || '', context.baseline, generated);
       if (window.MVU && typeof MVU.syncFacilityGravity === 'function') await MVU.syncFacilityGravity(messageId);
       return {
         stage: 'endday',
         stageId: 'endday:' + messageId + ':endday',
         ok: true,
-        source: 'main',
+        source: 'second',
         summary: generated.summary,
         error: null,
         messageId
       };
-    } catch (e) {
-      error(PREFIX_MAIN, '日结失败', e);
-      if (typeof toast === 'function') toast('error', '每日结算失败', e && e.message || String(e));
+    } catch (secondError) {
+      error(PREFIX_SECOND, '归寝日结失败', secondError);
+      if (typeof toast === 'function') {
+        toast('error', '第二 API 日结失败', (secondError && secondError.message || String(secondError)) + '；已保留确定性结算，可在设置中重试。');
+      }
+      lastFailure = Object.assign({}, context, { messageId, purpose: 'endday' });
       return {
         stage: 'endday',
         stageId: 'endday:' + messageId + ':endday',
         ok: false,
-        source: 'main',
-        error: e,
+        source: 'second',
+        error: secondError,
         messageId
       };
     }
@@ -682,7 +573,7 @@ const ApiEngine = (function () {
   }
 
   async function testSecondApi(candidate) {
-    if (typeof generate !== 'function' && typeof generateRaw !== 'function') throw new Error('当前环境缺少变量生成接口，未发送请求');
+    if (typeof generate !== 'function') throw new Error('当前环境缺少酒馆预设生成接口，未发送请求');
     const cfg = Settings.load();
     const snapshot = resolvePreset('normal', cfg);
     const api = Object.assign({}, cfg.secondApi, candidate || {});

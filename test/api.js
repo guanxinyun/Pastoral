@@ -106,19 +106,11 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   if (fs.existsSync(apiPath)) {
     let attempts = 0;
     const configs = [], createdPresets = [], rawConfigs = [];
-    const noContext = {
-      worldInfoBefore: false, personaDescription: false, charDescription: false, charPersonality: false,
-      scenario: false, worldInfoAfter: false, dialogueExamples: false, chatHistory: false
-    };
-    const allContext = {
-      worldInfoBefore: true, personaDescription: true, charDescription: true, charPersonality: true,
-      scenario: true, worldInfoAfter: true, dialogueExamples: true, chatHistory: true
-    };
     let settingsState = {
-      apiMode: 'multi', prompts: { normal: '玩家普通变量要求', endday: '玩家归寝要求' },
+      prompts: { normal: '玩家普通变量要求', endday: '玩家归寝要求' },
       variablePresets: {
-        normal: { mode: 'none', presetName: '', context: Object.assign({}, noContext) },
-        endday: { mode: 'current', presetName: '', context: Object.assign({}, noContext) }
+        normal: { mode: 'current', presetName: '' },
+        endday: { mode: 'current', presetName: '' }
       },
       secondApi: { url: 'https://logic.example/v1', key: 'secret', model: 'logic-model', timeout: 5000, maxRetries: 2 }
     };
@@ -171,17 +163,16 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
     console.log('\n[3a] 阶段快照与固定预设短事务');
     const splitSettings = {
-      apiMode: 'multi',
       prompts: { normal: 'NORMAL_GUIDE_A', endday: 'ENDDAY_GUIDE_B' },
       variablePresets: {
-        normal: { mode: 'fixed', presetName: '日常A', context: { chatHistory: true }, temperature: 0.1 },
-        endday: { mode: 'fixed', presetName: '归寝B', context: { chatHistory: false }, temperature: 0.3 }
+        normal: { mode: 'fixed', presetName: '日常A', temperature: 0.1 },
+        endday: { mode: 'fixed', presetName: '归寝B', temperature: 0.3 }
       },
       secondApi: settingsState.secondApi
     };
     const normalSnapshot = win.ApiEngine.createStageSnapshot('normal', splitSettings);
     const enddaySnapshot = win.ApiEngine.createStageSnapshot('endday', splitSettings);
-    ok(Object.isFrozen(normalSnapshot) && Object.isFrozen(normalSnapshot.context), '阶段快照及上下文不可变');
+    ok(Object.isFrozen(normalSnapshot) && !Object.prototype.hasOwnProperty.call(normalSnapshot, 'context'), '阶段快照不可变且不再携带无预设上下文');
     ok(normalSnapshot.kind === 'normal' && normalSnapshot.presetName === '日常A' && normalSnapshot.guide === 'NORMAL_GUIDE_A',
       '日常快照只读取日常设置');
     ok(enddaySnapshot.kind === 'endday' && enddaySnapshot.presetName === '归寝B' && enddaySnapshot.guide === 'ENDDAY_GUIDE_B',
@@ -252,57 +243,38 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
     const result = await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
     ok(attempts === 3, '失败后按 maxRetries=2 共尝试 3 次');
-    ok(configs.length === 0 && rawConfigs.length === 3, 'none 模式全程只用 generateRaw，不经过任何酒馆预设');
+    ok(configs.length === 3 && rawConfigs.length === 0, '变量重试全程只使用当前预设 generate');
     ok(typeof win.getWorldbook === 'undefined' && typeof win.getCharWorldbookNames === 'undefined', '变量请求不再依赖世界书接口');
-    ok(/玩家普通变量要求/.test(rawConfigs[0].user_input), '普通请求使用玩家保存的自定义指导');
-    ok(/内置输出格式：JSONPatch/.test(rawConfigs[0].user_input), '提示词自动合并内置变量更新输出格式');
-    ok(JSON.stringify(rawConfigs[0].ordered_prompts) === JSON.stringify(['user_input']), '未勾选上下文时只发送本项目提示');
-    ok(rawConfigs[0].max_chat_history === 0, 'none 模式不额外携带聊天历史');
+    ok(/玩家普通变量要求/.test(configs[0].user_input), '普通请求使用玩家保存的自定义指导');
+    ok(/内置输出格式：JSONPatch/.test(configs[0].user_input), '提示词自动合并内置变量更新输出格式');
     const promptWithFacts = win.ApiEngine.buildPrompt({ purpose: 'endday', baseline: { stat_data: {} }, calculated: { facilityGravity: { 美食: 7 }, salary: 200, maintenance: 30 } });
     ok(/玩家归寝要求/.test(promptWithFacts) && /美食/.test(promptWithFacts) && /200/.test(promptWithFacts) && /30/.test(promptWithFacts), '归寝提示包含自定义要求与脚本确定事实');
     ok(/当前阶段：归寝日结/.test(promptWithFacts) && /基础单位是整数铜币/.test(promptWithFacts) && /<JSONPatch>/.test(promptWithFacts) && /不得覆盖脚本已确定事实/.test(promptWithFacts), '提示明确阶段、铜币、JSON Patch 与防重复约束');
     ok(!/内置日常指导/.test(promptWithFacts), '归寝提示不混入日常阶段指导');
     const builtinPrompt = win.ApiEngine.buildPrompt({ purpose: 'normal', baseline: { stat_data: {} }, config: { prompts: {} } });
     ok(/内置日常指导/.test(builtinPrompt) && /内置输出格式/.test(builtinPrompt), '未自定义时回退内置日常指导并附输出格式');
-    ok(rawConfigs[0].custom_api.apiurl === 'https://logic.example/v1' && rawConfigs[0].custom_api.source === 'openai', '传入 custom_api URL/model/source');
-    ok(!/secret/.test(rawConfigs[0].user_input), 'API Key 不进入提示词');
+    ok(configs[0].custom_api.apiurl === 'https://logic.example/v1' && configs[0].custom_api.source === 'openai', '传入 custom_api URL/model/source');
+    ok(!/secret/.test(configs[0].user_input), 'API Key 不进入提示词');
     ok(result.updateTag.includes('/旅店/资金') && result.updateTag.includes('<JSONPatch>'), '返回第二 API 的 JSON Patch UpdateVariable');
     ok(createdPresets.length === 0, '不再向玩家预设列表写入内部空白预设');
     ok(!win.ApiEngine.availablePresetNames().includes('【Pastoral 内部】空白变量更新'), '遗留内部预设不出现在可选列表中');
 
-    const firstOverrides = rawConfigs[0].overrides || {};
-    ok(firstOverrides.chat_history && JSON.stringify(firstOverrides.chat_history.prompts) === '[]',
-      '未勾选普通聊天历史时仍清空 prompts');
-    ok(firstOverrides.chat_history.with_depth_entries === undefined
-      && firstOverrides.chat_history.author_note === undefined,
-      '默认沿用酒馆的深度条目与作者注释');
-    ok(firstOverrides.char_description === '' && firstOverrides.world_info_before === '' && firstOverrides.world_info_after === ''
-      && firstOverrides.persona_description === '' && firstOverrides.scenario === '' && firstOverrides.char_personality === ''
-      && firstOverrides.dialogue_examples === '', 'none 模式清空全部未勾选占位符，杜绝角色卡与世界书残留');
-    ok(rawConfigs[0].custom_api.temperature === 0 && rawConfigs[0].custom_api.top_p === 'unset'
-      && rawConfigs[0].custom_api.frequency_penalty === 'unset' && rawConfigs[0].custom_api.presence_penalty === 'unset',
+    const firstOverrides = configs[0].overrides || {};
+    ok(!firstOverrides.chat_history, '当前预设默认沿用聊天历史与深度注入');
+    ok(configs[0].custom_api.temperature === 0 && configs[0].custom_api.top_p === 'unset'
+      && configs[0].custom_api.frequency_penalty === 'unset' && configs[0].custom_api.presence_penalty === 'unset',
       '变量请求不继承剧情预设的采样参数');
 
-    settingsState.variablePresets.normal = { mode: 'none', presetName: '', blockDepthEntries: false, context: Object.assign({}, noContext, { chatHistory: true, charDescription: true }) };
-    rawConfigs.length = 0; attempts = 2;
+    settingsState.variablePresets.normal = { mode: 'current', presetName: '', blockDepthEntries: true };
+    configs.length = 0; attempts = 2;
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
-    ok(JSON.stringify(rawConfigs[0].ordered_prompts) === JSON.stringify(['char_description', 'chat_history', 'user_input']), '勾选的上下文按酒馆默认顺序追加');
-    const pickedOverrides = rawConfigs[0].overrides || {};
-    ok(pickedOverrides.char_description === undefined && (!pickedOverrides.chat_history || pickedOverrides.chat_history.prompts === undefined),
-      '勾选的上下文不被清空');
-    ok(!pickedOverrides.chat_history || (pickedOverrides.chat_history.with_depth_entries === undefined
-      && pickedOverrides.chat_history.author_note === undefined), '勾选聊天历史时默认仍沿用深度注入');
-
-    settingsState.variablePresets.normal.blockDepthEntries = true;
-    rawConfigs.length = 0; attempts = 2;
-    await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
-    ok(rawConfigs[0].overrides.chat_history.with_depth_entries === false
-      && rawConfigs[0].overrides.chat_history.author_note === '', '显式勾选时才屏蔽深度条目与作者注释');
+    ok(configs[0].overrides.chat_history.with_depth_entries === false
+      && configs[0].overrides.chat_history.author_note === '', '显式勾选时才屏蔽深度条目与作者注释');
 
     console.log('\n[3b] 单一任务通道与固定预设切换');
     const requestDiagnostics = [];
     win.addEventListener('pastoral:variable-request', (e) => requestDiagnostics.push(e.detail));
-    settingsState.variablePresets.endday = { mode: 'current', presetName: '', blockDepthEntries: false, context: allContext };
+    settingsState.variablePresets.endday = { mode: 'current', presetName: '', blockDepthEntries: false };
     configs.length = 0; rawConfigs.length = 0; attempts = 2;
     win.generate = async (config) => { configs.push(config); return okReply; };
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'endday' });
@@ -315,7 +287,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       || configs[0].overrides.chat_history.with_depth_entries === undefined,
       'current 模式默认沿用世界书深度注入');
 
-    settingsState.variablePresets.normal = { mode: 'fixed', presetName: '变量专用', context: allContext };
+    settingsState.variablePresets.normal = { mode: 'fixed', presetName: '变量专用' };
     configs.length = 0; rawConfigs.length = 0; transactionEvents.length = 0;
     win.generate = async (config) => { configs.push(config); return okReply; };
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
@@ -329,15 +301,14 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       && d.taskCount === 1 && d.switched === true && d.restored === true), 'fixed 请求诊断确认切换并恢复');
     ok(!/secret|玩家普通变量要求|玩家归寝要求/.test(JSON.stringify(requestDiagnostics)), '请求诊断不泄露密钥或提示词全文');
 
-    settingsState.variablePresets.normal = { mode: 'fixed', presetName: '已删除预设', context: Object.assign({}, noContext) };
+    settingsState.variablePresets.normal = { mode: 'fixed', presetName: '已删除预设' };
     configs.length = 0; rawConfigs.length = 0;
-    win.generateRaw = async (config) => { rawConfigs.push(config); return okReply; };
+    win.generate = async (config) => { configs.push(config); return okReply; };
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
-    ok(configs.length === 0 && JSON.stringify(rawConfigs[0].ordered_prompts) === JSON.stringify(['user_input']),
-      '固定预设不存在时降级为真正的不带预设');
+    ok(configs.length === 1 && rawConfigs.length === 0, '固定预设不存在时安全回退当前预设');
 
     // Windows 会同时消费 user_input/injects，Termux 会忽略 injects；生产配置没有 injects 时两端都只有一份任务。
-    settingsState.variablePresets.normal = { mode: 'current', presetName: '', context: allContext };
+    settingsState.variablePresets.normal = { mode: 'current', presetName: '' };
     let hostConfig = null;
     win.generate = async (config) => { hostConfig = config; return okReply; };
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
@@ -350,7 +321,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(termuxCopies === 1, 'Termux 宿主即使忽略 injects 也收到一份更新任务');
 
     let repairInputs = [];
-    settingsState.variablePresets.normal = { mode: 'current', presetName: '', context: allContext };
+    settingsState.variablePresets.normal = { mode: 'current', presetName: '' };
     win.generate = async (config) => {
       repairInputs.push(config);
       return repairInputs.length === 1 ? '完全没有标签' : okReply;
@@ -368,22 +339,22 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const statusEvents = [];
     win.addEventListener('pastoral:api-status', (e) => statusEvents.push(e.detail));
     let testConfig = null;
-    settingsState.variablePresets.normal = { mode: 'current', presetName: '', context: allContext };
+    settingsState.variablePresets.normal = { mode: 'current', presetName: '' };
     win.generate = async (config) => { testConfig = config; return 'PASTORAL_API_OK'; };
     const tested = await win.ApiEngine.testSecondApi({ url: 'https://probe.example/v1', key: 'probe-secret', model: 'probe-model', timeout: 1000 });
     ok(tested.ok && tested.target === 'probe.example', '第二 API 连接测试返回目标主机与成功结果');
     ok(testConfig && !testConfig.preset_name && !testConfig.injects && /PASTORAL_API_OK/.test(testConfig.user_input),
       '连接测试复用 current 模式的单一 user_input 通道');
 
-    let noPresetConfig = null;
-    settingsState.variablePresets.normal = { mode: 'none', presetName: '', context: Object.assign({}, noContext) };
-    win.generate = async () => { throw new Error('none 模式不得调用 generate'); };
-    win.generateRaw = async (config) => {
-      noPresetConfig = config;
-      return '<UpdateVariable><Analysis>不带预设</Analysis><JSONPatch>[]</JSONPatch></UpdateVariable>';
+    let currentPresetConfig = null;
+    settingsState.variablePresets.normal = { mode: 'current', presetName: '' };
+    win.generate = async (config) => {
+      currentPresetConfig = config;
+      return '<UpdateVariable><Analysis>当前预设</Analysis><JSONPatch>[]</JSONPatch></UpdateVariable>';
     };
-    const noPreset = await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
-    ok(noPreset.updateTag && noPresetConfig && JSON.stringify(noPresetConfig.ordered_prompts) === JSON.stringify(['user_input']), 'none 模式即使 generate 可用也只走 generateRaw 最小路径');
+    win.generateRaw = async () => { throw new Error('变量请求不得回退 generateRaw'); };
+    const currentPreset = await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
+    ok(currentPreset.updateTag && currentPresetConfig && !currentPresetConfig.ordered_prompts, '当前预设变量请求只走 generate');
 
     ok(statusEvents.some((x) => x.stage === '测试第二 API' && x.loading) && statusEvents.some((x) => x.stage === '第二 API 测试成功' && !x.loading), '连接测试提供请求中与成功状态');
     ok(!statusEvents.some((x) => /probe-secret/.test(JSON.stringify(x))), '连接测试状态不泄露 API Key');
@@ -421,7 +392,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     win.iframe_events = { GENERATION_STARTED: 'js-generation-started', GENERATION_ENDED: 'js-generation-ended' };
     win.tavern_events = { GENERATION_STARTED: 'generation-started', GENERATION_ENDED: 'generation-ended', GENERATION_STOPPED: 'generation-stopped' };
     win.eventOn = (name, handler) => { generationEvents[name] = handler; };
-    win.Settings.load = () => ({ apiMode: 'multi', secondApi: { url: 'x', key: 'k', model: 'm', timeout: 1000, maxRetries: 0 } });
+    const completeSettings = { secondApi: { url: 'x', key: 'k', model: 'm', timeout: 1000, maxRetries: 0 } };
+    win.Settings.load = () => completeSettings;
+    win.Settings.secondApiIssues = (config) => ['url', 'key', 'model'].filter((key) => !String(config.secondApi[key] || '').trim());
     win.MVU.getDataSnapshot = () => ({ stat_data: { before: true } });
     win.MVU.latestMessageId = () => latestId;
     win.getLastMessageId = () => latestId;
@@ -443,17 +416,28 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     await wait(5);
     ok(win.document.getElementById('composerSend').disabled, '主生成/变量后处理期间发送按钮冻结');
     await sending;
-    ok(processed === 1, '多 API 普通发送只后处理一次');
+    ok(processed === 1, '第二 API 普通发送只后处理一次');
     ok(processedAfterEnd, '变量后处理只在主模型 GENERATION_ENDED 后启动');
     ok(!win.document.getElementById('composerSend').disabled, '后处理结束后发送按钮恢复');
     ok(slash.filter((x) => x === '/trigger await=true').length === 1, '主模型使用 await=true 只触发一次');
 
-    win.triggerSlash = async () => { throw new Error('send unavailable'); };
     const composer = win.document.getElementById('composerInput');
+    let openSettingsDetail = null;
+    win.addEventListener('pastoral:open-settings', (event) => { openSettingsDetail = event.detail; });
+    slash.length = 0;
+    win.Settings.load = () => ({ secondApi: { url: '', key: '', model: '' } });
+    composer.value = '第二 API 未配置时保留';
+    const preflightBlocked = await win.Chat.handleUnifiedRequest(composer.value);
+    ok(!preflightBlocked && slash.length === 0, '第二 API 配置缺失时不发送主剧情');
+    ok(composer.value === '第二 API 未配置时保留', '前置校验失败保留输入');
+    ok(openSettingsDetail && openSettingsDetail.page === 'api' && openSettingsDetail.focus === 'secondApiUrl', '自动打开接口设置并聚焦首个缺失项');
+
+    win.Settings.load = () => completeSettings;
+    win.triggerSlash = async () => { throw new Error('send unavailable'); };
     composer.value = '失败时保留我';
     const failedSend = await win.Chat.handleUnifiedRequest(composer.value);
     ok(!failedSend && composer.value === '失败时保留我', '发送失败时保留输入框完整内容');
-    win.Settings.load = () => ({ apiMode: 'single', secondApi: { url: '', key: '', model: '', timeout: 1000, maxRetries: 0 } });
+    win.Settings.load = () => completeSettings;
     win.triggerSlash = async (cmd) => {
       if (cmd === '/trigger await=true') {
         latestId += 1;
@@ -466,15 +450,15 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const successfulSend = await win.Chat.handleUnifiedRequest(composer.value);
     ok(successfulSend && composer.value === '', '发送成功后才清空输入框');
     const requestStatus = win.document.getElementById('requestStatus');
-    ok(requestStatus.querySelector('[data-request-status-title]').textContent === '主剧情完成' && !requestStatus.classList.contains('is-loading'), '普通单 API 回复完成后结束等待状态');
+    ok(requestStatus.querySelector('[data-request-status-title]').textContent === '变量更新完成' && !requestStatus.classList.contains('is-loading'), '普通第二 API 变量更新完成后结束等待状态');
 
-    win.Settings.load = () => ({ apiMode: 'single', secondApi: { url: '', key: '', model: '', timeout: 1000, maxRetries: 0 } });
+    win.Settings.load = () => completeSettings;
     win.triggerSlash = async (cmd) => {
       if (cmd === '/trigger await=true') latestId += 1;
     };
     const withoutEndEvent = await win.Chat.handleUnifiedRequest('无结束事件也应完成');
     ok(withoutEndEvent, '未收到 GENERATION_ENDED 时通过新 AI 楼层完成请求');
-    ok(requestStatus.querySelector('[data-request-status-title]').textContent === '主剧情完成' && !requestStatus.classList.contains('is-loading'), '事件缺失的降级路径也正确收尾状态');
+    ok(requestStatus.querySelector('[data-request-status-title]').textContent === '变量更新完成' && !requestStatus.classList.contains('is-loading'), '事件缺失的降级路径也正确完成第二 API 后处理');
 
     latestId += 1;
     const userOnlyId = latestId;
@@ -490,23 +474,22 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
     const stages = [];
     const actualProcessEndday = win.ApiEngine.processEndday;
-    win.Settings.load = () => ({ apiMode: 'multi', secondApi: { url: 'x', key: 'k', model: 'm', timeout: 1000, maxRetries: 0 } });
+    win.Settings.load = () => completeSettings;
     win.ApiEngine.processAfterMain = async (context) => { stages.push(context.purpose); return { ok: true }; };
     win.MVU.settleForWrite = () => { stages.push('settle'); return { data: { stat_data: { settled: true } }, report: { afterFunds: 700 }, calculated: { dimensions: {}, total: 0 } }; };
     win.MVU.writeWithTimeout = async () => { stages.push('initial-write'); return { ok: true }; };
     win.ApiEngine.processEndday = async (context) => { stages.push(context.purpose); return { ok: true, summary: '完成', source: 'second' }; };
     win.MVU.enforceAndWrite = async () => { stages.push('enforce'); };
     await win.Chat.handleUnifiedRequest('归寝入眠', { kind: 'endday' });
-    ok(stages.join('>') === 'normal>settle>initial-write>endday>enforce', '多 API 归寝严格执行日常→脚本→首次写回→归寝→事实锁定');
+    ok(stages.join('>') === 'normal>settle>initial-write>endday>enforce', '第二 API 归寝严格执行日常→脚本→首次写回→归寝→事实锁定');
 
     // 日常与归寝必须分别读取自己的阶段配置，固定预设短切 A 后再短切 B。
     const stagePresets = [];
     win.Settings.load = () => ({
-      apiMode: 'multi',
       prompts: { normal: 'NORMAL_GUIDE_A', endday: 'ENDDAY_GUIDE_B' },
       variablePresets: {
-        normal: { mode: 'fixed', presetName: '日常A', context: {} },
-        endday: { mode: 'fixed', presetName: '归寝B', context: {} }
+        normal: { mode: 'fixed', presetName: '日常A' },
+        endday: { mode: 'fixed', presetName: '归寝B' }
       },
       secondApi: { url: 'x', key: 'k', model: 'm', timeout: 1000, maxRetries: 0 }
     });
@@ -523,11 +506,11 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     win.MVU.enforceAndWrite = async () => {};
     await win.Chat.handleUnifiedRequest('分阶段预设归寝', { kind: 'endday' });
     ok(stagePresets[0] === 'normal:日常A' && stagePresets[1].startsWith('endday:归寝B:'),
-      '多 API 归寝严格使用日常 A 与归寝 B 两份独立设置');
+      '第二 API 归寝严格使用日常 A 与归寝 B 两份独立设置');
     const summaries = [];
     win.addEventListener('pastoral:daily-summary', (e) => summaries.push(e.detail));
 
-    // 多 API 日常失败仍继续确定性与归寝，但必须向归寝传递禁止补算事实并标记部分完成。
+    // 第二 API 日常失败仍继续确定性与归寝，但必须向归寝传递禁止补算事实并标记部分完成。
     const failureStages = [];
     win.ApiEngine.processAfterMain = async () => {
       failureStages.push('normal-failed');
@@ -554,7 +537,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     win.MVU.settleForWrite = () => { stages.push('settle'); return { data: { stat_data: { settled: true } }, report: {}, calculated: { dimensions: {}, total: 0 } }; };
     win.MVU.writeWithTimeout = async () => ({ ok: true });
     win.MVU.enforceAndWrite = async () => { stages.push('enforce'); };
-    win.ApiEngine.processEndday = async () => { stages.push('endday'); return { ok: false, source: 'main', error: new Error('日结模型失败') }; };
+    win.ApiEngine.processEndday = async () => { stages.push('endday'); return { ok: false, source: 'second', error: new Error('日结模型失败') }; };
     await win.Chat.handleUnifiedRequest('再次归寝', { kind: 'endday' });
     ok(stages.includes('settle') && stages.includes('enforce') && summaries.some((x) => x.updateOk === false && /日结模型失败/.test(x.updateError)), '额外 AI 失败时仍保留确定性结算并触发账簿');
 
@@ -582,14 +565,11 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     win.ApiEngine.processEndday = actualProcessEndday;
   }
 
-  console.log('\n[5] 归寝日结按模式只运行规定次数');
+  console.log('\n[5] 归寝变量阶段只运行第二 API');
   if (win.ApiEngine) {
     let rawCalls = 0, secondCalls = 0;
-    const singleConfig = { apiMode: 'single', prompts: { normal: '', endday: '' }, variablePresets: { normal: { mode: 'none', context: {} }, endday: { mode: 'none', context: {} } }, secondApi: { url: '', key: '', model: '', timeout: 1000, maxRetries: 0 } };
-    win.Settings.load = () => singleConfig;
-    const enddayReply = '今日账簿已结清<UpdateVariable><Analysis>日期推进</Analysis><JSONPatch>[{"op":"delta","path":"/世界/时间/天数","value":1}]</JSONPatch></UpdateVariable>';
-    win.generate = async () => { rawCalls++; return enddayReply; };
-    win.generateRaw = async () => { rawCalls++; return enddayReply; };
+    win.Settings.load = () => ({ prompts: { normal: '', endday: '' }, variablePresets: { normal: { mode: 'current' }, endday: { mode: 'current' } }, secondApi: { url: 'x', key: 'k', model: 'm', timeout: 1000, maxRetries: 0 } });
+    win.generateRaw = async () => { rawCalls++; throw new Error('不得使用主 API generateRaw'); };
     win.getChatMessages = () => [{ message_id: 20, role: 'assistant', message: '归寝剧情' }];
     win.getLastMessageId = () => 20;
     win.MVU.latestMessageId = () => 20;
@@ -597,28 +577,18 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     win.Mvu.parseMessage = async () => ({ stat_data: { afterDaily: true } });
     win.Mvu.replaceMvuData = async () => {};
     win.setChatMessages = async () => {};
-    const single = await win.ApiEngine.processEndday({ baseline: win.MVU.getDataSnapshot(), messageId: 20 });
-    ok(rawCalls === 1 && single.ok && single.source === 'main', '单 API 归寝额外调用当前主 API 一次');
-    ok(single.summary === '今日账簿已结清', '日结返回变量标签外的总结文本');
-
-    let singleBaseline = null;
-    win.MVU.getDataSnapshot = () => ({ stat_data: { afterMainStory: true } });
-    win.Mvu.parseMessage = async (message, baseline) => { singleBaseline = baseline; return { stat_data: { afterDaily: true } }; };
-    await win.ApiEngine.processEndday({ baseline: { stat_data: { beforeMainStory: true } }, messageId: 20 });
-    ok(singleBaseline && singleBaseline.stat_data.afterMainStory === true, '单 API 日结从主剧情后的最新快照继续，不覆盖剧情变量');
-
-    rawCalls = 0;
-    win.Settings.load = () => ({ apiMode: 'multi', prompts: { normal: '', endday: '' }, variablePresets: { normal: { mode: 'none', context: {} }, endday: { mode: 'none', context: {} } }, secondApi: { url: 'x', key: 'k', model: 'm', timeout: 1000, maxRetries: 0 } });
-    win.ApiEngine.callSecondApiForVariable = async (context) => { secondCalls++; return { raw: '双轨日结' + secondTag, updateTag: secondTag, summary: '双轨日结', source: 'second', purpose: context.purpose }; };
-    const multi = await win.ApiEngine.processEndday({ baseline: win.MVU.getDataSnapshot(), messageId: 20 });
-    ok(secondCalls === 1 && multi.ok && multi.source === 'second', '多 API 归寝复用唯一一次副 API 调用');
-    ok(rawCalls === 0, '多 API 成功时不再额外调用主 API 日结');
+    win.ApiEngine.callSecondApiForVariable = async (context) => { secondCalls++; return { raw: '第二 API 日结' + secondTag, updateTag: secondTag, summary: '第二 API 日结', source: 'second', purpose: context.purpose }; };
+    const result = await win.ApiEngine.processEndday({ baseline: win.MVU.getDataSnapshot(), messageId: 20 });
+    ok(secondCalls === 1 && result.ok && result.source === 'second', '归寝复用唯一一次第二 API 调用');
+    ok(rawCalls === 0, '归寝成功时不调用主 API generateRaw');
 
     win.ApiEngine.callSecondApiForVariable = async () => { throw new Error('second unavailable'); };
     const secondFailure = await win.ApiEngine.processEndday({ baseline: { stat_data: { beforeMainStory: true } }, messageId: 20 });
-    ok(!secondFailure.ok && secondFailure.source === 'second' && /second unavailable/.test(String(secondFailure.error && secondFailure.error.message)), '多 API 归寝失败时明确报告第二 API 失败');
-    ok(rawCalls === 0, '多 API 归寝失败时不静默改用主 API');
+    ok(!secondFailure.ok && secondFailure.source === 'second' && /second unavailable/.test(String(secondFailure.error && secondFailure.error.message)), '归寝失败时明确报告第二 API 失败');
+    ok(rawCalls === 0, '第二 API 失败时不静默改用主 API');
     ok(win.ApiEngine.lastFailure && win.ApiEngine.lastFailure.purpose === 'endday', '失败的归寝请求登记为可重试');
+    const apiSource = fs.readFileSync(apiPath, 'utf8');
+    ok(!/callMainApiForDaily|appendDailyUpdate/.test(apiSource), '生产代码删除主 API 静默日结实现');
   }
 
   await wait(0);
