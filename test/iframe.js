@@ -99,8 +99,14 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
     '普通内嵌模式不设置全屏单页状态');
   ok(!embeddedLeft.hidden && !embeddedRight.hidden,
     '普通内嵌模式同时保留经营页与剧情页');
-  ok(/body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s+\.book\s*\{[^}]*flex-direction:\s*column/.test(CARD),
-    '普通手机内嵌按纵向完整页面排列');
+  const embeddedBook = cdoc.getElementById('book');
+  Object.defineProperty(embeddedBook, 'clientHeight', { value: 760, configurable: true });
+  Object.defineProperty(embeddedBook, 'scrollHeight', { value: 1800, configurable: true });
+  ok(embeddedBook.scrollHeight > embeddedBook.clientHeight
+    && /body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s+\.book\s*\{[^}]*overflow-y:\s*auto[^}]*touch-action:\s*pan-y/.test(CARD),
+  '普通手机内嵌整本书是可触摸的有界滚动区域');
+  ok(/body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s+\.(?:panels|journal__stream)[^}]*overflow:\s*visible/.test(CARD),
+    '普通手机内嵌的内部内容区不抢占书本滚动');
   measuredHeight = 980;
   cdoc.body.classList.add('is-prologue');
   await wait(80);
@@ -171,8 +177,18 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   ok(embeddedRight.hidden, '手机全屏经营页语义隐藏剧情页');
   ok(ledgerTab && storyTab && ledgerTab.getAttribute('aria-selected') === 'true'
     && storyTab.getAttribute('aria-selected') === 'false', '经营页 ARIA 状态正确');
+  embeddedLeft.scrollTop = 120;
   if (storyTab) storyTab.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
   ok(!!storyTab && cdoc.body.classList.contains('mobile-page--story') && storyTab.getAttribute('aria-selected') === 'true', '可切换到剧情页');
+  embeddedLeft.scrollTop = 0; // 模拟 display:none 后浏览器丢弃隐藏页滚动位置
+  embeddedRight.scrollTop = 240;
+  if (ledgerTab) ledgerTab.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
+  embeddedRight.scrollTop = 0;
+  await wait(20);
+  ok(embeddedLeft.scrollTop === 120, '切回经营页后恢复离开前的滚动位置');
+  if (storyTab) storyTab.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
+  await wait(20);
+  ok(embeddedRight.scrollTop === 240, '切回剧情页后恢复离开前的滚动位置');
   ok(/px$/.test(cdoc.documentElement.style.getPropertyValue('--mobile-viewport-height')), '手机沉浸同步可视视口高度 CSS 变量');
 
   btn.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));

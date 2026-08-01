@@ -18,9 +18,40 @@ html.in-tavern--dynamic { height: auto; min-height: 0; overflow: visible; }
 body.in-tavern.in-tavern--dynamic { height: auto; min-height: 0; overflow: visible; }
 body.in-tavern.in-tavern--dynamic .title-screen { height: auto; min-height: 560px; overflow: visible; }
 body.in-tavern.in-tavern--dynamic.is-prologue .prologue { height: auto; max-height: none; overflow: visible; }
-body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) { height: auto; min-height: 640px; overflow: visible; }
-body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) .book { height: auto; min-height: 640px; overflow: visible; flex-direction: column; flex-wrap: nowrap; }
+body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) {
+  height: var(--mobile-viewport-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+}
+body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) .book {
+  height: var(--mobile-viewport-height, 100dvh);
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
 body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) .page { width: 100%; height: auto; overflow: visible; flex: 0 0 auto; }
+body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) .panels {
+  flex: 0 0 auto;
+  min-height: auto;
+  overflow: visible;
+  max-height: none;
+}
+body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) .journal {
+  flex: 0 0 auto;
+  min-height: auto;
+  overflow: visible;
+}
+body.in-tavern.in-tavern--dynamic.is-game:not(.is-immersive) .journal__stream {
+  flex: 0 0 auto;
+  min-height: auto;
+  overflow: visible;
+  max-height: none;
+}
 html.in-tavern--dynamic.is-immersive {
   height: var(--mobile-viewport-height, 100dvh);
   min-height: 0;
@@ -244,10 +275,32 @@ body.is-immersive .page {
   body.is-immersive.mobile-page--ledger .page--right,
   body.is-immersive.mobile-page--story .page--left { display: none; }
   body.is-immersive.mobile-page--ledger .page--left,
-  body.is-immersive.mobile-page--story .page--right { display: flex; }
-  body.is-immersive.mobile-page--story .page--right { min-height: 0; flex-direction: column; }
-  body.is-immersive.mobile-page--story .journal { flex: 1 1 auto; min-height: 0; overflow: hidden; }
-  body.is-immersive.mobile-page--story .journal__stream { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  body.is-immersive.mobile-page--story .page--right {
+    display: flex;
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+  body.is-immersive.mobile-page--ledger .panels,
+  body.is-immersive.mobile-page--story .panels {
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
+    max-height: none;
+  }
+  body.is-immersive.mobile-page--story .page--right { flex-direction: column; }
+  body.is-immersive.mobile-page--story .journal { flex: 0 0 auto; min-height: auto; overflow: visible; }
+  body.is-immersive.mobile-page--story .journal__stream {
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
+    max-height: none;
+  }
   body.is-immersive.mobile-page--story .composer { flex: 0 0 auto; padding-top: var(--space-2); }
   body.is-immersive.mobile-page--story .composer__input { max-height: min(132px, 24dvh); }
   body.is-immersive.mobile-page--story .dock {

@@ -90,20 +90,29 @@ ok(/body\.in-tavern\.in-tavern--dynamic\.is-game\.is-immersive\s*\{[^}]*height:\
   '手机全屏 body 明确占满可视视口而不是保留自然短高度');
 ok(/body\.in-tavern\.in-tavern--dynamic\.is-game\.is-immersive\s+\.book\s*\{[^}]*height:\s*var\(--mobile-viewport-height,\s*100dvh\)/.test(CSS),
   '手机全屏书本用足够高优先级覆盖酒馆 100% 高度规则');
-ok(/body\.is-immersive\.mobile-page--story\s+\.page--right\s*\{[^}]*min-height:\s*0/.test(CSS), '手机剧情页保持纵向弹性且允许正文收缩');
+ok(/body\.is-immersive\.mobile-page--ledger\s+\.page--left,\s*body\.is-immersive\.mobile-page--story\s+\.page--right\s*\{[^}]*min-height:\s*100%/.test(CSS),
+  '手机活动页至少填满剩余视口并允许内容向下增长');
 ok(/body\.is-immersive\.mobile-page--story\s+\.dock\s*\{[^}]*display:\s*grid/.test(CSS), '手机剧情 dock 使用稳定网格而非任意换行');
 ok(!/@media\s*\(max-width:\s*899px\)[\s\S]*body\.in-tavern\.is-game\s+\.mobile-page-switcher/.test(CSS),
   '普通手机内嵌模式不显示全屏页签');
 ok(!/body\.in-tavern\.is-game\.mobile-page--(?:ledger|story)/.test(CSS),
   '普通手机内嵌模式不套用全屏单页隐藏规则');
-ok(/body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s*\{[^}]*height:\s*auto[^}]*min-height:\s*640px[^}]*overflow:\s*visible/.test(CSS),
-  '普通手机游玩页仅在非全屏时使用自然高度');
-ok(/body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s+\.book\s*\{[^}]*height:\s*auto[^}]*min-height:\s*640px[^}]*flex-direction:\s*column[^}]*flex-wrap:\s*nowrap/.test(CSS),
-  '普通手机游玩书页纵向自然排列而非折叠或硬挤双栏');
+ok(/body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s*\{[^}]*height:\s*var\(--mobile-viewport-height,\s*100dvh\)[^}]*min-height:\s*0[^}]*overflow:\s*hidden/.test(CSS),
+  '普通手机内嵌把页面锁定到可视视口，避免宿主与卡片双重滚动');
+ok(/body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s+\.book\s*\{[^}]*height:\s*var\(--mobile-viewport-height,\s*100dvh\)[^}]*overflow-x:\s*hidden[^}]*overflow-y:\s*auto[^}]*overscroll-behavior:\s*contain[^}]*touch-action:\s*pan-y/.test(CSS),
+  '普通手机内嵌仅由整本书承载纵向触摸滚动');
 ok(/body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s+\.page\s*\{[^}]*width:\s*100%[^}]*height:\s*auto[^}]*overflow:\s*visible/.test(CSS),
-  '普通手机内嵌的两张页面各占完整宽度');
-ok(!/body\.in-tavern\.in-tavern--dynamic\.is-game\s+\.book\s*\{[^}]*height:\s*auto/.test(CSS),
-  '自然高度规则不会覆盖手机全屏视口范围');
+  '普通手机内嵌的两张页面按自然高度进入书本滚动流');
+ok(/body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s+\.panels[^}]*overflow:\s*visible[^}]*max-height:\s*none/.test(CSS),
+  '普通手机内嵌面板不形成嵌套滚动');
+ok(/body\.in-tavern\.in-tavern--dynamic\.is-game:not\(\.is-immersive\)\s+\.journal__stream[^}]*overflow:\s*visible[^}]*max-height:\s*none/.test(CSS),
+  '普通手机内嵌消息流不形成嵌套滚动');
+ok(/body\.is-immersive\.mobile-page--ledger\s+\.page--left,\s*body\.is-immersive\.mobile-page--story\s+\.page--right\s*\{[^}]*overflow-x:\s*hidden[^}]*overflow-y:\s*auto[^}]*overscroll-behavior:\s*contain[^}]*touch-action:\s*pan-y/.test(CSS),
+  '手机全屏仅由当前可见书页承载纵向触摸滚动');
+ok(/body\.is-immersive\.mobile-page--(?:ledger|story)\s+\.panels[^}]*overflow:\s*visible[^}]*max-height:\s*none/.test(CSS),
+  '手机全屏面板不形成嵌套滚动');
+ok(/body\.is-immersive\.mobile-page--story\s+\.journal__stream[^}]*overflow:\s*visible[^}]*max-height:\s*none/.test(CSS),
+  '手机全屏消息流不形成嵌套滚动');
 ok(/body\.is-immersive\.is-mobile-keyboard-open\s+\.dock\s*\{[^}]*display:\s*none/.test(CSS), '软键盘打开时隐藏状态与快捷栏');
 ok(/body\.is-immersive\.is-mobile-keyboard-open\s+\.hud/.test(CSS), '软键盘打开时 HUD 使用紧凑样式');
 ok(!/body\.is-immersive\.is-mobile-keyboard-open\s+\.composer\s*\{[^}]*(position:\s*(fixed|absolute))/.test(CSS), '键盘模式 composer 仍在正常布局流');

@@ -13,6 +13,7 @@
   const $  = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   let mobilePage = 'ledger';
+  const mobileScrollPositions = { ledger: 0, story: 0 };
   let wasImmersive = false;
   let viewportFrame = 0;
   let composerFocused = false;
@@ -45,17 +46,25 @@
   }
 
   function setMobilePage(name) {
-    mobilePage = name === 'story' ? 'story' : 'ledger';
-    document.body.classList.toggle('mobile-page--ledger', mobilePage === 'ledger');
-    document.body.classList.toggle('mobile-page--story', mobilePage === 'story');
+    const nextPage = name === 'story' ? 'story' : 'ledger';
     const left = document.getElementById('pageLeft');
     const right = document.getElementById('pageRight');
+    const pages = { ledger: left, story: right };
+    const current = pages[mobilePage];
+    if (current) mobileScrollPositions[mobilePage] = current.scrollTop;
+    mobilePage = nextPage;
+    document.body.classList.toggle('mobile-page--ledger', mobilePage === 'ledger');
+    document.body.classList.toggle('mobile-page--story', mobilePage === 'story');
     if (left) left.hidden = mobilePage === 'story';
     if (right) right.hidden = mobilePage === 'ledger';
     $$('[data-mobile-page]').forEach((button) => {
       const on = button.dataset.mobilePage === mobilePage;
       button.classList.toggle('is-active', on);
       button.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    requestAnimationFrame(() => {
+      const target = pages[mobilePage];
+      if (target) target.scrollTop = mobileScrollPositions[mobilePage];
     });
     queueMobileViewportSync();
   }
