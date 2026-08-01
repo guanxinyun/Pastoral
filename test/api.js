@@ -169,6 +169,79 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     win.toast = () => {};
     win.eval(fs.readFileSync(apiPath, 'utf8'));
 
+    console.log('\n[3a] 阶段快照与固定预设短事务');
+    const splitSettings = {
+      apiMode: 'multi',
+      prompts: { normal: 'NORMAL_GUIDE_A', endday: 'ENDDAY_GUIDE_B' },
+      variablePresets: {
+        normal: { mode: 'fixed', presetName: '日常A', context: { chatHistory: true }, temperature: 0.1 },
+        endday: { mode: 'fixed', presetName: '归寝B', context: { chatHistory: false }, temperature: 0.3 }
+      },
+      secondApi: settingsState.secondApi
+    };
+    const normalSnapshot = win.ApiEngine.createStageSnapshot('normal', splitSettings);
+    const enddaySnapshot = win.ApiEngine.createStageSnapshot('endday', splitSettings);
+    ok(Object.isFrozen(normalSnapshot) && Object.isFrozen(normalSnapshot.context), '阶段快照及上下文不可变');
+    ok(normalSnapshot.kind === 'normal' && normalSnapshot.presetName === '日常A' && normalSnapshot.guide === 'NORMAL_GUIDE_A',
+      '日常快照只读取日常设置');
+    ok(enddaySnapshot.kind === 'endday' && enddaySnapshot.presetName === '归寝B' && enddaySnapshot.guide === 'ENDDAY_GUIDE_B',
+      '归寝快照只读取归寝设置');
+
+    const transactionEvents = [];
+    let activePreset = '玩家当前预设';
+    const livePreset = { settings: { temperature: 0.77 }, prompts: [{ id: 'live-edit', enabled: true, role: 'system', content: '尚未保存的现场编辑' }], prompts_unused: [], extensions: {} };
+    const networkResolvers = [];
+    win.getLoadedPresetName = () => { transactionEvents.push('get-name:' + activePreset); return activePreset; };
+    win.getPreset = (name) => {
+      transactionEvents.push('get-preset:' + name);
+      return name === 'in_use' ? livePreset : { settings: {}, prompts: [], prompts_unused: [], extensions: {} };
+    };
+    win.loadPreset = (name) => { transactionEvents.push('load:' + name); activePreset = name; return true; };
+    const restoredLive = [];
+    win.replacePreset = async (name, preset, options) => {
+      transactionEvents.push('replace:' + name + ':' + options.render);
+      restoredLive.push(preset);
+    };
+    win.generate = (config) => {
+      transactionEvents.push('generate:' + activePreset + ':' + config.user_input);
+      return new Promise((resolve) => networkResolvers.push(resolve));
+    };
+
+    const firstNetwork = win.ApiEngine.launchWithFixedPreset('日常A', { user_input: 'TASK_A' });
+    await wait(0);
+    ok(transactionEvents.join('>') === [
+      'get-name:玩家当前预设', 'get-preset:in_use', 'load:日常A', 'generate:日常A:TASK_A',
+      'load:玩家当前预设', 'replace:in_use:none'
+    ].join('>'), '固定预设严格执行保存现场→切换→发起→立即恢复');
+    ok(activePreset === '玩家当前预设' && restoredLive.length === 1
+      && restoredLive[0] !== livePreset && restoredLive[0].prompts[0].content === '尚未保存的现场编辑',
+    '原预设名称与未保存 in_use 现场均已恢复');
+
+    transactionEvents.length = 0;
+    const secondNetwork = win.ApiEngine.launchWithFixedPreset('归寝B', { user_input: 'TASK_B' });
+    await wait(0);
+    ok(transactionEvents.includes('generate:归寝B:TASK_B'), '首个网络响应未完成时第二个短事务仍能发起');
+    ok(activePreset === '玩家当前预设', '第二个短事务也在网络完成前恢复预设');
+    networkResolvers[0]('FIRST_OK'); networkResolvers[1]('SECOND_OK');
+    ok((await firstNetwork) === 'FIRST_OK' && (await secondNetwork) === 'SECOND_OK', '网络 Promise 在短锁外并发等待并各自返回');
+
+    transactionEvents.length = 0;
+    win.generate = () => { transactionEvents.push('generate-throw'); throw new Error('sync launch error'); };
+    let syncFailure = null;
+    try { await win.ApiEngine.launchWithFixedPreset('日常A', { user_input: 'FAIL' }); }
+    catch (e) { syncFailure = e; }
+    ok(syncFailure && /sync launch error/.test(syncFailure.message), 'generate 同步抛错向调用方报告');
+    ok(transactionEvents.includes('load:玩家当前预设') && transactionEvents.includes('replace:in_use:none'),
+      'generate 同步抛错后仍恢复原预设与现场');
+
+    // 恢复本节后续测试需要的生成桩。
+    win.generate = async (config) => {
+      attempts++; configs.push(config);
+      if (attempts < 3) throw new Error('temporary');
+      return okReply;
+    };
+    win.getPreset = (name) => name === 'in_use' ? livePreset : { settings: {}, prompts: [], prompts_unused: [], extensions: {} };
+
     const result = await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
     ok(attempts === 3, '失败后按 maxRetries=2 共尝试 3 次');
     ok(configs.length === 0 && rawConfigs.length === 3, 'none 模式全程只用 generateRaw，不经过任何酒馆预设');
@@ -329,8 +402,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     await win.ApiEngine.callSecondApiForVariable({ baseline: win.MVU.getDataSnapshot(), purpose: 'normal' });
     ok(injectRepairs.length === 2 && /玩家普通变量要求/.test(injectRepairs[1]) && /只需修正格式/.test(injectRepairs[1]),
       'inject 模式格式纠正仍携带完整任务消息');
-    ok(createdPresets.length === 0, '两种组装方式都不写入任何预设');
-    ok(typeof win.loadPreset === 'undefined', '两种组装方式都不切换玩家当前预设');
+    ok(createdPresets.length === 0, '变量请求不创建或覆盖任何酒馆预设');
 
     win.generate = async (config) => { attempts++; configs.push(config); return attempts < 3 ? Promise.reject(new Error('temporary')) : okReply; };
     win.generateRaw = async (config) => { attempts++; rawConfigs.push(config); return attempts < 3 ? Promise.reject(new Error('temporary')) : okReply; };

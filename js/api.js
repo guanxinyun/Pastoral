@@ -23,6 +23,8 @@ const ApiEngine = (function () {
   ];
   let sequence = 0;
   let lastFailure = null;
+  // 只串行“保存现场→切换→发起→恢复”这几步；API 网络等待不在锁内。
+  let presetLaunchTail = Promise.resolve();
 
   function now() { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); }
   function log(prefix, stage, detail) { console.info(prefix, stage, detail || ''); }
@@ -182,6 +184,62 @@ const ApiEngine = (function () {
     const key = kind === 'endday' ? 'endday' : 'normal';
     const value = config && config.variablePresets && config.variablePresets[key];
     return value && typeof value === 'object' ? value : { mode: 'none', presetName: '', context: {} };
+  }
+
+  /** 冻结单个阶段所需的全部配置，后续不得重新读取另一阶段设置。 */
+  function createStageSnapshot(kind, config) {
+    const key = kind === 'endday' ? 'endday' : 'normal';
+    const cfg = config || Settings.load();
+    const selected = variablePresetConfig(key, cfg);
+    const mode = ['none', 'current', 'fixed'].includes(selected.mode) ? selected.mode : 'none';
+    const context = Object.freeze(Object.assign({}, selected.context || {}));
+    return Object.freeze({
+      kind: key,
+      mode,
+      presetName: mode === 'current' ? 'in_use' : String(selected.presetName || '').trim(),
+      context,
+      blockDepthEntries: selected.blockDepthEntries !== false,
+      temperature: Number.isFinite(Number(selected.temperature)) ? Number(selected.temperature) : 0,
+      guide: updateGuide(key, cfg)
+    });
+  }
+
+  /**
+   * 短事务：切到固定预设发起 generate，立即恢复原预设，再在锁外等待网络结果。
+   * 同时恢复 in_use 现场，避免玩家尚未保存的预设编辑因切换而丢失。
+   */
+  function launchWithFixedPreset(targetPreset, generateConfig) {
+    let responsePromise;
+    const launch = async () => {
+      if (typeof getLoadedPresetName !== 'function' || typeof getPreset !== 'function'
+        || typeof loadPreset !== 'function' || typeof replacePreset !== 'function'
+        || typeof generate !== 'function') {
+        throw new Error('当前环境缺少固定预设短事务所需接口');
+      }
+      const originalName = String(getLoadedPresetName() || '').trim();
+      if (!originalName) throw new Error('无法确定当前加载的酒馆预设');
+      const originalLive = clone(getPreset('in_use'));
+      let switched = false;
+      let launchError = null;
+      try {
+        if (!loadPreset(targetPreset)) throw new Error('切换目标预设“' + targetPreset + '”失败');
+        switched = true;
+        // 这里只取得 Promise，不等待网络回复。
+        responsePromise = Promise.resolve(generate(generateConfig));
+      } catch (e) {
+        launchError = e;
+      } finally {
+        if (switched) {
+          if (!loadPreset(originalName)) throw new Error('恢复原预设“' + originalName + '”失败');
+          await replacePreset('in_use', originalLive, { render: 'none' });
+        }
+      }
+      if (launchError) throw launchError;
+    };
+    const transaction = presetLaunchTail.then(launch, launch);
+    // 锁只等恢复完成；失败也吞入 tail，不能永久卡住后续短事务。
+    presetLaunchTail = transaction.catch(() => {});
+    return transaction.then(() => responsePromise).then((network) => network);
   }
 
   function availablePresetNames() {
@@ -603,6 +661,8 @@ const ApiEngine = (function () {
 
   return {
     LEGACY_PRESET_NAME,
+    createStageSnapshot,
+    launchWithFixedPreset,
     availablePresetNames,
     orderedPrompts,
     compilePreset,
