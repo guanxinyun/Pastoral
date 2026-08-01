@@ -45,8 +45,9 @@ const Host = (function () {
     }
   }
 
-  /** 本卡片所在的 iframe 元素 */
+  /** 本卡片所在的 iframe 元素；优先使用浏览器原生 frameElement。 */
   function selfFrame() {
+    try { if (window.frameElement) return window.frameElement; } catch (e) { /* cross-origin */ }
     const d = parentDoc();
     if (!d) return null;
     try {
@@ -81,6 +82,12 @@ iframe.pastoral-host-frame:not(.${IMMERSIVE_CLASS}) {
   max-height: calc(100dvh - 96px) !important;
   overflow: hidden !important;
   border: 0 !important;
+}
+
+/* 手机标题/序章按内容动态增高；进入游戏后由脚本收回可视高度。 */
+iframe.pastoral-host-dynamic:not(.${IMMERSIVE_CLASS}) {
+  height: var(--pastoral-frame-height, 560px) !important;
+  max-height: none !important;
 }
 
 /* 沉浸模式：只将当前页面 iframe 钉满视口 */
@@ -171,23 +178,75 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
     } catch (e) { /* ignore */ }
   }
 
+  /* ---------- 手机动态高度 ---------- */
+
+  let dynamicFrameTimer = 0;
+
+  function isMobileViewport() { return window.innerWidth < 900; }
+
+  function hostViewportHeight() {
+    const d = parentDoc();
+    const host = d && d.defaultView;
+    const height = Number(host && (host.visualViewport && host.visualViewport.height || host.innerHeight));
+    const fallback = Number(window.visualViewport && window.visualViewport.height || window.innerHeight);
+    return Math.max(560, Math.min(900, Math.round((height > 0 ? height - 96 : fallback) || 560)));
+  }
+
+  function measureDynamicFrameHeight(frame) {
+    if (!frame || frame.classList.contains(IMMERSIVE_CLASS)) return;
+    const intro = document.body && (document.body.classList.contains('is-title') || document.body.classList.contains('is-prologue'));
+    const height = intro
+      ? Math.max(560, document.documentElement.scrollHeight || 0, document.body ? document.body.scrollHeight : 0)
+      : hostViewportHeight();
+    frame.style.setProperty('--pastoral-frame-height', Math.ceil(height) + 'px');
+  }
+
+  function queueDynamicFrameMeasure(frame) {
+    if (dynamicFrameTimer) clearTimeout(dynamicFrameTimer);
+    dynamicFrameTimer = setTimeout(() => { dynamicFrameTimer = 0; measureDynamicFrameHeight(frame); }, 24);
+  }
+
+  function installDynamicFrameHeight(frame) {
+    if (!frame || !isMobileViewport()) return;
+    frame.classList.add('pastoral-host-dynamic');
+    queueDynamicFrameMeasure(frame);
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(() => queueDynamicFrameMeasure(frame));
+      resizeObserver.observe(document.documentElement);
+      if (document.body) resizeObserver.observe(document.body);
+    }
+    if (typeof MutationObserver !== 'undefined' && document.body) {
+      const mutationObserver = new MutationObserver(() => queueDynamicFrameMeasure(frame));
+      mutationObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }
+    window.addEventListener('resize', () => queueDynamicFrameMeasure(frame));
+  }
+
   /* ---------- 初始化 ---------- */
 
   function init() {
     if (!isHost) { selfDestruct(); return false; }
     if (inTavern) {
-      injectTakeover();
+      const takeover = injectTakeover();
       const frame = selfFrame();
       if (frame) frame.classList.add('pastoral-host-frame');
+      document.documentElement.classList.add('in-tavern');
+      document.body.classList.add('in-tavern');
+      if (isMobileViewport()) {
+        document.documentElement.classList.add('in-tavern--dynamic');
+        document.body.classList.add('in-tavern--dynamic');
+        installDynamicFrameHeight(frame);
+      }
       // 酒馆可能在切换聊天后重建 DOM，补注一次
       setTimeout(() => {
         injectTakeover();
         const currentFrame = selfFrame();
-        if (currentFrame) currentFrame.classList.add('pastoral-host-frame');
+        if (currentFrame) {
+          currentFrame.classList.add('pastoral-host-frame');
+          installDynamicFrameHeight(currentFrame);
+        }
       }, 1500);
       watchFullscreenExit();
-      document.documentElement.classList.add('in-tavern');
-      document.body.classList.add('in-tavern');
     } else {
       document.body.classList.add('standalone');
     }

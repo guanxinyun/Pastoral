@@ -94,6 +94,27 @@ const Intro = (function () {
     quest: ' * 委托任务：'
   };
 
+  function formatOpeningMessage() {
+    const lines = splitParagraphs(OPENING_TEXT);
+    const output = ['# 一封来自远方的信', '', '> **星梦摇篮 · 家族遗产书**', '', '---', ''];
+    let quoting = false;
+    lines.forEach((line) => {
+      if (line === MARK.pigeon) output.push('## 信鸽带来的遗产', '');
+      if (line === MARK.letterIntro) output.push('### 霍根·星摇的来信', '');
+      if (line === MARK.letterStart) quoting = true;
+      if (line.startsWith(MARK.journey)) output.push('', '---', '', '## 前往翠玉摇篮', '');
+      if (line === MARK.ellie) output.push('', '## 与艾莉初见', '');
+      if (line === MARK.morning) output.push('', '---', '', '## 新的一天开始了', '');
+      if (line.startsWith('* 委托任务：')) output.push('', '---', '', '## 委托任务', '');
+      output.push(quoting ? '> ' + line : line, '');
+      if (line === MARK.letterEnd) quoting = false;
+    });
+    output.push('```', '```');
+    return output.join('\n').trim();
+  }
+
+  const OPENING_MESSAGE = formatOpeningMessage();
+
   let initialized = false;
   let starting = false;
   let ready = false;
@@ -193,7 +214,7 @@ const Intro = (function () {
   }
 
   function revealExperience() {
-    document.body.classList.remove('is-prologue');
+    document.body.classList.remove('is-title', 'is-prologue');
     document.body.classList.add('is-game');
     const book = unlockBook();
     removeTitle(book);
@@ -207,7 +228,7 @@ const Intro = (function () {
   async function persistFloorZeroOpening(decision) {
     if (!decision || decision.reason !== 'floor-zero' || !(window.Host && Host.inTavern)) return false;
     if (typeof setChatMessages !== 'function') throw new Error('当前环境无法覆盖第 0 楼开局文本');
-    await setChatMessages([{ message_id: 0, message: OPENING_TEXT }], { refresh: 'none' });
+    await setChatMessages([{ message_id: 0, message: OPENING_MESSAGE }], { refresh: 'none' });
     return true;
   }
 
@@ -341,6 +362,6 @@ const Intro = (function () {
     button.addEventListener('click', start);
   }
 
-  return { OPENING_TEXT, chapters, detectEntry, init, start, persistFloorZeroOpening, renderPrologue, revealExperience, enterGame };
+  return { OPENING_TEXT, OPENING_MESSAGE, chapters, detectEntry, init, start, persistFloorZeroOpening, renderPrologue, revealExperience, enterGame };
 })();
 window.Intro = Intro;

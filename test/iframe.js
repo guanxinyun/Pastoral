@@ -46,7 +46,9 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
 
   const cwin = iframe.contentWindow;
   const cdoc = cwin.document;
+  let measuredHeight = 640;
   Object.defineProperty(cwin, 'innerWidth', { value: 390, writable: true, configurable: true });
+  Object.defineProperty(cwin, 'innerHeight', { value: 760, writable: true, configurable: true });
   let requestedElement = null;
   iframe.requestFullscreen = async function () { requestedElement = this; pdoc.fullscreenElement = this; };
   pdoc.exitFullscreen = async function () { pdoc.fullscreenElement = null; };
@@ -75,18 +77,28 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   cdoc.open();
   cdoc.write(CARD);
   cdoc.close();
+  Object.defineProperty(cdoc.documentElement, 'scrollHeight', { get: () => measuredHeight, configurable: true });
+  Object.defineProperty(cdoc.body, 'scrollHeight', { get: () => measuredHeight, configurable: true });
   await wait(700);
 
   ok(!!cdoc.getElementById('titleScreen') && cdoc.getElementById('book').hasAttribute('inert'), 'iframe 加载后标题先出现');
   cdoc.getElementById('titleStart').dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
   await wait(100);
   ok(!cdoc.getElementById('book').hasAttribute('inert') && cdoc.getElementById('prologue').hidden, '已有楼层从标题直接恢复正式界面');
+  ok(cdoc.body.classList.contains('is-game') && !cdoc.body.classList.contains('is-title'),
+    '已有存档进入游戏后清除标题阶段状态');
   const embeddedSwitcher = cdoc.querySelector('[data-mobile-page-switcher]');
   const embeddedStoryTab = cdoc.querySelector('[data-mobile-page="story"]');
   ok(embeddedSwitcher && !embeddedSwitcher.hidden && cdoc.body.classList.contains('mobile-page--ledger'), '窄酒馆 iframe 非全屏也启用单页经营视图');
   embeddedStoryTab && embeddedStoryTab.dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
   ok(cdoc.body.classList.contains('mobile-page--story'), '窄酒馆 iframe 非全屏可切换剧情页');
   cdoc.querySelector('[data-mobile-page="ledger"]').dispatchEvent(new cwin.MouseEvent('click', { bubbles: true }));
+  measuredHeight = 980;
+  cdoc.body.classList.add('is-prologue');
+  await wait(80);
+  ok(parseFloat(iframe.style.getPropertyValue('--pastoral-frame-height')) >= 980,
+    '序章阶段随完整正文增长宿主 iframe');
+  cdoc.body.classList.remove('is-prologue');
 
   console.log('\n[1] 第 0 层接管其余聊天楼层');
   const style = pdoc.getElementById('pastoral-host-takeover');
@@ -94,9 +106,14 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   const css = style ? style.textContent : '';
   ok(/#chat > \.mes:not\(\[mesid="0"\]\)/.test(css), '接管样式隐藏第 1 层及以后聊天楼层');
   ok(!/#send_form[\s\S]*display:\s*none/.test(css), '接管样式保留原生输入区');
-  ok(iframe.classList.contains('pastoral-host-frame'), '宿主 iframe 带有界布局标记');
+  ok(iframe.classList.contains('pastoral-host-frame'), '宿主 iframe 带接管标记');
+  ok(iframe.classList.contains('pastoral-host-dynamic'), '窄屏宿主 iframe 使用动态高度模式');
+  ok(parseFloat(iframe.style.getPropertyValue('--pastoral-frame-height')) >= 560,
+    '标题阶段立即写入至少 560px 的动态 iframe 高度');
+  ok(/iframe\.pastoral-host-dynamic[\s\S]*height:\s*var\(--pastoral-frame-height,\s*560px\)/.test(css),
+    '父页面以测量值驱动移动 iframe 高度');
   ok(/iframe\.pastoral-host-frame[\s\S]*height:\s*clamp\(560px,\s*78vh,\s*900px\)[\s\S]*height:\s*clamp\(560px,\s*78dvh,\s*900px\)/.test(css),
-    '父酒馆 iframe 先提供移动 WebView 可识别的 vh 高度，再用 dvh 增强');
+    '桌面有界 iframe 保留 vh 与 dvh 高度');
   ok(/iframe\.pastoral-host-frame[\s\S]*max-height:\s*calc\(100vh\s*-\s*96px\)[\s\S]*max-height:\s*calc\(100dvh\s*-\s*96px\)/.test(css),
     '宿主 iframe 最大高度同时提供 vh 与 dvh，旧手机不会回退成 150px 短条');
 
@@ -137,6 +154,12 @@ const HOST_PAGE = `<!DOCTYPE html><html><head><title>SillyTavern</title></head><
   ok(!iframe.classList.contains('pastoral-immersive'), '退出：iframe 去沉浸类');
   ok(!pdoc.body.classList.contains('pastoral-immersive-lock'), '退出：父页解锁滚动');
   ok(!cdoc.body.classList.contains('is-immersive'), '退出：卡内类已移除');
+  measuredHeight = 2100;
+  cdoc.body.classList.add('is-game');
+  await wait(80);
+  const gameFrameHeight = parseFloat(iframe.style.getPropertyValue('--pastoral-frame-height'));
+  ok(gameFrameHeight <= 760,
+    '进入游戏后 iframe 回到父视口可用高度而非跟随长内容（实际 ' + gameFrameHeight + 'px）');
   ok(cdoc.body.classList.contains('mobile-page--ledger') !== cdoc.body.classList.contains('mobile-page--story'), '退出全屏后窄酒馆 iframe 仍保持一个单页视图');
   ok(btn.getAttribute('aria-pressed') === 'false', '退出：aria-pressed=false');
 

@@ -60,6 +60,15 @@ function load(options = {}) {
     ok(Intro.OPENING_TEXT.includes('——你的远房叔公，霍根·星摇'), '开局包含准确署名');
     ok(Intro.OPENING_TEXT.trimEnd().endsWith('（报酬：声望+3）'), '开局以准确任务报酬结尾');
     ok(Intro.OPENING_TEXT.length > 3500, '开局为完整长文本而非摘要');
+    ok(typeof Intro.OPENING_MESSAGE === 'string' && Intro.OPENING_MESSAGE.startsWith('# 一封来自远方的信'),
+      '首楼持久化文本使用 Markdown 标题排版');
+    const openingParagraphs = Intro.OPENING_TEXT.split(/\n+/).map((part) => part.trim()).filter(Boolean);
+    let cursor = -1;
+    ok(typeof Intro.OPENING_MESSAGE === 'string' && openingParagraphs.every((part) => {
+      cursor = Intro.OPENING_MESSAGE.indexOf(part, cursor + 1); return cursor >= 0;
+    }), '首楼排版完整保留每段开局原文及顺序');
+    ok(typeof Intro.OPENING_MESSAGE === 'string' && /\n---\n/.test(Intro.OPENING_MESSAGE) && /```\s*```\s*$/.test(Intro.OPENING_MESSAGE),
+      '首楼排版包含章节分隔并在末尾保留空围栏触发标记');
     let decision = await Intro.detectEntry();
     ok(decision.mode === 'prologue' && decision.reason === 'floor-zero' && decision.floor === 0, '第 0 层强制序章');
 
@@ -108,8 +117,8 @@ function load(options = {}) {
     const write = pending.writes[0];
     ok(pending.writeCalls === 1 && write && write.messages[0].message_id === 0,
       '酒馆新开局先写回第 0 楼');
-    ok(!!write && write.messages[0].message === tavern.win.Intro.OPENING_TEXT,
-      '第 0 楼正文被完整内置开局覆盖');
+    ok(!!write && write.messages[0].message === tavern.win.Intro.OPENING_MESSAGE,
+      '第 0 楼正文被完整排版开局覆盖');
     ok(!!write && write.config.refresh === 'none', '覆盖第 0 楼不触发宿主整页重载');
     ok(tavern.doc.getElementById('prologue').hidden, '写回完成前不伪装序章已就绪');
     tavern.releaseWrite();

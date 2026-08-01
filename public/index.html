@@ -372,6 +372,13 @@ body.in-tavern.is-game .book { width: 100%; max-width: none; height: 100%; min-h
 body.in-tavern .page { min-height: 0; height: 100%; overflow: hidden; }
 body.in-tavern .panels { overflow-y: auto; overscroll-behavior: contain; }
 body.in-tavern .journal__stream { flex: 1; min-height: 0; max-height: none; overflow-y: auto; overscroll-behavior: contain; }
+
+/* 父页面无法接管时，向酒馆暴露自然内容高度，避免默认 150px iframe 裁切。 */
+html.in-tavern--dynamic { height: auto; min-height: 0; overflow: visible; }
+body.in-tavern.in-tavern--dynamic { height: auto; min-height: 0; overflow: visible; }
+body.in-tavern.in-tavern--dynamic .title-screen { height: auto; min-height: 560px; overflow: visible; }
+body.in-tavern.in-tavern--dynamic.is-prologue .prologue { height: auto; max-height: none; overflow: visible; }
+body.in-tavern.in-tavern--dynamic.is-game { height: 100%; overflow: hidden; }
 body.in-tavern.is-title .prologue,
 body.in-tavern.is-title .book,
 body.in-tavern.is-prologue .title-screen,
@@ -1913,8 +1920,9 @@ const Host = (function () {
     }
   }
 
-  /** 本卡片所在的 iframe 元素 */
+  /** 本卡片所在的 iframe 元素；优先使用浏览器原生 frameElement。 */
   function selfFrame() {
+    try { if (window.frameElement) return window.frameElement; } catch (e) { /* cross-origin */ }
     const d = parentDoc();
     if (!d) return null;
     try {
@@ -1949,6 +1957,12 @@ iframe.pastoral-host-frame:not(.${IMMERSIVE_CLASS}) {
   max-height: calc(100dvh - 96px) !important;
   overflow: hidden !important;
   border: 0 !important;
+}
+
+/* 手机标题/序章按内容动态增高；进入游戏后由脚本收回可视高度。 */
+iframe.pastoral-host-dynamic:not(.${IMMERSIVE_CLASS}) {
+  height: var(--pastoral-frame-height, 560px) !important;
+  max-height: none !important;
 }
 
 /* 沉浸模式：只将当前页面 iframe 钉满视口 */
@@ -2039,23 +2053,75 @@ body.${IMMERSIVE_CLASS}-lock { overflow: hidden !important; }
     } catch (e) { /* ignore */ }
   }
 
+  /* ---------- 手机动态高度 ---------- */
+
+  let dynamicFrameTimer = 0;
+
+  function isMobileViewport() { return window.innerWidth < 900; }
+
+  function hostViewportHeight() {
+    const d = parentDoc();
+    const host = d && d.defaultView;
+    const height = Number(host && (host.visualViewport && host.visualViewport.height || host.innerHeight));
+    const fallback = Number(window.visualViewport && window.visualViewport.height || window.innerHeight);
+    return Math.max(560, Math.min(900, Math.round((height > 0 ? height - 96 : fallback) || 560)));
+  }
+
+  function measureDynamicFrameHeight(frame) {
+    if (!frame || frame.classList.contains(IMMERSIVE_CLASS)) return;
+    const intro = document.body && (document.body.classList.contains('is-title') || document.body.classList.contains('is-prologue'));
+    const height = intro
+      ? Math.max(560, document.documentElement.scrollHeight || 0, document.body ? document.body.scrollHeight : 0)
+      : hostViewportHeight();
+    frame.style.setProperty('--pastoral-frame-height', Math.ceil(height) + 'px');
+  }
+
+  function queueDynamicFrameMeasure(frame) {
+    if (dynamicFrameTimer) clearTimeout(dynamicFrameTimer);
+    dynamicFrameTimer = setTimeout(() => { dynamicFrameTimer = 0; measureDynamicFrameHeight(frame); }, 24);
+  }
+
+  function installDynamicFrameHeight(frame) {
+    if (!frame || !isMobileViewport()) return;
+    frame.classList.add('pastoral-host-dynamic');
+    queueDynamicFrameMeasure(frame);
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(() => queueDynamicFrameMeasure(frame));
+      resizeObserver.observe(document.documentElement);
+      if (document.body) resizeObserver.observe(document.body);
+    }
+    if (typeof MutationObserver !== 'undefined' && document.body) {
+      const mutationObserver = new MutationObserver(() => queueDynamicFrameMeasure(frame));
+      mutationObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }
+    window.addEventListener('resize', () => queueDynamicFrameMeasure(frame));
+  }
+
   /* ---------- 初始化 ---------- */
 
   function init() {
     if (!isHost) { selfDestruct(); return false; }
     if (inTavern) {
-      injectTakeover();
+      const takeover = injectTakeover();
       const frame = selfFrame();
       if (frame) frame.classList.add('pastoral-host-frame');
+      document.documentElement.classList.add('in-tavern');
+      document.body.classList.add('in-tavern');
+      if (isMobileViewport()) {
+        document.documentElement.classList.add('in-tavern--dynamic');
+        document.body.classList.add('in-tavern--dynamic');
+        installDynamicFrameHeight(frame);
+      }
       // 酒馆可能在切换聊天后重建 DOM，补注一次
       setTimeout(() => {
         injectTakeover();
         const currentFrame = selfFrame();
-        if (currentFrame) currentFrame.classList.add('pastoral-host-frame');
+        if (currentFrame) {
+          currentFrame.classList.add('pastoral-host-frame');
+          installDynamicFrameHeight(currentFrame);
+        }
       }, 1500);
       watchFullscreenExit();
-      document.documentElement.classList.add('in-tavern');
-      document.body.classList.add('in-tavern');
     } else {
       document.body.classList.add('standalone');
     }
@@ -6720,6 +6786,27 @@ const Intro = (function () {
     quest: ' * 委托任务：'
   };
 
+  function formatOpeningMessage() {
+    const lines = splitParagraphs(OPENING_TEXT);
+    const output = ['# 一封来自远方的信', '', '> **星梦摇篮 · 家族遗产书**', '', '---', ''];
+    let quoting = false;
+    lines.forEach((line) => {
+      if (line === MARK.pigeon) output.push('## 信鸽带来的遗产', '');
+      if (line === MARK.letterIntro) output.push('### 霍根·星摇的来信', '');
+      if (line === MARK.letterStart) quoting = true;
+      if (line.startsWith(MARK.journey)) output.push('', '---', '', '## 前往翠玉摇篮', '');
+      if (line === MARK.ellie) output.push('', '## 与艾莉初见', '');
+      if (line === MARK.morning) output.push('', '---', '', '## 新的一天开始了', '');
+      if (line.startsWith('* 委托任务：')) output.push('', '---', '', '## 委托任务', '');
+      output.push(quoting ? '> ' + line : line, '');
+      if (line === MARK.letterEnd) quoting = false;
+    });
+    output.push('```', '```');
+    return output.join('\n').trim();
+  }
+
+  const OPENING_MESSAGE = formatOpeningMessage();
+
   let initialized = false;
   let starting = false;
   let ready = false;
@@ -6819,7 +6906,7 @@ const Intro = (function () {
   }
 
   function revealExperience() {
-    document.body.classList.remove('is-prologue');
+    document.body.classList.remove('is-title', 'is-prologue');
     document.body.classList.add('is-game');
     const book = unlockBook();
     removeTitle(book);
@@ -6833,7 +6920,7 @@ const Intro = (function () {
   async function persistFloorZeroOpening(decision) {
     if (!decision || decision.reason !== 'floor-zero' || !(window.Host && Host.inTavern)) return false;
     if (typeof setChatMessages !== 'function') throw new Error('当前环境无法覆盖第 0 楼开局文本');
-    await setChatMessages([{ message_id: 0, message: OPENING_TEXT }], { refresh: 'none' });
+    await setChatMessages([{ message_id: 0, message: OPENING_MESSAGE }], { refresh: 'none' });
     return true;
   }
 
@@ -6967,7 +7054,7 @@ const Intro = (function () {
     button.addEventListener('click', start);
   }
 
-  return { OPENING_TEXT, chapters, detectEntry, init, start, persistFloorZeroOpening, renderPrologue, revealExperience, enterGame };
+  return { OPENING_TEXT, OPENING_MESSAGE, chapters, detectEntry, init, start, persistFloorZeroOpening, renderPrologue, revealExperience, enterGame };
 })();
 window.Intro = Intro;
 

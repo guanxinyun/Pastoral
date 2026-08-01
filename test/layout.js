@@ -114,8 +114,14 @@ ok(/\.card:hover[^{]*\{[^}]*transform:\s*translateY/.test(CSS), '正式卡片具
 
 console.log('\n[6] 酒馆 iframe 有界布局');
 ok(/html\.in-tavern\s*\{[^}]*height:\s*100%[^}]*overflow:\s*hidden/.test(CSS), '酒馆子文档锁定为单个 iframe 视口');
-ok(/body\.in-tavern\s*\{[^}]*height:\s*100%[^}]*overflow:\s*hidden/.test(CSS), '酒馆 body 不再向外撑高');
-ok(/body\.in-tavern\s+\.title-screen\s*\{[^}]*height:\s*100%[^}]*min-height:\s*0/.test(CSS), '酒馆标题不使用 dvh 参与高度反馈');
+ok(/body\.in-tavern\s*\{[^}]*height:\s*100%[^}]*overflow:\s*hidden/.test(CSS), '有界酒馆 body 不再向外撑高');
+ok(/html\.in-tavern--dynamic\s*\{[^}]*height:\s*auto[^}]*overflow:\s*visible/.test(CSS), '动态宿主 html 暴露自然内容高度');
+ok(/body\.in-tavern\.in-tavern--dynamic\s*\{[^}]*height:\s*auto[^}]*overflow:\s*visible/.test(CSS), '动态宿主 body 不裁切内容');
+ok(/body\.in-tavern\.in-tavern--dynamic\s+\.title-screen\s*\{[^}]*height:\s*auto[^}]*min-height:\s*560px[^}]*overflow:\s*visible/.test(CSS),
+  '父页面不可接管时标题至少 560px 并完整暴露开始按钮');
+ok(/body\.in-tavern\.in-tavern--dynamic\.is-prologue\s+\.prologue\s*\{[^}]*height:\s*auto[^}]*max-height:\s*none[^}]*overflow:\s*visible/.test(CSS),
+  '动态宿主序章按完整内容自然展开');
+ok(/body\.in-tavern\s+\.title-screen\s*\{[^}]*height:\s*100%[^}]*min-height:\s*0/.test(CSS), '有界酒馆标题不使用 dvh 参与高度反馈');
 ok(/body\.in-tavern\.is-prologue\s+\.prologue\s*\{[^}]*width:\s*calc\(100%\s*-\s*24px\)[^}]*height:\s*calc\(100%\s*-\s*24px\)[^}]*margin:\s*12px auto[^}]*overflow-y:\s*auto/.test(CSS), '酒馆序章在留白视口内滚动');
 ok(/\.book\s*\{[^}]*--book-edge-inline:\s*clamp\(16px,\s*2vw,\s*32px\)/.test(CSS),
   '书本外壳定义响应式同色页缘');

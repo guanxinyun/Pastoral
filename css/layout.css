@@ -12,6 +12,13 @@ body.in-tavern.is-game .book { width: 100%; max-width: none; height: 100%; min-h
 body.in-tavern .page { min-height: 0; height: 100%; overflow: hidden; }
 body.in-tavern .panels { overflow-y: auto; overscroll-behavior: contain; }
 body.in-tavern .journal__stream { flex: 1; min-height: 0; max-height: none; overflow-y: auto; overscroll-behavior: contain; }
+
+/* 父页面无法接管时，向酒馆暴露自然内容高度，避免默认 150px iframe 裁切。 */
+html.in-tavern--dynamic { height: auto; min-height: 0; overflow: visible; }
+body.in-tavern.in-tavern--dynamic { height: auto; min-height: 0; overflow: visible; }
+body.in-tavern.in-tavern--dynamic .title-screen { height: auto; min-height: 560px; overflow: visible; }
+body.in-tavern.in-tavern--dynamic.is-prologue .prologue { height: auto; max-height: none; overflow: visible; }
+body.in-tavern.in-tavern--dynamic.is-game { height: 100%; overflow: hidden; }
 body.in-tavern.is-title .prologue,
 body.in-tavern.is-title .book,
 body.in-tavern.is-prologue .title-screen,
