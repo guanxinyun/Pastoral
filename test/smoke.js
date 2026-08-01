@@ -107,7 +107,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(!!doc.getElementById('fullscreenToggle'), '全屏按钮存在');
     doc.getElementById('settingsBtn').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
     await wait(30);
-    ok(!!doc.querySelector('[name="apiMode"]') && !!doc.querySelector('[name="secondApiUrl"]'), '设置中包含 API 模式和第二 API 参数');
+    ok(!doc.querySelector('[name="apiMode"]') && !!doc.querySelector('[name="secondApiUrl"]'), '设置直接显示第二 API 参数且不再提供模式开关');
     ok(doc.querySelector('[name="secondApiKey"]').type === 'password', 'API Key 使用密码输入框');
     ok(!!doc.getElementById('retrySecondApi'), '设置中提供手动重试第二 API 操作');
     ok(!!doc.getElementById('testSecondApi'), '设置中提供第二 API 连接测试');
@@ -116,10 +116,10 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     doc.querySelector('[data-settings-tab="presets"]').dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
     const normalMode = doc.querySelector('[name="normalPresetMode"]');
     const enddayMode = doc.querySelector('[name="enddayPresetMode"]');
-    ok(normalMode && enddayMode && normalMode.value === 'none' && enddayMode.value === 'none', '普通与归寝变量请求默认均为不带预设');
-    const contextBoxes = doc.querySelectorAll('[data-preset-context="normal"] input[type="checkbox"]');
-    ok(contextBoxes.length === 8, '普通变量请求提供八项无预设上下文开关');
-    ok(Array.from(contextBoxes).every((box) => !box.checked), '不带预设时默认不勾选任何酒馆上下文');
+    ok(normalMode && enddayMode && normalMode.value === 'current' && enddayMode.value === 'current', '普通与归寝变量请求默认均沿用当前预设');
+    ok(Array.from(normalMode.options).map((option) => option.value).join(',') === 'current,fixed'
+      && Array.from(enddayMode.options).map((option) => option.value).join(',') === 'current,fixed', '预设只保留当前与指定预设');
+    ok(!doc.querySelector('[data-preset-context]'), '不再显示无预设上下文开关');
     normalMode.value = 'fixed'; normalMode.dispatchEvent(new win.Event('change', { bubbles: true }));
     const normalFixed = doc.querySelector('[name="normalPresetName"]');
     ok(!normalFixed.closest('[data-preset-fixed]').hidden && normalFixed.options.length === 2, '固定模式显示酒馆预设列表且排除内部预设');
@@ -127,7 +127,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     // 深度注入屏蔽对三种模式都要有，所以不能藏在 none 专属的上下文区域里。
     const blockDepth = doc.querySelector('[name="normalBlockDepth"]');
     ok(!!blockDepth && !blockDepth.checked, '预设页提供深度注入屏蔽开关且默认不勾选');
-    ok(!blockDepth.closest('[data-preset-context]'), '深度注入屏蔽独立于 none 专属上下文区域，固定预设模式下同样可见');
+    ok(!blockDepth.closest('[data-preset-context]'), '深度注入屏蔽在当前与指定预设模式下均可见');
     ok(!!doc.querySelector('[name="normalTemperature"]') && doc.querySelector('[name="normalTemperature"]').value === '0',
       '预设页提供采样温度且默认 0');
     const effective = doc.querySelector('[data-preset-effective="normal"]');

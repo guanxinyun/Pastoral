@@ -3581,28 +3581,15 @@ const Settings = (function () {
     endday: (window.Rules && Rules.DEFAULT_GUIDE && Rules.DEFAULT_GUIDE.endday) || '完成归寝日结，不重复脚本已确定的结算。'
   };
   const DEFAULT_PROMPTS = BUILTIN_GUIDE;
-  // 不带预设时默认什么都不额外发送：只发本项目的指导与本轮正文。
-  const VARIABLE_CONTEXT_DEFAULTS = {
-    worldInfoBefore: false,
-    personaDescription: false,
-    charDescription: false,
-    charPersonality: false,
-    scenario: false,
-    worldInfoAfter: false,
-    dialogueExamples: false,
-    chatHistory: false
-  };
   const variablePresetDefaults = () => ({
-    mode: 'none',
+    mode: 'current',
     presetName: '',
     // 默认沿用酒馆对世界书深度条目与作者注释的处理；玩家可按阶段主动屏蔽。
     blockDepthEntries: false,
     // 变量计算要稳定复现，默认不继承剧情预设的高温。
-    temperature: 0,
-    context: Object.assign({}, VARIABLE_CONTEXT_DEFAULTS)
+    temperature: 0
   });
   const DEFAULTS = {
-    apiMode: 'single',
     prompts: {
       normal: '',
       endday: ''
@@ -3654,21 +3641,20 @@ const Settings = (function () {
 
   function normalizeVariablePreset(value) {
     const preset = merge(variablePresetDefaults(), object(value));
-    preset.mode = ['none', 'current', 'fixed'].includes(preset.mode) ? preset.mode : 'none';
+    preset.mode = preset.mode === 'fixed' ? 'fixed' : 'current';
     preset.presetName = String(preset.presetName == null ? '' : preset.presetName).trim();
-    // 旧版本曾暴露 compile/inject 选择；两条通道在不同宿主行为不一致，迁移时删除。
+    // 旧版 none 上下文与 compile/inject 组装路径均不再参与运行。
     delete preset.assembly;
+    delete preset.context;
     preset.blockDepthEntries = preset.blockDepthEntries === true;
     const temperature = Number(preset.temperature);
     preset.temperature = Number.isFinite(temperature) ? Math.min(2, Math.max(0, temperature)) : 0;
-    preset.context = merge(VARIABLE_CONTEXT_DEFAULTS, object(preset.context));
-    Object.keys(VARIABLE_CONTEXT_DEFAULTS).forEach((key) => { preset.context[key] = !!preset.context[key]; });
     return preset;
   }
 
   function normalize(value) {
     const cfg = merge(DEFAULTS, object(value));
-    cfg.apiMode = cfg.apiMode === 'multi' ? 'multi' : 'single';
+    delete cfg.apiMode;
     if (!isObject(cfg.prompts)) cfg.prompts = merge(DEFAULTS.prompts, {});
     if (!isObject(cfg.variablePresets)) cfg.variablePresets = {};
     if (!isObject(cfg.secondApi)) cfg.secondApi = merge(DEFAULTS.secondApi, {});
@@ -3715,12 +3701,20 @@ const Settings = (function () {
     return BUILTIN_GUIDE[key];
   }
 
-  function isSecondApiComplete(config) {
+  function secondApiIssues(config) {
     const api = object(config && config.secondApi);
-    return !!(String(api.url || '').trim() && String(api.key || '').trim() && String(api.model || '').trim());
+    const issues = [];
+    if (!String(api.url || '').trim()) issues.push('URL');
+    if (!String(api.key || '').trim()) issues.push('API Key');
+    if (!String(api.model || '').trim()) issues.push('模型');
+    return issues;
   }
 
-  return { KEY, SETTINGS_VERSION, DEFAULTS, DEFAULT_PROMPTS, VARIABLE_CONTEXT_DEFAULTS, load, save, normalize, promptFor, builtinGuide, isSecondApiComplete };
+  function isSecondApiComplete(config) {
+    return secondApiIssues(config).length === 0;
+  }
+
+  return { KEY, SETTINGS_VERSION, DEFAULTS, DEFAULT_PROMPTS, load, save, normalize, promptFor, builtinGuide, secondApiIssues, isSecondApiComplete };
 })();
 window.Settings = Settings;
 
@@ -7218,12 +7212,6 @@ window.Intro = Intro;
     ]));
 
     const form = h('form', { class: 'settings-form', id: 'apiSettingsForm' });
-    const mode = h('select', { class: 'set-input', name: 'apiMode', 'aria-label': 'API 模式' }, [
-      h('option', { value: 'single' }, '单 API'), h('option', { value: 'multi' }, '多 API')
-    ]);
-    mode.value = cfg.apiMode;
-    form.appendChild(h('label', { class: 'set-field' }, [h('span', { class: 'set-field__label' }, 'API 模式'), mode]));
-
     const apiBox = h('fieldset', { class: 'set-api', id: 'secondApiFields' });
     apiBox.appendChild(h('legend', {}, '第二 API'));
     const field = (label, name, value, type, min) => h('label', { class: 'set-field' }, [
@@ -7268,8 +7256,7 @@ window.Intro = Intro;
     });
     form.appendChild(apiBox);
 
-    const syncMode = () => { apiBox.hidden = mode.value !== 'multi'; if (mode.value === 'multi') syncCheck(); };
-    mode.addEventListener('change', syncMode); syncMode();
+    syncCheck();
     const save = h('button', { class: 'btn btn--primary btn--block', type: 'submit' }, '保存 API 设置');
     form.appendChild(save);
     const testApi = h('button', { class: 'btn btn--ghost btn--block', id: 'testSecondApi', type: 'button' }, '测试第二 API 连接');
@@ -7301,7 +7288,7 @@ window.Intro = Intro;
       e.preventDefault();
       const cleanUrl = ApiEngine.normalizeUrl(form.elements.secondApiUrl.value);
       form.elements.secondApiUrl.value = cleanUrl;
-      const next = Settings.save({ apiMode: mode.value, secondApi: {
+      const next = Settings.save({ secondApi: {
         url: cleanUrl,
         key: form.elements.secondApiKey.value,
         model: form.elements.secondApiModel.value,
@@ -7309,9 +7296,9 @@ window.Intro = Intro;
         maxRetries: form.elements.secondApiRetries.value
       } });
       syncCheck();
-      const issues = next.apiMode === 'multi' ? ApiEngine.inspectApi(next.secondApi) : [];
+      const issues = ApiEngine.inspectApi(next.secondApi);
       if (issues.length) toast('warn', '设置已保存，但配置不可用', issues.join('；'));
-      else toast('success', '设置已保存', next.apiMode === 'multi' ? '双轨 API 已启用。' : '当前使用单 API。');
+      else toast('success', '设置已保存', '第二 API 已配置，将用于所有变量更新。');
     });
     apiPage.appendChild(form);
 
@@ -7383,21 +7370,15 @@ window.Intro = Intro;
 
     const presetForm = h('form', { class: 'settings-form preset-settings-form', id: 'presetSettingsForm' });
     const presetNames = window.ApiEngine && typeof ApiEngine.availablePresetNames === 'function' ? ApiEngine.availablePresetNames() : [];
-    const contextLabels = {
-      worldInfoBefore: '世界书（角色定义前）', personaDescription: '玩家人格', charDescription: '角色描述',
-      charPersonality: '角色性格', scenario: '场景', worldInfoAfter: '世界书（角色定义后）',
-      dialogueExamples: '示例对话', chatHistory: '聊天历史'
-    };
     const presetCard = (kind, title) => {
       const setting = cfg.variablePresets[kind];
       const card = h('fieldset', { class: 'set-api preset-card', 'data-preset-card': kind });
       card.appendChild(h('legend', {}, title));
       const mode = h('select', { class: 'set-input', name: kind + 'PresetMode', 'aria-label': title + '预设模式' }, [
-        h('option', { value: 'none' }, '不带预设（只发本项目指导）'),
-        h('option', { value: 'current' }, '跟随酒馆当前预设'),
-        h('option', { value: 'fixed' }, '固定指定预设')
+        h('option', { value: 'current' }, '沿用酒馆当前预设'),
+        h('option', { value: 'fixed' }, '指定自定义预设')
       ]);
-      card.appendChild(h('p', { class: 'faint set-help' }, '“预设”指酒馆 Chat Completion 预设（提示词管理器里的提示词条目与生成参数）。不带预设时用 generateRaw，预设的主提示词、越狱、历史后指令都不参与。'));
+      card.appendChild(h('p', { class: 'faint set-help' }, '“预设”指酒馆 Chat Completion 预设。可沿用当前预设，或为变量阶段指定独立预设。'));
       mode.value = setting.mode;
       card.appendChild(h('label', { class: 'set-field' }, [h('span', { class: 'set-field__label' }, '预设模式'), mode]));
 
@@ -7413,24 +7394,15 @@ window.Intro = Intro;
       fixed.querySelector('select').value = missingPreset.length ? setting.presetName : (presetNames.includes(setting.presetName) ? setting.presetName : (presetNames[0] || ''));
       fixed.querySelector('select').disabled = !presetNames.length && !missingPreset.length;
       card.appendChild(fixed);
-      const context = h('div', { class: 'preset-context', 'data-preset-context': kind }, [
-        h('p', { class: 'faint set-help' }, '不带预设时默认只发送本项目的更新指导与最近正文，酒馆预设完全不参与。如仍需要额外上下文，在下面勾选。'),
-        h('div', { class: 'preset-context__grid' }, Object.entries(contextLabels).map(([key, label]) => {
-          const input = h('input', { type: 'checkbox', name: kind + 'Context_' + key, value: '1' });
-          input.checked = setting.context[key] === true;
-          return h('label', { class: 'preset-check' }, [input, h('span', {}, label)]);
-        }))
-      ]);
-      card.appendChild(context);
 
-      // 三种模式共用；默认沿用酒馆注入，玩家可按阶段主动屏蔽。
+      // 两种预设模式共用；默认沿用酒馆注入，玩家可按阶段主动屏蔽。
       const blockDepth = h('input', { type: 'checkbox', name: kind + 'BlockDepth', value: '1' });
       blockDepth.checked = setting.blockDepthEntries === true;
       card.appendChild(h('label', { class: 'preset-check preset-check--wide' }, [
         blockDepth,
         h('div', {}, [
           h('span', {}, '屏蔽世界书按深度注入条目与作者注释'),
-          h('span', { class: 'faint set-help' }, '默认沿用酒馆对深度世界书条目与作者注释的处理；勾选后才强制关闭。此项与普通聊天历史开关相互独立。')
+          h('span', { class: 'faint set-help' }, '默认沿用酒馆对深度世界书条目与作者注释的处理；勾选后才强制关闭。')
         ])
       ]));
       const temperature = h('input', {
@@ -7448,29 +7420,14 @@ window.Intro = Intro;
 
       const sync = () => {
         fixed.hidden = mode.value !== 'fixed';
-        context.hidden = mode.value !== 'none';
-        const checkedContext = Object.keys(contextLabels).filter((key) => {
-          const input = card.querySelector('[name="' + kind + 'Context_' + key + '"]');
-          return input && input.checked;
-        }).map((key) => contextLabels[key]);
-        const parts = [];
-        if (mode.value === 'none') {
-          parts.push('本次只发送：本项目更新指导 + 输出格式 + 最近三层正文 + 当前变量快照');
-          if (checkedContext.length) parts.push('额外携带：' + checkedContext.join('、'));
-          else parts.push('不携带任何角色卡或世界书内容');
-        } else if (mode.value === 'current') {
-          parts.push('使用酒馆当前预设');
-          parts.push('任务只发送一次（通过 user_input）');
-        } else {
-          parts.push('切换到固定预设，等待约 1 秒后发起请求，再保留约 2 秒提示词捕获窗口后切回；不等待 API 回复完成');
-          parts.push('任务只发送一次（通过 user_input）');
-        }
+        const parts = mode.value === 'current'
+          ? ['使用酒馆当前预设', '任务只发送一次（通过 user_input）']
+          : ['切换到指定预设，等待约 1 秒后发起请求，再保留约 2 秒提示词捕获窗口后切回；不等待 API 回复完成', '任务只发送一次（通过 user_input）'];
         parts.push(blockDepth.checked ? '已屏蔽深度注入与作者注释' : '沿用酒馆深度注入与作者注释');
         effective.textContent = '实际发送：' + parts.join('；') + '。';
       };
       mode.addEventListener('change', sync);
       blockDepth.addEventListener('change', sync);
-      card.querySelectorAll('[name^="' + kind + 'Context_"]').forEach((input) => input.addEventListener('change', sync));
       sync();
       return card;
     };
@@ -7483,17 +7440,12 @@ window.Intro = Intro;
     presetForm.appendChild(h('div', { class: 'settings-actions' }, h('button', { class: 'btn btn--primary', type: 'submit' }, '保存变量预设')));
     presetForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const stage = (kind) => {
-        const context = {};
-        Object.keys(contextLabels).forEach((key) => { context[key] = !!presetForm.elements[kind + 'Context_' + key].checked; });
-        return {
-          mode: presetForm.elements[kind + 'PresetMode'].value,
-          presetName: presetForm.elements[kind + 'PresetName'].value,
-          blockDepthEntries: !!presetForm.elements[kind + 'BlockDepth'].checked,
-          temperature: presetForm.elements[kind + 'Temperature'].value,
-          context
-        };
-      };
+      const stage = (kind) => ({
+        mode: presetForm.elements[kind + 'PresetMode'].value,
+        presetName: presetForm.elements[kind + 'PresetName'].value,
+        blockDepthEntries: !!presetForm.elements[kind + 'BlockDepth'].checked,
+        temperature: presetForm.elements[kind + 'Temperature'].value
+      });
       Settings.save({ variablePresets: { normal: stage('normal'), endday: stage('endday') } });
       toast('success', '变量预设已保存', '普通更新与归寝更新将分别使用所选策略。');
     });

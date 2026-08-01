@@ -13,28 +13,15 @@ const Settings = (function () {
     endday: (window.Rules && Rules.DEFAULT_GUIDE && Rules.DEFAULT_GUIDE.endday) || '完成归寝日结，不重复脚本已确定的结算。'
   };
   const DEFAULT_PROMPTS = BUILTIN_GUIDE;
-  // 不带预设时默认什么都不额外发送：只发本项目的指导与本轮正文。
-  const VARIABLE_CONTEXT_DEFAULTS = {
-    worldInfoBefore: false,
-    personaDescription: false,
-    charDescription: false,
-    charPersonality: false,
-    scenario: false,
-    worldInfoAfter: false,
-    dialogueExamples: false,
-    chatHistory: false
-  };
   const variablePresetDefaults = () => ({
-    mode: 'none',
+    mode: 'current',
     presetName: '',
     // 默认沿用酒馆对世界书深度条目与作者注释的处理；玩家可按阶段主动屏蔽。
     blockDepthEntries: false,
     // 变量计算要稳定复现，默认不继承剧情预设的高温。
-    temperature: 0,
-    context: Object.assign({}, VARIABLE_CONTEXT_DEFAULTS)
+    temperature: 0
   });
   const DEFAULTS = {
-    apiMode: 'single',
     prompts: {
       normal: '',
       endday: ''
@@ -86,21 +73,20 @@ const Settings = (function () {
 
   function normalizeVariablePreset(value) {
     const preset = merge(variablePresetDefaults(), object(value));
-    preset.mode = ['none', 'current', 'fixed'].includes(preset.mode) ? preset.mode : 'none';
+    preset.mode = preset.mode === 'fixed' ? 'fixed' : 'current';
     preset.presetName = String(preset.presetName == null ? '' : preset.presetName).trim();
-    // 旧版本曾暴露 compile/inject 选择；两条通道在不同宿主行为不一致，迁移时删除。
+    // 旧版 none 上下文与 compile/inject 组装路径均不再参与运行。
     delete preset.assembly;
+    delete preset.context;
     preset.blockDepthEntries = preset.blockDepthEntries === true;
     const temperature = Number(preset.temperature);
     preset.temperature = Number.isFinite(temperature) ? Math.min(2, Math.max(0, temperature)) : 0;
-    preset.context = merge(VARIABLE_CONTEXT_DEFAULTS, object(preset.context));
-    Object.keys(VARIABLE_CONTEXT_DEFAULTS).forEach((key) => { preset.context[key] = !!preset.context[key]; });
     return preset;
   }
 
   function normalize(value) {
     const cfg = merge(DEFAULTS, object(value));
-    cfg.apiMode = cfg.apiMode === 'multi' ? 'multi' : 'single';
+    delete cfg.apiMode;
     if (!isObject(cfg.prompts)) cfg.prompts = merge(DEFAULTS.prompts, {});
     if (!isObject(cfg.variablePresets)) cfg.variablePresets = {};
     if (!isObject(cfg.secondApi)) cfg.secondApi = merge(DEFAULTS.secondApi, {});
@@ -147,11 +133,19 @@ const Settings = (function () {
     return BUILTIN_GUIDE[key];
   }
 
-  function isSecondApiComplete(config) {
+  function secondApiIssues(config) {
     const api = object(config && config.secondApi);
-    return !!(String(api.url || '').trim() && String(api.key || '').trim() && String(api.model || '').trim());
+    const issues = [];
+    if (!String(api.url || '').trim()) issues.push('URL');
+    if (!String(api.key || '').trim()) issues.push('API Key');
+    if (!String(api.model || '').trim()) issues.push('模型');
+    return issues;
   }
 
-  return { KEY, SETTINGS_VERSION, DEFAULTS, DEFAULT_PROMPTS, VARIABLE_CONTEXT_DEFAULTS, load, save, normalize, promptFor, builtinGuide, isSecondApiComplete };
+  function isSecondApiComplete(config) {
+    return secondApiIssues(config).length === 0;
+  }
+
+  return { KEY, SETTINGS_VERSION, DEFAULTS, DEFAULT_PROMPTS, load, save, normalize, promptFor, builtinGuide, secondApiIssues, isSecondApiComplete };
 })();
 window.Settings = Settings;
