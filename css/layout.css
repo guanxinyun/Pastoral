@@ -3,6 +3,92 @@
    左页=功能面板  右页=正文叙事
    ============================================================ */
 
+/* ============ 山谷暮光标题 ============ */
+.title-screen {
+  position: relative;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  min-height: 100dvh;
+  overflow: hidden;
+  isolation: isolate;
+  color: hsl(42 45% 94%);
+  background: var(--color-title-sky);
+  transition: opacity 420ms var(--ease-ink), transform 420ms var(--ease-page), filter 420ms var(--ease-ink);
+}
+.title-screen.is-leaving { opacity: 0; transform: translateY(-12px) scale(1.01); filter: blur(3px); pointer-events: none; }
+.title-screen__scene, .title-screen__scene > span { position: absolute; inset: 0; pointer-events: none; }
+.title-screen__sky {
+  background:
+    radial-gradient(circle at 73% 17%, hsl(41 80% 78% / .95) 0 2.4%, hsl(41 84% 66% / .2) 4% 17%, transparent 32%),
+    linear-gradient(177deg, var(--color-title-sky) 0%, hsl(214 40% 26%) 38%, var(--color-title-horizon) 72%, hsl(39 68% 66%) 100%);
+}
+.title-screen__mountains--far { top: 32%; clip-path: polygon(0 54%,8% 35%,17% 52%,27% 22%,38% 51%,51% 17%,62% 48%,74% 28%,87% 54%,100% 35%,100% 100%,0 100%); background: hsl(211 38% 19% / .78); }
+.title-screen__mountains--near { top: 45%; clip-path: polygon(0 43%,12% 25%,23% 48%,36% 16%,48% 46%,64% 23%,77% 49%,90% 20%,100% 44%,100% 100%,0 100%); background: hsl(166 25% 13% / .9); }
+.title-screen__lake { top: 60%; background: linear-gradient(180deg, hsl(205 36% 27% / .8), hsl(165 31% 10% / .92)), repeating-linear-gradient(177deg, transparent 0 11px, hsl(41 74% 69% / .12) 12px 13px); clip-path: polygon(5% 15%,100% 0,100% 100%,0 100%); }
+.title-screen__mist { top: 53%; height: 28%; background: radial-gradient(ellipse at center, hsl(42 44% 87% / .19), transparent 67%); filter: blur(12px); }
+.title-screen__mist--two { top: 62%; transform: translateX(-12%); opacity: .62; }
+.title-screen__tree { right: auto; width: 58%; background: radial-gradient(ellipse at 21% 45%, hsl(154 42% 5% / .98) 0 18%, transparent 45%), linear-gradient(74deg, transparent 0 25%, hsl(151 33% 5%) 26% 31%, transparent 32%); }
+.title-screen__inn { inset: auto 13% 12%; width: min(340px, 38vw); height: min(210px, 25vw); background: hsl(28 42% 11%); clip-path: polygon(4% 35%,48% 3%,96% 35%,90% 35%,90% 100%,10% 100%,10% 35%); filter: drop-shadow(0 18px 24px hsl(0 0% 0% / .45)); }
+.title-screen__inn::before { content: ""; position: absolute; inset: 30% 10% 0; background: repeating-linear-gradient(90deg, transparent 0 19%, hsl(33 32% 18%) 20% 23%); }
+.title-screen__inn i { position: absolute; z-index: 2; width: 9%; aspect-ratio: .75; bottom: 28%; background: hsl(42 90% 68%); box-shadow: 0 0 22px hsl(42 90% 64% / .7); }
+.title-screen__inn i:nth-child(1) { left: 27%; } .title-screen__inn i:nth-child(2) { left: 47%; } .title-screen__inn i:nth-child(3) { right: 27%; }
+.title-screen__fireflies { background-image: radial-gradient(circle at 12% 72%, hsl(46 95% 75%) 0 1px, transparent 2px), radial-gradient(circle at 22% 61%, hsl(46 95% 75%) 0 1.5px, transparent 2.5px), radial-gradient(circle at 66% 74%, hsl(46 95% 75%) 0 1px, transparent 2px), radial-gradient(circle at 78% 55%, hsl(46 95% 75%) 0 1px, transparent 2px), radial-gradient(circle at 87% 69%, hsl(46 95% 75%) 0 1.5px, transparent 2.5px); filter: drop-shadow(0 0 5px hsl(46 95% 70%)); }
+.title-screen__content { position: relative; z-index: 3; width: min(680px, calc(100% - 40px)); padding: clamp(28px, 6vw, 64px); text-align: center; text-shadow: 0 3px 24px hsl(211 70% 4% / .76); }
+.title-screen__eyebrow { margin-bottom: var(--space-5); color: hsl(42 62% 82%); font-family: var(--font-kai); font-size: var(--font-size-xs); letter-spacing: .26em; text-transform: uppercase; }
+.title-screen h1 { max-width: 12ch; margin-inline: auto; color: inherit; font-size: clamp(2.4rem, 8vw, 5.2rem); font-weight: 600; line-height: 1.12; letter-spacing: .08em; }
+.title-screen__author { margin-top: var(--space-5); color: hsl(42 70% 78%); font-family: var(--font-kai); letter-spacing: .22em; }
+.title-screen__start { position: relative; min-width: 184px; min-height: 52px; margin-top: var(--space-8); padding: 12px 30px; overflow: hidden; border: 1px solid hsl(42 74% 72% / .72); border-radius: var(--radius-full); color: hsl(42 48% 96%); background: hsl(28 39% 14% / .58); box-shadow: 0 0 0 1px hsl(42 80% 62% / .12), 0 10px 38px hsl(0 0% 0% / .28), inset 0 0 24px hsl(42 80% 68% / .08); backdrop-filter: blur(8px); font-family: var(--font-kai); font-weight: 600; letter-spacing: .18em; transition: transform var(--t-base) var(--ease-page), border-color var(--t-base), box-shadow var(--t-base), background var(--t-base); }
+.title-screen__start:hover, .title-screen__start:focus-visible { transform: translateY(-3px); border-color: hsl(42 88% 80%); background: hsl(28 39% 12% / .72); box-shadow: 0 0 30px hsl(42 85% 66% / .3), 0 14px 42px hsl(0 0% 0% / .32); }
+.title-screen__start:active { transform: translateY(0) scale(.98); }
+.title-screen__start:disabled { cursor: wait; opacity: .74; }
+.title-screen__start-glow { position: absolute; inset: -2px auto -2px -45%; width: 38%; transform: skewX(-22deg); background: linear-gradient(90deg, transparent, hsl(44 95% 88% / .5), transparent); }
+.title-screen__credit { margin-top: var(--space-6); }
+.title-screen__credit a { display: inline-flex; align-items: center; min-height: 44px; padding: 6px 12px; color: hsl(42 38% 83%); border-bottom: 1px solid transparent; font-family: var(--font-kai); font-size: var(--font-size-xs); letter-spacing: .08em; transition: color var(--t-base), border-color var(--t-base); }
+.title-screen__credit a:hover, .title-screen__credit a:focus-visible { color: hsl(42 82% 86%); border-color: currentColor; }
+.title-screen__status { min-height: 1.6em; margin-top: var(--space-2); color: hsl(42 34% 82%); font-size: var(--font-size-xs); }
+
+/* ============ 强制序章 ============ */
+.prologue { position: relative; z-index: 2; max-width: 920px; margin: 0 auto; padding: clamp(36px, 8vw, 88px) clamp(18px, 6vw, 64px); color: var(--color-text); background: radial-gradient(circle at 50% 0%, var(--color-parchment-highlight), transparent 34%), linear-gradient(165deg, var(--color-surface-raised), var(--color-surface)); border-inline: 1px solid var(--color-border); box-shadow: var(--shadow-book); }
+.prologue[hidden] { display: none; }
+.prologue__hero { max-width: 72ch; margin: 0 auto clamp(42px, 8vw, 80px); text-align: center; }
+.prologue__eyebrow { color: var(--color-primary); font-family: var(--font-kai); font-size: var(--font-size-xs); letter-spacing: .24em; }
+.prologue__title { margin: var(--space-4) 0; font-size: clamp(2rem, 6vw, 3.5rem); letter-spacing: .08em; }
+.prologue-time { display: inline-flex; min-height: 44px; align-items: center; padding: 8px 18px; border: 1px solid var(--color-primary); border-radius: var(--radius-full); color: var(--ink-green); background: var(--amber-glow); font-family: var(--font-kai); letter-spacing: .08em; }
+[data-theme="night"] .prologue-time { color: var(--color-text); }
+.prologue__measure { max-width: 72ch; margin-inline: auto; }
+.prologue-chapter { margin: 0 0 clamp(42px, 7vw, 72px); }
+.prologue-chapter__title { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6); color: var(--color-primary); font-size: var(--font-size-xl); }
+.prologue-chapter__title::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--color-border-strong), transparent); }
+.prologue-chapter p { margin-bottom: 1.15em; font-family: var(--font-serif); font-size: var(--font-size-base); line-height: 2; text-align: justify; }
+.prologue-pigeon { position: relative; padding-top: var(--space-8); }
+.prologue-pigeon::before { content: "✦  来自白帆城以外"; display: block; margin-bottom: var(--space-4); color: var(--color-text-muted); font-family: var(--font-kai); font-size: var(--font-size-xs); letter-spacing: .16em; }
+.prologue-letter { position: relative; }
+.prologue-letter__crest { position: absolute; z-index: 2; top: 60px; right: -12px; display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; color: hsl(40 42% 87%); background: radial-gradient(circle at 35% 28%, hsl(0 45% 48%), var(--ochre-red) 60%, hsl(0 38% 25%)); border: 4px double hsl(0 32% 27% / .72); box-shadow: var(--shadow-paper); font-family: var(--font-serif); font-size: var(--font-size-lg); transform: rotate(8deg); }
+.prologue-letter__paper { position: relative; margin: 0; padding: clamp(28px, 6vw, 56px); overflow: hidden; color: hsl(28 39% 17%); background: var(--texture-linen), linear-gradient(145deg, var(--color-parchment-highlight), var(--color-parchment-warm)); border: 1px solid hsl(34 35% 58% / .6); border-radius: 4px 14px 6px 11px; box-shadow: var(--shadow-letter); }
+.prologue-letter__paper::before { content: "槐"; position: absolute; inset: 22% auto auto 50%; color: hsl(151 26% 24% / .055); font-family: var(--font-serif); font-size: 15rem; transform: translateX(-50%) rotate(-8deg); }
+.prologue-letter__paper p, .prologue-letter__paper footer { position: relative; z-index: 1; }
+.prologue-letter__paper p:first-child::first-letter { float: left; margin: .08em .16em 0 0; color: var(--ochre-red); font-size: 3.3em; line-height: .82; }
+.prologue-letter__signature { margin: var(--space-8) 0 var(--space-4); font-family: var(--font-kai); text-align: right; }
+.prologue-letter__postscript { padding-top: var(--space-5); border-top: 1px dashed hsl(28 30% 45% / .45); color: hsl(28 25% 34%); font-family: var(--font-kai) !important; font-size: var(--font-size-sm) !important; }
+.prologue-route { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin: 0 0 var(--space-8); counter-reset: stop; }
+.prologue-route__stop { position: relative; min-height: 72px; padding: 42px 6px 0; color: var(--color-text-muted); font-family: var(--font-kai); font-size: var(--font-size-xs); text-align: center; }
+.prologue-route__stop::before { content: ""; position: absolute; z-index: 2; top: 15px; left: 50%; width: 14px; height: 14px; border: 3px solid var(--color-surface-raised); border-radius: 50%; background: var(--color-primary); box-shadow: var(--shadow-glow-amber); transform: translateX(-50%); }
+.prologue-route__stop:not(:last-child)::after { content: ""; position: absolute; top: 21px; left: calc(50% + 8px); width: calc(100% - 16px); height: 2px; background: linear-gradient(90deg, var(--color-primary), var(--color-border-strong)); }
+.prologue-dialogue { margin-left: clamp(8px, 4vw, 34px); padding: var(--space-4) var(--space-5); border-left: 3px solid var(--color-ellie); background: hsl(198 38% 58% / .08); border-radius: 0 var(--radius-md) var(--radius-md) 0; font-family: var(--font-kai) !important; text-align: left !important; }
+.prologue-morning { padding: clamp(20px, 5vw, 42px); background: radial-gradient(circle at 76% 0%, hsl(42 90% 72% / .24), transparent 42%); border-radius: var(--radius-xl); }
+
+@media (max-width: 639px) {
+  .title-screen__tree { width: 86%; opacity: .82; }
+  .title-screen__inn { right: 4%; width: 48vw; height: 34vw; }
+  .title-screen__content { width: calc(100% - 24px); padding: var(--space-8) var(--space-4); }
+  .prologue { border-inline: 0; }
+  .prologue-letter__crest { right: 4px; top: 68px; width: 48px; height: 48px; }
+  .prologue-letter__paper { padding: var(--space-6); }
+  .prologue-chapter p { text-align: left; }
+}
+
 /* 环境氛围层（固定，不占文档流） */
 .ambient {
   position: fixed;

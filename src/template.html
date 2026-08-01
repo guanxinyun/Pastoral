@@ -10,8 +10,36 @@
   <!-- 环境氛围层（昼/夜渐变，不占位） -->
   <div class="ambient" aria-hidden="true"></div>
 
+  <!-- 山谷暮光标题界面 -->
+  <section class="title-screen" id="titleScreen" aria-labelledby="gameTitle">
+    <div class="title-screen__scene" aria-hidden="true">
+      <span class="title-screen__sky"></span>
+      <span class="title-screen__mountains title-screen__mountains--far"></span>
+      <span class="title-screen__mountains title-screen__mountains--near"></span>
+      <span class="title-screen__lake"></span>
+      <span class="title-screen__mist title-screen__mist--one"></span>
+      <span class="title-screen__mist title-screen__mist--two"></span>
+      <span class="title-screen__inn"><i></i><i></i><i></i></span>
+      <span class="title-screen__tree"></span>
+      <span class="title-screen__fireflies"></span>
+    </div>
+    <div class="title-screen__content">
+      <p class="title-screen__eyebrow">A tale of hearth &amp; inheritance</p>
+      <h1 id="gameTitle">我们的家族<br>又没落了？</h1>
+      <p class="title-screen__author">作者 · 观心</p>
+      <button class="title-screen__start" id="titleStart" type="button" aria-busy="false">
+        <span>开始游戏</span><span class="title-screen__start-glow" aria-hidden="true"></span>
+      </button>
+      <p class="title-screen__credit"><a href="https://discord.com/channels/1380075940285124724/1480878747291881654" target="_blank" rel="noopener noreferrer">卡免费发布 · 类脑 / 旅程</a></p>
+      <p class="title-screen__status" id="titleStatus" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- 仅新开局展示的强制序章 -->
+  <section class="prologue" id="prologue" aria-labelledby="prologueTitle" hidden></section>
+
   <!-- 双页书 -->
-  <main class="book" id="book">
+  <main class="book" id="book" inert aria-hidden="true">
 
     <nav class="mobile-page-switcher" data-mobile-page-switcher hidden role="tablist" aria-label="手机全屏页面">
       <button class="mobile-page-switcher__tab is-active" type="button" role="tab" aria-selected="true" aria-controls="pageLeft" data-mobile-page="ledger">经营页</button>

@@ -591,6 +591,7 @@
   /* ---------- 初始化 ---------- */
   async function init() {
     Icon.render(document);
+    if (window.Intro) Intro.init();
     if (window.IconPicker) await IconPicker.init();
 
     // 等待 MVU 就绪

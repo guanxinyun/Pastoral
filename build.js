@@ -10,7 +10,7 @@ const root = __dirname;
 const CSS = ['tokens', 'base', 'layout', 'components', 'animations'];
 // host 必须最先：唯一宿主判定 + 跨域样式接管
 // rules 必须在 settings 之前：settings 的默认更新指导取自 rules
-const JS = ['host', 'icons', 'data', 'extract', 'rules', 'settings', 'assets', 'icon-picker', 'money', 'mvu', 'api', 'chat', 'render', 'app'];
+const JS = ['host', 'icons', 'data', 'extract', 'rules', 'settings', 'assets', 'icon-picker', 'money', 'mvu', 'api', 'chat', 'render', 'intro', 'app'];
 
 function read(p) {
   return fs.readFileSync(path.join(root, p), 'utf8');
