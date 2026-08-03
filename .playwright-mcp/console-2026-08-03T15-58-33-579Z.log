@@ -1,0 +1,8 @@
+[   37588ms] NotFoundError: Failed to execute 'releasePointerCapture' on 'Element': No active pointer with the given id is found.
+    at HTMLDivElement.<anonymous> (http://localhost:8765/index.html:5917:33)
+    at eval (eval at <anonymous> (eval at evaluate (:303:30)), <anonymous>:11:8)
+    at async eval (eval at evaluate (:303:30), <anonymous>:4:30)
+    at async <anonymous>:329:30
+[   54090ms] NotFoundError: Failed to execute 'releasePointerCapture' on 'Element': No active pointer with the given id is found.
+    at HTMLDivElement.<anonymous> (http://localhost:8765/index.html:5917:33)
+    at eval (eval at <anonymous> (eval at evaluate (:303:30)), <anonymous>:15:8)

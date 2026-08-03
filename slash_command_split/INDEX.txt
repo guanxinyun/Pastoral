@@ -1,0 +1,17 @@
+============================================================
+  SillyTavern Slash 命令参考 — 分文件索引
+  原始文件: slash_command .txt (294 行 → 按字母范围拆分)
+============================================================
+
+ 文件           | 命令范围        | 部分代表性命令
+----------------|----------------|------------------------------
+ 01-a-f.txt     | /? 到 /fuzzy  | /api, /audio*, /char-*, /chat-*, /comment, /continue, /echo, /event-emit, /extension-*
+ 02-g-p.txt     | /gen 到 /pick-icon | /gen*, /getvar, /if, /imagine*, /impersonate, /inject, /input, /let, /member-*, /model, /note-*, /preset
+ 03-q-z.txt     | /qr 到 /yt-script | /qr*, /regex*, /send*, /setvar, /stop, /sys*, /tag-*, /trigger, /var*, /while, /world
+
+此外:
+  00-common.txt 是按功能精选的常用命令子集（grep 输出，供快速查阅）
+
+用法提示:
+  - 找命令 → 按首字母选对应文件
+  - 快速查常用 → 看 00-common.txt

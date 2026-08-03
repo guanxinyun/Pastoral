@@ -2,7 +2,7 @@
 
 **Created:** 2026-08-01 01:30
 **Status:** completed
-**Goal:** 修复主回复完成状态与归寝写回阻塞，并为普通/归寝变量更新增加可持久化的三态酒馆预设控制。
+**Goal:** 当前优先修复桌面序章无法滚动至开始按钮、手机真正全屏后游戏区坍缩为短条两个布局回归；既有迁移资料与实现记录继续保留。
 
 ## Architecture
 
@@ -56,4 +56,82 @@
 - **Tests:** `npm test`; `node --check` 修改脚本；`git diff --check`；必要的实际运行检查。
 - **Dependencies:** Tasks 1-5
 - **Acceptance:** 全套验证通过；不纳入用户已有未提交文档/拆分文件；提交推送到 `origin/main`。
+- **Status:** [X] done
+
+### Task 7: 建立技术证据地图
+- **Description:** 从用户指定指导文件、源码、测试、类型切片与既有设计文档中定位五条核心实现链路及其准确入口。
+- **Files to touch:** `findings.md`, `progress.md`
+- **Dependencies:** 无
+- **Acceptance:** 每个主题均有源码文件、关键符号、调用关系和测试证据。
+- **Status:** [X] done
+
+### Task 8: 还原迁移契约与时序
+- **Description:** 将实现细节提炼成宿主能力接口、数据契约、异步时序、异常恢复、版本兼容和安全边界。
+- **Files to touch:** `findings.md`, `progress.md`
+- **Dependencies:** Task 7
+- **Acceptance:** 其他项目无需复制整个 Pastoral，即可按最小适配层复现能力。
+- **Status:** [X] done
+
+### Task 9: 编写独立迁移指南
+- **Description:** 新建中文技术文档，按概念、源码定位、流程、伪代码、迁移步骤、测试清单和常见陷阱组织。
+- **Files to touch:** 独立的 `迁移参考资料/` 文档包、`progress.md`
+- **Dependencies:** Tasks 7-8
+- **Acceptance:** 完整覆盖正文文件选择、MVU、第二 API、固定预设延时短事务、伪零层及综合迁移模板。
+- **Status:** [X] done
+
+### Task 10: 交叉验证与收尾
+- **Description:** 对照当前源码和测试核验文档符号、常量与行为，检查 Markdown 引用、主题覆盖和变更边界；更新规划文件。
+- **Files to touch:** `迁移参考资料/`、`findings.md`, `progress.md`, `task_plan.md`
+- **Dependencies:** Task 9
+- **Acceptance:** 文档与当前实现一致，验证结果有记录，功能源码、测试和构建源没有本轮差异。
+- **Status:** [X] done
+
+## 当前关键决策
+
+- 以当前源码和测试为最终事实来源，历史进度与设计文档仅用于辅助定位。
+- 输出为独立中文迁移指南，不把实现说明只留在规划文件中。
+- 文档区分“Pastoral 当前策略”与“宿主稳定 API 契约”，明确易受酒馆版本影响的经验延时和内部字段。
+- 初始迁移资料整理阶段不改功能实现；后续经用户另行批准，已进入独立的交互与状态实现任务。
+- 迁移资料仍集中在独立的 `迁移参考资料/` 文件夹，并随生产行为同步更新。
+- 当前源码与迁移推荐均将深度注入屏蔽默认设为未勾选（`blockDepthEntries: false`）。
+
+## 遇到的错误
+
+| 错误 | 尝试次数 | 解决方案 |
+|------|---------|---------|
+| `findings.md` 原先不存在 | 1 | 已在项目根目录按中文研究模板创建 |
+| 一次无效替换（新旧文本完全相同） | 1 | 已停止重复调用，改为先搜索待修正文案再精准编辑 |
+
+## 当前布局回归续修（2026-08-02）
+
+### Task 11: 真实浏览器复现并锁定根因
+- **Description:** 分别复现桌面序章无法滚动至“进入旅店”和手机真正全屏后游戏区坍缩，记录 iframe/父页面、body、书页的实际类名、尺寸和 overflow。
+- **Files to touch:** `progress.md`（仅记录证据）
+- **Tests:** Playwright 桌面与 390px 手机宿主场景。
+- **Dependencies:** 无
+- **Acceptance:** 两个问题都能稳定重现，并有从计算样式到错误规则/状态来源的完整证据。
+- **Status:** [X] done
+
+### Task 12: 添加两个失败回归测试
+- **Description:** 在不先改生产实现的前提下，用最小断言固定桌面序章按钮可达与手机全屏舞台占满视口。
+- **Files to touch:** `test/iframe.js`, `test/layout.js`（或最小新增浏览器测试）
+- **Tests:** 新断言在旧实现上明确失败，且失败原因对应已证实根因。
+- **Dependencies:** Task 11
+- **Acceptance:** RED 阶段稳定、针对性明确。
+- **Status:** [X] done
+
+### Task 13: 修复布局根因
+- **Description:** 只修改导致两项回归的 CSS/宿主状态同步，保持普通内嵌无全屏页签/退出、真全屏单页范围和桌面有界滚动契约。
+- **Files to touch:** `css/layout.css`, `js/host.js`/`js/app.js`（按根因决定）
+- **Tests:** Task 12 新测试转绿，既有 iframe/layout 测试继续通过。
+- **Dependencies:** Task 12
+- **Acceptance:** 桌面可滚至按钮，手机真全屏游戏舞台不再是短条。
+- **Status:** [X] done
+
+### Task 14: 实机验证、构建与发布
+- **Description:** 桌面和手机尺寸实际交互检查，运行全量测试/语法/差异检查，重建两个 bundle，仅提交本续修相关文件并推送当前分支。
+- **Files to touch:** `index.html`, `public/index.html`, `task_plan.md`, `progress.md` 及 Task 13 文件
+- **Tests:** focused tests；`npm test`；`node --check`；`git diff --check`；Playwright 实测。
+- **Dependencies:** Task 13
+- **Acceptance:** 验证全部通过；不纳入现有无关删除、MVU 文档与切片文件；提交已推送。
 - **Status:** [X] done

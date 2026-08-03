@@ -1,0 +1,204 @@
+[     351ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:8000/:0
+[     918ms] [LOG] Loading locale data from ./locales/zh-cn.json @ http://127.0.0.1:8000/scripts/i18n.js:124
+[    1695ms] [LOG] monaco-editor loaded.  Module @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    1695ms] [LOG] ST-Prompt-Template initialized @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    1823ms] [LOG] [Prompt Template] Faker loaded @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    1823ms] [LOG] [Aircraft, BitcoinAddressFamily, BitcoinNetwork, CssFunction, CssSpace, Faker, FakerError, IPv4Network, Sex, SimpleFaker, af_ZA, allFakers, allLocales, ar, az, base, bn_BD, cs_CZ, cy, da, de, de_AT, de_CH, dv, el, en, en_AU, en_AU_ocker, en_BORK, en_CA, en_GB, en_GH, en_HK, en_IE, en_IN, en_NG, en_US, en_ZA, eo, es, es_MX, fa, faker, fakerAF_ZA, fakerAR, fakerAZ, fakerBASE, fakerBN_BD, fakerCS_CZ, fakerCY, fakerDA, fakerDE, fakerDE_AT, fakerDE_CH, fakerDV, fakerEL, fakerEN, fakerEN_AU, fakerEN_AU_ocker, fakerEN_BORK, fakerEN_CA, fakerEN_GB, fakerEN_GH, fakerEN_HK, fakerEN_IE, fakerEN_IN, fakerEN_NG, fakerEN_US, fakerEN_ZA, fakerEO, fakerES, fakerES_MX, fakerFA, fakerFI, fakerFR, fakerFR_BE, fakerFR_CA, fakerFR_CH, fakerFR_LU, fakerFR_SN, fakerHE, fakerHR, fakerHU, fakerHY, fakerID_ID, fakerIT, fakerJA, fakerKA_GE, fakerKO, fakerLV, fakerMK, fakerNB_NO, fakerNE, fakerNL, fakerNL_BE, fakerPL, fakerPT_BR, fakerPT_PT, fakerRO, fakerRO_MD] @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    1830ms] [LOG] [Prompt Template] xxhash loaded @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    1914ms] [INFO] Using default TTS Provider settings @ http://127.0.0.1:8000/scripts/extensions/tts/system.js:119
+[    2055ms] [LOG] [QR2] sets:  [QuickReplySet] @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    2056ms] [LOG] [QR2] settings:  QuickReplySettings @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    2113ms] [LOG] ______________________记忆插件：开始加载______________________ @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:18
+[    2114ms] [LOG] 电脑端 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:841
+[    2115ms] [LOG] 变量 tableDebugModeAble 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2115ms] [LOG] getTemplate index @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:346
+[    2125ms] [LOG] getTemplate appHeaderTableDrawer @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:346
+[    2133ms] [LOG] updateIndex 4 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/settings/userExtensionSetting.js:626
+[    2133ms] [LOG] 变量 deep 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 injection_mode 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 table_to_chat_mode 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 table_cell_width_mode 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 message_template 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 deep 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 clear_up_stairs 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 clear_up_stairs 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 rebuild_token_limit_value 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 rebuild_token_limit_value 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 custom_temperature 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 custom_temperature 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 step_by_step_user_prompt 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 separateReadContextLayers 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 separateReadLorebook 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 rebuild_message_template_list 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 lastSelectedTemplate 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 lastSelectedTemplate 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 默认 rebuild_base @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/settings/userExtensionSetting.js:715
+[    2134ms] [LOG] 变量 lastSelectedTemplate 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 tableDebugModeAble 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 isAiReadTable 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 isAiWriteTable 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 confirm_before_execution 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2134ms] [LOG] 变量 use_main_api 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2135ms] [LOG] 变量 step_by_step_use_main_api 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2135ms] [LOG] 变量 bool_ignore_del 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2135ms] [LOG] 变量 bool_silent_refresh 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2135ms] [LOG] 变量 ignore_user_sent 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2135ms] [LOG] 变量 show_settings_in_extension_menu 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2135ms] [LOG] 变量 alternate_switch 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2135ms] [LOG] 变量 show_drawer_in_extension_list 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2135ms] [LOG] 变量 table_to_chat_can_edit 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2135ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2137ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2137ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2137ms] [LOG] 变量 table_to_chat_mode 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2137ms] [LOG] 设置已渲染 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/settings/userExtensionSetting.js:608
+[    2137ms] [LOG] 初始化绑定 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/settings/userExtensionSetting.js:285
+[    2138ms] [LOG] 变量 show_drawer_in_extension_list 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2138ms] [LOG] 变量 show_settings_in_extension_menu 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2138ms] [LOG] 变量 alternate_switch 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2138ms] [LOG] 变量 table_cell_width_mode 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    2138ms] [WARNING] [DEPRECATED] MacrosParser.registerMacro is deprecated and will be removed in a future version. Use macros.registry.registerMacro (from scripts/macros/macro-system.js) or substituteParams({ dynamicMacros }) instead. Arguments: [tablePrompt, ] @ http://127.0.0.1:8000/scripts/macros.js:64
+[    2138ms] [WARNING] [DEPRECATED] MacrosParser.registerMacro is deprecated and will be removed in a future version. Use macros.registry.registerMacro (from scripts/macros/macro-system.js) or substituteParams({ dynamicMacros }) instead. Arguments: [tableData, ] @ http://127.0.0.1:8000/scripts/macros.js:64
+[    2139ms] [WARNING] [DEPRECATED] MacrosParser.registerMacro is deprecated and will be removed in a future version. Use macros.registry.registerMacro (from scripts/macros/macro-system.js) or substituteParams({ dynamicMacros }) instead. Arguments: [GET_ALL_TABLES_JSON, ] @ http://127.0.0.1:8000/scripts/macros.js:64
+[    2139ms] [LOG] 设置表格编辑按钮 async function doNavbarIconClick() {
+    const icon = $(this).find('.drawer-icon');
+    const drawer = $(this).parent().find('.drawer-content');
+    const drawerWasOpenAlready = $(this).parent().find('.drawer-content').hasClass('openDrawer');
+    const targetDrawerID = $(this).parent().find('.drawer-content').attr('id');
+
+    if (!drawerWasOpenAlready) {
+        const $openDrawers = $('.openDrawer:not(.pinnedOpen)');
+        const $openIcons = $('.openIcon:not(.drawerPinnedOpen)');
+        for (const iconEl of $openIcons) {
+            $(iconEl).toggleClass('closedIcon openIcon');
+        }
+        for (const el of $openDrawers) {
+            $(el).toggleClass('closedDrawer openDrawer');
+        }
+        if ($openDrawers.length && animation_duration) {
+            await delay(animation_duration);
+        }
+        icon.toggleClass('openIcon closedIcon');
+        drawer.toggleClass('openDrawer closedDrawer');
+
+        if (targetDrawerID === 'right-nav-panel') {
+            favsToHotswap();
+            $('#rm_print_characters_block').trigger('scroll');
+        }
+
+        // Set the height of "autoSetHeight" textareas within the drawer to their scroll height
+        if (!CSS.supports('field-sizing', 'content')) {
+            const textareas = $(this).closest('.drawer').find('.drawer-content textarea.autoSetHeight');
+            for (const textarea of textareas) {
+                await resetScrollHeight($(textarea));
+            }
+        }
+    } else if (drawerWasOpenAlready) {
+        icon.toggleClass('closedIcon openIcon');
+        drawer.toggleClass('closedDrawer openDrawer');
+    }
+} @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:885
+[    2139ms] [LOG] getTemplate manager @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:346
+[    2139ms] [LOG] ______________________记忆插件：加载完成______________________ @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:931
+[    2148ms] [LOG] getTemplate sheetTemplateEditor @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:346
+[    2155ms] [LOG] dragSpace是什么 JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:420
+[    2713ms] [WARNING] [DEPRECATED] MacrosParser.registerMacro is deprecated and will be removed in a future version. Use macros.registry.registerMacro (from scripts/macros/macro-system.js) or substituteParams({ dynamicMacros }) instead. Arguments: [userAvatarPath, ] @ http://127.0.0.1:8000/scripts/macros.js:64
+[    2713ms] [WARNING] [DEPRECATED] MacrosParser.registerMacro is deprecated and will be removed in a future version. Use macros.registry.registerMacro (from scripts/macros/macro-system.js) or substituteParams({ dynamicMacros }) instead. Arguments: [charAvatarPath, ] @ http://127.0.0.1:8000/scripts/macros.js:64
+[    2790ms] [WARNING] Failed to process stylesheet on initial load: SecurityError: Failed to read the 'cssRules' property from 'CSSStyleSheet': Cannot access rules
+    at processImportedStylesheet (http://127.0.0.1:8000/scripts/dynamic-styles.js:106:28)
+    at http://127.0.0.1:8000/scripts/dynamic-styles.js:66:17
+    at Array.forEach (<anonymous>)
+    at processRules (http://127.0.0.1:8000/scripts/dynamic-styles.js:60:27)
+    at applyDynamicFocusStyles (http://127.0.0.1:8000/scripts/dynamic-styles.js:111:5)
+    at http://127.0.0.1:8000/scripts/dynamic-styles.js:198:13
+    at Array.forEach (<anonymous>)
+    at initDynamicStyles (http://127.0.0.1:8000/scripts/dynamic-styles.js:196:38)
+    at firstLoadInit (http://127.0.0.1:8000/script.js:753:5)
+    at async HTMLDocument.<anonymous> (http://127.0.0.1:8000/script.js:12529:5) @ http://127.0.0.1:8000/scripts/dynamic-styles.js:199
+[    2922ms] [LOG] JSHandle@node @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[    3435ms] [LOG] initializeMenuSections @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:712
+[    3435ms] [LOG] S.fn.init @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:713
+[    3437ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1125
+[    3438ms] [LOG] displayVersion SillyTavern 1.18.0 'release' (8172dcd0e) @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:399
+[    3992ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1145
+[    5599ms] [INFO] Rendered 1 messages in 0.004 seconds. @ http://127.0.0.1:8000/script.js:1528
+[    5639ms] [LOG] [Prompt Template] *** PRELOADING WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    5640ms] [LOG] [Prompt Template] *** EVALUATING 0 WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    5641ms] [LOG] [Prompt Template] processing 0 world info in 2ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    5648ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    5648ms] [LOG] [QR2] CHAT_CHANGED 我们的家族又没落了？ - 2026-08-02@00h38m58s166ms @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    5651ms] [LOG] ========================================
+更新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:781
+[    5651ms] [LOG] 刷新表格模板视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:484
+[    5652ms] [LOG] ========================================
+更新表格内容视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:783
+[    5652ms] [LOG] renderSheetsDOM_task [1] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[    5652ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5652ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[    5652ms] [LOG] renderSheetsDOM_task [2] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[    5652ms] [LOG] 向上查询表格数据，深度 0 截断 1000 从最新开始 true @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:218
+[    5652ms] [LOG] 向上查询表格数据，找到表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T16:38:58.176Z, mes: ```
+<body>
+    <script>
+    $('body').load('http:/…1:5501/index.html')
+    </script>
+    </body>
+```} @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:230
+[    5652ms] [LOG] renderSheetsDOM: {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T16:38:58.176Z, mes: ```
+<body>
+    <script>
+    $('body').load('http:/…1:5501/index.html')
+    </script>
+    </body>
+```} [Sheet, Sheet, Sheet, Sheet, Sheet, Sheet] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:510
+[    5652ms] [LOG] renderSheetsDOM_task [3] 任务耗时: 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[    5652ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[    5653ms] [LOG] renderSheetsDOM_task [4] 任务耗时: 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[    5653ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5653ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[    5656ms] [LOG] 选择了 true [sheet_kmQEANJl, sheet_IPDLHgqv, sheet_4NSxTxc9, sheet_fY5NWa7m, sheet_ZjcL3cZR, sheet_GjNJy63B] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[    5657ms] [LOG] dragSpace是什么 JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:420
+[    5659ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[    5659ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[    5659ms] [LOG] 刷新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:593
+[    5664ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[    5664ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[    5666ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[    5666ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[    5666ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[    5666ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[    5667ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[    5667ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[    5667ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[    5676ms] [LOG] [QR2] calling {functionToCall: , args: Array(2)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    5680ms] [LOG] [Prompt Template] processing #0 messages in 3ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    5722ms] [LOG] [Prompt Template] processing receive result: 48 tokens and 101 chars @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    5734ms] [INFO] 变量结构注册成功 @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[    6387ms] [LOG] [ToolManager] Registered function tool: ToolDefinition @ http://127.0.0.1:8000/scripts/tool-calling.js:289
+[    6784ms] [LOG] Generate entered @ http://127.0.0.1:8000/script.js:4231
+[    6785ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    6785ms] [LOG] [QR2] Before-generation hook skipped due to dryRun. @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    6786ms] [LOG] Core/all messages: 1/1 @ http://127.0.0.1:8000/script.js:4546
+[    6789ms] [LOG] [WI] Hypothetically adding 0 entries to prompt [] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[    6789ms] [LOG] skipWIAN not active, adding WIAN @ http://127.0.0.1:8000/script.js:4605
+[    6794ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[    6803ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[    6825ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    6859ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1145
+[    7125ms] [ERROR] Access to fetch at 'http://api.muyoo.com.cn/check-version' from origin 'http://127.0.0.1:8000' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://127.0.0.1:8000/:0
+[    7126ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://api.muyoo.com.cn/check-version:0
+[    7124ms] TypeError: Failed to fetch
+    at HTMLDocument.<anonymous> (http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:822:5)
+    at e (http://127.0.0.1:8000/lib/jquery-3.5.1.min.js:2:30005)
+    at t (http://127.0.0.1:8000/lib/jquery-3.5.1.min.js:2:30307)
+[    7974ms] [LOG] Generate entered @ http://127.0.0.1:8000/script.js:4231
+[    7975ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    7975ms] [LOG] [QR2] Before-generation hook skipped due to dryRun. @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    7975ms] [LOG] Core/all messages: 1/1 @ http://127.0.0.1:8000/script.js:4546
+[    7977ms] [LOG] [WI] Hypothetically adding 0 entries to prompt [] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[    7977ms] [LOG] skipWIAN not active, adding WIAN @ http://127.0.0.1:8000/script.js:4605
+[    7979ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[    7984ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[    8008ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40

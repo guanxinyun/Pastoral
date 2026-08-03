@@ -1,0 +1,133 @@
+- main [ref=f2e2]:
+  - generic [ref=f2e4]:
+    - navigation "功能切换" [ref=f2e5]:
+      - button "总览 旅店总览" [ref=f2e1104] [cursor=pointer]:
+        - generic [ref=f2e12]: 总览
+        - text: 旅店总览
+      - button "库存 库存与食谱" [ref=f2e13] [cursor=pointer]:
+        - generic [ref=f2e18]: 库存
+        - text: 库存与食谱
+      - button "建筑 建筑与蓝图" [ref=f2e19] [cursor=pointer]:
+        - generic [ref=f2e25]: 建筑
+        - text: 建筑与蓝图
+      - button "地图 地图与探索" [ref=f2e1028] [cursor=pointer]:
+        - generic [ref=f2e33]: 地图
+        - text: 地图与探索
+      - button "员工 员工名册" [ref=f2e34] [cursor=pointer]:
+        - generic [ref=f2e39]: 员工
+        - text: 员工名册
+      - button "访客 宾客盈门" [ref=f2e40] [cursor=pointer]:
+        - generic [ref=f2e46]: 访客
+        - text: 宾客盈门
+      - button "任务 任务日志" [ref=f2e47] [cursor=pointer]:
+        - generic [ref=f2e53]: 任务
+        - text: 任务日志
+      - button "农牧" [ref=f2e1105] [cursor=pointer]
+    - generic [ref=f2e1106]:
+      - generic [ref=f2e1107]:
+        - button "普通农田" [ref=f2e1108] [cursor=pointer]
+        - button "魔法农田" [ref=f2e1109] [cursor=pointer]
+        - button "种子图鉴" [ref=f2e1110] [cursor=pointer]
+        - button "畜牧与堆肥" [ref=f2e1111] [cursor=pointer]
+      - generic [ref=f2e1112]:
+        - text: 旅店农田
+        - generic [ref=f2e1113]: 3×3
+      - generic [ref=f2e1114]: 点击田格查看状态与农事操作；坐标从 (0,0) 开始。
+      - generic [ref=f2e1121]:
+        - button "田格0,0，荒地；普通田格 0,0，右键或长按更换图标" [ref=f2e1122]:
+          - generic [ref=f2e1123]: 0,0
+          - generic [ref=f2e1129]: 荒地
+        - button "田格1,0，荒地；普通田格 1,0，右键或长按更换图标" [ref=f2e1130]:
+          - generic [ref=f2e1131]: 1,0
+          - generic [ref=f2e1137]: 荒地
+        - button "田格2,0，荒地；普通田格 2,0，右键或长按更换图标" [ref=f2e1138]:
+          - generic [ref=f2e1139]: 2,0
+          - generic [ref=f2e1145]: 荒地
+        - button "田格0,1，种植中，春小麦；普通田格 0,1 · 春小麦，右键或长按更换图标" [ref=f2e1146]:
+          - generic [ref=f2e1147]: 0,1
+          - generic [ref=f2e1152]: 春小麦
+        - button "田格1,1，荒地；普通田格 1,1，右键或长按更换图标" [ref=f2e1153]:
+          - generic [ref=f2e1154]: 1,1
+          - generic [ref=f2e1160]: 荒地
+        - button "田格2,1，荒地；普通田格 2,1，右键或长按更换图标" [ref=f2e1161]:
+          - generic [ref=f2e1162]: 2,1
+          - generic [ref=f2e1168]: 荒地
+        - button "田格0,2，种植中，紫胡萝卜；普通田格 0,2 · 紫胡萝卜，右键或长按更换图标" [ref=f2e1169]:
+          - generic [ref=f2e1170]: 0,2
+          - generic [ref=f2e1176]: 紫胡萝卜
+        - button "田格1,2，荒地；普通田格 1,2，右键或长按更换图标" [ref=f2e1177]:
+          - generic [ref=f2e1178]: 1,2
+          - generic [ref=f2e1184]: 荒地
+        - button "田格2,2，荒地；普通田格 2,2，右键或长按更换图标" [ref=f2e1185]:
+          - generic [ref=f2e1186]: 2,2
+          - generic [ref=f2e1192]: 荒地
+      - generic [ref=f2e1193]:
+        - text: 范围外田格
+        - generic [ref=f2e1194]: "1"
+      - generic [ref=f2e1196]:
+        - generic [ref=f2e1197]:
+          - button "普通田格 3,-1 · 霜叶菜，右键或长按更换图标" [ref=f2e1198]
+          - generic [ref=f2e1204]: 田格 (3,-1) · 种植中 · 霜叶菜
+          - generic "已浇水" [ref=f2e1205]
+          - generic "已施肥" [ref=f2e1208]
+        - generic [ref=f2e1214]:
+          - generic [ref=f2e1215]: 已成熟
+          - generic [ref=f2e1216]: 品质修正 1
+        - generic [ref=f2e1219]: 已收获 0 次 · 过熟 0 日
+        - button [ref=f2e1221] [cursor=pointer]
+    - generic [ref=f2e138]:
+      - button "切换昼夜" [ref=f2e139] [cursor=pointer]
+      - button "进入全屏" [ref=f2e1467] [cursor=pointer]
+      - button "设置" [ref=f2e150] [cursor=pointer]
+  - generic [ref=f2e155]:
+    - generic [ref=f2e156]:
+      - generic [ref=f2e163]:
+        - strong [ref=f2e164]: 第1年 · 春季第3天
+        - generic [ref=f2e165]: 周三 · 晴
+      - generic [ref=f2e166]:
+        - generic [ref=f2e172]: 暮归旅店
+        - generic [ref=f2e173]: 声望 · 星辉
+      - generic [ref=f2e174]:
+        - generic [ref=f2e175]: 5金
+        - generic [ref=f2e181]: 声望
+    - generic [ref=f2e185]:
+      - generic "对话记录" [ref=f2e186]:
+        - article [ref=f2e187]:
+          - generic [ref=f2e188]:
+            - generic [ref=f2e189]: 暮归旅店
+            - generic [ref=f2e190]: "#0"
+          - generic [ref=f2e191]:
+            - text: 晨雾尚未散尽，旅店的木招牌在风里轻轻晃了一下。你推开吱呀作响的门，灰尘在斜射的日光里浮动——这间祖传的旅店，如今只剩你一个人了。所幸灶台还稳，地窖里还剩半袋晨露麦粉。 一位披着
+            - emphasis [ref=f2e192]: 褪色法袍
+            - text: 的旅人推门而入，斗篷上还沾着露水。他环顾四周，目光在空荡的大堂停留了片刻，轻声道：「听说这里的麦酒还算暖人……若不嫌弃，给我来一份热汤便好。」
+            - blockquote [ref=f2e193]: 后院那口老井泛起淡淡的薄荷蓝微光——井底的净水符文被春水唤醒了。
+            - text: 为褪袍旅人烹制一碗清露松茸汤 先去后院查看老井的微光 与旅人攀谈，询问他的来路 暂不理会，先整理今日账目
+      - generic [ref=f2e194]:
+        - button "◇ 为褪袍旅人烹制一碗清露松茸汤" [ref=f2e195] [cursor=pointer]:
+          - generic [ref=f2e196]: ◇
+          - generic [ref=f2e197]: 为褪袍旅人烹制一碗清露松茸汤
+        - button "◈ 先去后院查看老井的微光" [ref=f2e198] [cursor=pointer]:
+          - generic [ref=f2e199]: ◈
+          - generic [ref=f2e200]: 先去后院查看老井的微光
+        - button "✦ 与旅人攀谈，询问他的来路" [ref=f2e201] [cursor=pointer]:
+          - generic [ref=f2e202]: ✦
+          - generic [ref=f2e203]: 与旅人攀谈，询问他的来路
+        - button "❖ 暂不理会，先整理今日账目" [ref=f2e204] [cursor=pointer]:
+          - generic [ref=f2e205]: ❖
+          - generic [ref=f2e206]: 暂不理会，先整理今日账目
+      - generic [ref=f2e207]:
+        - textbox "输入行动" [ref=f2e208]:
+          - /placeholder: 写下你的行动……（Enter 发送 · Shift+Enter 换行）
+        - button "发送" [ref=f2e209] [cursor=pointer]
+    - generic [ref=f2e214]:
+      - generic [ref=f2e220]:
+        - generic [ref=f2e221]: 精力
+        - generic [ref=f2e222]: 78/100
+      - generic [ref=f2e230]:
+        - generic [ref=f2e231]: 压力
+        - generic [ref=f2e232]: 34/100
+      - generic [ref=f2e235]:
+        - button [ref=f2e236] [cursor=pointer]
+        - button [ref=f2e241] [cursor=pointer]
+        - button [ref=f2e245] [cursor=pointer]
+        - button [ref=f2e251] [cursor=pointer]

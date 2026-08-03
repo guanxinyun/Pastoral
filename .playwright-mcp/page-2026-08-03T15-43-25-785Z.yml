@@ -1,0 +1,150 @@
+- generic [active] [ref=f1e1]:
+  - region [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - paragraph [ref=f1e4]: A tale of hearth & inheritance
+      - heading "我们的家族 又没落了？" [level=1] [ref=f1e5]: 我们的家族又没落了？
+      - paragraph [ref=f1e6]: 作者 · 观心
+      - button "开始游戏" [ref=f1e7] [cursor=pointer]
+      - paragraph [ref=f1e9]:
+        - link "卡免费发布 · 类脑 / 旅程" [ref=f1e10] [cursor=pointer]:
+          - /url: https://discord.com/channels/1380075940285124724/1480878747291881654
+      - status [ref=f1e11]
+  - main [ref=f1e12]:
+    - generic [ref=f1e13]:
+      - navigation [ref=f1e14]:
+        - button [ref=f1e15] [cursor=pointer]:
+          - generic [ref=f1e21]: 总览
+        - button [ref=f1e22] [cursor=pointer]:
+          - generic [ref=f1e27]: 库存
+          - text: 库存与食谱
+        - button [ref=f1e28] [cursor=pointer]:
+          - generic [ref=f1e34]: 建筑
+          - text: 建筑与蓝图
+        - button [ref=f1e35] [cursor=pointer]:
+          - generic [ref=f1e42]: 地图
+          - text: 地图与探索
+        - button [ref=f1e43] [cursor=pointer]:
+          - generic [ref=f1e48]: 员工
+          - text: 员工名册
+        - button [ref=f1e49] [cursor=pointer]:
+          - generic [ref=f1e55]: 访客
+          - text: 宾客盈门
+        - button [ref=f1e56] [cursor=pointer]:
+          - generic [ref=f1e62]: 任务
+          - text: 任务日志
+        - button [ref=f1e63] [cursor=pointer]:
+          - generic [ref=f1e69]: 农牧
+          - text: 农牧总览
+      - generic [ref=f1e71]:
+        - generic [ref=f1e72]:
+          - text: 六维引力
+          - generic [ref=f1e73]: 总引力 65
+        - img [ref=f1e75]:
+          - generic [ref=f1e80]: 美食
+          - generic [ref=f1e82]: 知识
+          - generic [ref=f1e84]: 舒适
+          - generic [ref=f1e85]: 冒险
+          - generic [ref=f1e87]: 文化
+          - generic [ref=f1e89]: 自然
+          - generic [ref=f1e91]: "11"
+          - generic [ref=f1e93]: "7"
+          - generic [ref=f1e95]: "10"
+          - generic [ref=f1e97]: "1"
+          - generic [ref=f1e99]: "8"
+          - generic [ref=f1e101]: "10"
+        - generic [ref=f1e102]: 引力公式
+        - generic [ref=f1e103]:
+          - generic [ref=f1e104] [cursor=pointer]:
+            - generic [ref=f1e105]: 声望
+            - generic [ref=f1e106]: "2"
+          - generic [ref=f1e107]: +
+          - generic [ref=f1e108] [cursor=pointer]:
+            - generic [ref=f1e109]: 设施
+            - generic [ref=f1e110]: "47"
+          - generic [ref=f1e111]: +
+          - generic [ref=f1e112] [cursor=pointer]:
+            - generic [ref=f1e113]: 服务
+            - generic [ref=f1e114]: "9"
+          - generic [ref=f1e115]: +
+          - generic [ref=f1e116] [cursor=pointer]:
+            - generic [ref=f1e117]: 环境
+            - generic [ref=f1e118]: "7"
+          - generic [ref=f1e119]: =
+          - generic [ref=f1e120]:
+            - generic [ref=f1e121]: 总引力
+            - generic [ref=f1e122]: "65"
+        - generic [ref=f1e123]: 当日预报
+        - generic [ref=f1e124]:
+          - generic [ref=f1e125]:
+            - generic [ref=f1e126]: 天气 · 晴
+            - generic [ref=f1e132]: 引力 · 46
+          - generic [ref=f1e133]:
+            - generic [ref=f1e134]:
+              - text: 日初资金 ·
+              - strong [ref=f1e135]: 5金
+            - generic [ref=f1e136]:
+              - text: 当前资金 ·
+              - strong [ref=f1e137]: 5金
+            - generic [ref=f1e138]:
+              - text: 今日变化 ·
+              - strong [ref=f1e139]: +0铜
+          - generic [ref=f1e140]: 访客池：流浪旅人×2、游方术士×1、行商×1、未知×1
+          - generic [ref=f1e141]: 注意事项
+          - generic [ref=f1e143]: · 后院老井净水符文已激活，今日汤水质效提升。
+          - generic [ref=f1e144]: · 厨房柴火仅余 3 捆，傍晚前需补充。
+          - generic [ref=f1e145]: · 山莓进入成熟期，可前往林缘采集。
+      - generic [ref=f1e146]:
+        - button [ref=f1e147] [cursor=pointer]: 切换昼夜
+        - button [ref=f1e151] [cursor=pointer]: 进入全屏
+        - button [ref=f1e158] [cursor=pointer]: 设置
+    - generic [ref=f1e163]:
+      - generic [ref=f1e164]:
+        - generic [ref=f1e171]:
+          - strong [ref=f1e172]: 第1年 · 春季第3天
+          - generic [ref=f1e173]: 周三 · 晴
+        - generic [ref=f1e174]:
+          - generic [ref=f1e180]: 暮归旅店
+          - generic [ref=f1e181]: 声望 · 星辉
+        - generic [ref=f1e182]:
+          - generic [ref=f1e183]: 5金
+          - generic [ref=f1e189]: 声望
+      - generic [ref=f1e193]:
+        - article [ref=f1e195]:
+          - generic [ref=f1e196]:
+            - generic [ref=f1e197]: 暮归旅店
+            - generic [ref=f1e198]: "#0"
+          - generic [ref=f1e199]:
+            - text: 晨雾尚未散尽，旅店的木招牌在风里轻轻晃了一下。你推开吱呀作响的门，灰尘在斜射的日光里浮动——这间祖传的旅店，如今只剩你一个人了。所幸灶台还稳，地窖里还剩半袋晨露麦粉。 一位披着
+            - emphasis [ref=f1e200]: 褪色法袍
+            - text: 的旅人推门而入，斗篷上还沾着露水。他环顾四周，目光在空荡的大堂停留了片刻，轻声道：「听说这里的麦酒还算暖人……若不嫌弃，给我来一份热汤便好。」
+            - blockquote [ref=f1e201]: 后院那口老井泛起淡淡的薄荷蓝微光——井底的净水符文被春水唤醒了。
+            - text: 为褪袍旅人烹制一碗清露松茸汤 先去后院查看老井的微光 与旅人攀谈，询问他的来路 暂不理会，先整理今日账目
+        - generic [ref=f1e202]:
+          - button [ref=f1e203] [cursor=pointer]:
+            - generic [ref=f1e204]: ◇
+            - generic [ref=f1e205]: 为褪袍旅人烹制一碗清露松茸汤
+          - button [ref=f1e206] [cursor=pointer]:
+            - generic [ref=f1e207]: ◈
+            - generic [ref=f1e208]: 先去后院查看老井的微光
+          - button [ref=f1e209] [cursor=pointer]:
+            - generic [ref=f1e210]: ✦
+            - generic [ref=f1e211]: 与旅人攀谈，询问他的来路
+          - button [ref=f1e212] [cursor=pointer]:
+            - generic [ref=f1e213]: ❖
+            - generic [ref=f1e214]: 暂不理会，先整理今日账目
+        - generic [ref=f1e215]:
+          - textbox [ref=f1e216]:
+            - /placeholder: 写下你的行动……（Enter 发送 · Shift+Enter 换行）
+          - button [ref=f1e217] [cursor=pointer]: 发送
+      - generic [ref=f1e222]:
+        - generic [ref=f1e228]:
+          - generic [ref=f1e229]: 精力
+          - generic [ref=f1e230]: 78/100
+        - generic [ref=f1e238]:
+          - generic [ref=f1e239]: 压力
+          - generic [ref=f1e240]: 34/100
+        - generic [ref=f1e243]:
+          - button [ref=f1e244] [cursor=pointer]: 快捷烹饪
+          - button [ref=f1e249] [cursor=pointer]: 一键浇灌
+          - button [ref=f1e253] [cursor=pointer]: 小憩片刻
+          - button [ref=f1e259] [cursor=pointer]: 归寝入眠

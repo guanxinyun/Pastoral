@@ -1,0 +1,70 @@
+- generic [active] [ref=e1]:
+  - region [ref=e2]:
+    - generic [ref=e3]:
+      - paragraph [ref=e4]: A tale of hearth & inheritance
+      - heading "我们的家族 又没落了？" [level=1] [ref=e5]: 我们的家族又没落了？
+      - paragraph [ref=e6]: 作者 · 观心
+      - button "开始游戏" [ref=e7] [cursor=pointer]
+      - paragraph [ref=e9]:
+        - link "卡免费发布 · 类脑 / 旅程" [ref=e10] [cursor=pointer]:
+          - /url: https://discord.com/channels/1380075940285124724/1480878747291881654
+      - status [ref=e11]
+  - main [ref=e12]:
+    - generic [ref=e13]:
+      - navigation [ref=e14]:
+        - button [ref=e15] [cursor=pointer]:
+          - generic [ref=e21]: 总览
+        - button [ref=e22] [cursor=pointer]:
+          - generic [ref=e27]: 库存
+          - text: 库存与食谱
+        - button [ref=e28] [cursor=pointer]:
+          - generic [ref=e34]: 建筑
+          - text: 建筑与蓝图
+        - button [ref=e35] [cursor=pointer]:
+          - generic [ref=e42]: 地图
+          - text: 地图与探索
+        - button [ref=e43] [cursor=pointer]:
+          - generic [ref=e48]: 员工
+          - text: 员工名册
+        - button [ref=e49] [cursor=pointer]:
+          - generic [ref=e55]: 访客
+          - text: 宾客盈门
+        - button [ref=e56] [cursor=pointer]:
+          - generic [ref=e62]: 任务
+          - text: 任务日志
+        - button [ref=e63] [cursor=pointer]:
+          - generic [ref=e69]: 农牧
+          - text: 农牧总览
+      - generic [ref=e70]:
+        - button [ref=e71] [cursor=pointer]: 切换昼夜
+        - button [ref=e75] [cursor=pointer]: 进入全屏
+        - button [ref=e82] [cursor=pointer]: 设置
+    - generic [ref=e87]:
+      - generic [ref=e88]:
+        - generic [ref=e95]:
+          - strong [ref=e96]: 第1年 · 春季第3天
+          - generic [ref=e97]: 周三 · 晴
+        - generic [ref=e98]:
+          - generic [ref=e104]: 暮归旅店
+          - generic [ref=e105]: 声望 萤火
+        - generic [ref=e106]:
+          - generic [ref=e107]: "50000"
+          - generic [ref=e113]: 声望
+      - generic [ref=e117]:
+        - paragraph [ref=e119]: 正在展卷……
+        - generic [ref=e120]:
+          - textbox [ref=e121]:
+            - /placeholder: 写下你的行动……（Enter 发送 · Shift+Enter 换行）
+          - button [ref=e122] [cursor=pointer]: 发送
+      - generic [ref=e127]:
+        - generic [ref=e133]:
+          - generic [ref=e134]: 精力
+          - generic [ref=e135]: 78/100
+        - generic [ref=e143]:
+          - generic [ref=e144]: 压力
+          - generic [ref=e145]: 34/100
+        - generic [ref=e148]:
+          - button [ref=e149] [cursor=pointer]: 快捷烹饪
+          - button [ref=e154] [cursor=pointer]: 一键浇灌
+          - button [ref=e158] [cursor=pointer]: 小憩片刻
+          - button [ref=e164] [cursor=pointer]: 归寝入眠

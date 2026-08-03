@@ -13,11 +13,16 @@ body {
   line-height: 1.6;
   color: var(--color-text);
   background-color: var(--color-bg);
-  /* 多层纹理叠加：颗粒 + 亚麻纤维 + 暖光晕 */
+  /* 多层纹理叠加：颗粒 + 亚麻纤维 + 暖光晕 + 底纹图片 */
   background-image:
     var(--texture-noise),
     var(--texture-linen),
-    var(--vignette);
+    var(--vignette),
+    var(--texture-base-image);
+  background-size: 180px, auto, auto, cover;
+  background-repeat: repeat, repeat, no-repeat, no-repeat;
+  background-position: center, center, center, center;
+  background-attachment: scroll, scroll, scroll, fixed;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   transition: background-color var(--t-slow) var(--ease-ink),

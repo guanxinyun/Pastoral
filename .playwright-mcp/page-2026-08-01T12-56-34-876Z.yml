@@ -1,0 +1,58 @@
+- main [ref=f2e2]:
+  - tablist "手机全屏页面" [ref=f2e1457]:
+    - tab "经营页" [ref=f2e1458] [cursor=pointer]
+    - tab "剧情页" [active] [selected] [ref=f2e1459] [cursor=pointer]
+    - button "退出全屏" [ref=f2e1460] [cursor=pointer]: 退出
+  - text: 旅店总览 库存与食谱 建筑与蓝图 地图与探索 员工名册 宾客盈门 任务日志 切换昼夜 退出全屏 设置
+  - generic [ref=f2e155]:
+    - generic [ref=f2e156]:
+      - generic [ref=f2e163]:
+        - strong [ref=f2e164]: 第1年 · 春季第3天
+        - generic [ref=f2e165]: 周三 · 晴
+      - generic [ref=f2e166]:
+        - generic [ref=f2e172]: 暮归旅店
+        - generic [ref=f2e173]: 声望 · 星辉
+      - generic [ref=f2e174]:
+        - generic [ref=f2e175]: 5金
+        - generic [ref=f2e181]: 声望
+    - generic [ref=f2e185]:
+      - generic "对话记录" [ref=f2e186]:
+        - article [ref=f2e187]:
+          - generic [ref=f2e188]:
+            - generic [ref=f2e189]: 暮归旅店
+            - generic [ref=f2e190]: "#0"
+          - generic [ref=f2e191]:
+            - text: 晨雾尚未散尽，旅店的木招牌在风里轻轻晃了一下。你推开吱呀作响的门，灰尘在斜射的日光里浮动——这间祖传的旅店，如今只剩你一个人了。所幸灶台还稳，地窖里还剩半袋晨露麦粉。 一位披着
+            - emphasis [ref=f2e192]: 褪色法袍
+            - text: 的旅人推门而入，斗篷上还沾着露水。他环顾四周，目光在空荡的大堂停留了片刻，轻声道：「听说这里的麦酒还算暖人……若不嫌弃，给我来一份热汤便好。」
+            - blockquote [ref=f2e193]: 后院那口老井泛起淡淡的薄荷蓝微光——井底的净水符文被春水唤醒了。
+            - text: 为褪袍旅人烹制一碗清露松茸汤 先去后院查看老井的微光 与旅人攀谈，询问他的来路 暂不理会，先整理今日账目
+      - generic [ref=f2e194]:
+        - button "◇ 为褪袍旅人烹制一碗清露松茸汤" [ref=f2e195] [cursor=pointer]:
+          - generic [ref=f2e196]: ◇
+          - generic [ref=f2e197]: 为褪袍旅人烹制一碗清露松茸汤
+        - button "◈ 先去后院查看老井的微光" [ref=f2e198] [cursor=pointer]:
+          - generic [ref=f2e199]: ◈
+          - generic [ref=f2e200]: 先去后院查看老井的微光
+        - button "✦ 与旅人攀谈，询问他的来路" [ref=f2e201] [cursor=pointer]:
+          - generic [ref=f2e202]: ✦
+          - generic [ref=f2e203]: 与旅人攀谈，询问他的来路
+        - button "❖ 暂不理会，先整理今日账目" [ref=f2e204] [cursor=pointer]:
+          - generic [ref=f2e205]: ❖
+          - generic [ref=f2e206]: 暂不理会，先整理今日账目
+      - generic [ref=f2e207]:
+        - textbox "输入行动" [ref=f2e208]:
+          - /placeholder: 写下你的行动……（Enter 发送 · Shift+Enter 换行）
+        - button "发送" [ref=f2e209] [cursor=pointer]
+    - generic [ref=f2e214]:
+      - generic [ref=f2e220]:
+        - generic [ref=f2e221]: 精力
+        - generic [ref=f2e222]: 78/100
+      - generic [ref=f2e230]:
+        - generic [ref=f2e231]: 压力
+        - generic [ref=f2e232]: 34/100
+      - generic [ref=f2e235]:
+        - button [ref=f2e236] [cursor=pointer]
+        - button [ref=f2e241] [cursor=pointer]
+        - button [ref=f2e245] [cursor=pointer]
+        - button [ref=f2e251] [cursor=pointer]

@@ -23,7 +23,7 @@
   background: linear-gradient(165deg, var(--color-surface-raised), var(--color-surface));
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-paper);
+  box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(42 80% 92% / 0.25);
   transition: transform var(--t-base) var(--ease-soft), box-shadow var(--t-base), border-color var(--t-base);
 }
 .card + .card { margin-top: 10px; }
@@ -119,7 +119,7 @@
 .g-total__val { font-family: var(--font-mono); font-weight: 700; color: var(--color-primary); font-size: var(--font-size-xl); text-shadow: 0 0 10px var(--amber-glow); }
 
 /* ---------- 建筑 ---------- */
-.building { position: relative; padding: 12px; overflow: hidden; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); box-shadow: var(--shadow-paper); transition: all var(--t-base) var(--ease-soft); }
+.building { position: relative; padding: 12px; overflow: hidden; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(42 80% 92% / 0.25); transition: all var(--t-base) var(--ease-soft); }
 .building::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: linear-gradient(var(--color-primary), transparent); opacity: .72; }
 .building + .building { margin-top: 8px; }
 .building:hover { border-color: var(--color-primary); box-shadow: var(--shadow-paper); }
@@ -214,7 +214,7 @@
 .livestock-card + .livestock-card { margin-top: 6px; }
 
 /* ---------- 员工 ---------- */
-.staff-card { position: relative; padding: 12px; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); box-shadow: var(--shadow-paper); transition: transform var(--t-base), border-color var(--t-base), box-shadow var(--t-base); }
+.staff-card { position: relative; padding: 12px; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(42 80% 92% / 0.25); transition: transform var(--t-base), border-color var(--t-base), box-shadow var(--t-base); }
 .staff-card + .staff-card { margin-top: 8px; }
 .staff-card:hover, .staff-card:focus-within { transform: translateY(-2px); border-color: var(--color-primary); box-shadow: var(--shadow-raised); }
 .staff-card.low-morale { filter: saturate(0.6); }
@@ -252,7 +252,7 @@
 .gem-tag--dark { background: hsl(280 45% 50% / 0.18); color: hsl(280 45% 65%); border: 1px solid hsl(280 45% 50%); }
 
 /* ---------- 访客 ---------- */
-.visitor-card { position: relative; padding: 12px; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); box-shadow: var(--shadow-paper); transition: all var(--t-base) var(--ease-soft); overflow: hidden; }
+.visitor-card { position: relative; padding: 12px; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(42 80% 92% / 0.25); transition: all var(--t-base) var(--ease-soft); overflow: hidden; }
 .visitor-card + .visitor-card { margin-top: 8px; }
 .visitor-card:hover { border-color: var(--color-primary); transform: translateY(-2px); box-shadow: var(--shadow-paper); }
 .visitor-card.special { border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--amber-glow), var(--shadow-paper); }
@@ -267,7 +267,7 @@
 .resist-tag { border-style: dashed; }
 
 /* ---------- 任务 ---------- */
-.quest-card { padding: 12px; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary); box-shadow: var(--shadow-paper); transition: transform var(--t-base), border-color var(--t-base), box-shadow var(--t-base); }
+.quest-card { padding: 12px; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary); box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(42 80% 92% / 0.25); transition: transform var(--t-base), border-color var(--t-base), box-shadow var(--t-base); }
 .quest-card:hover, .quest-card:focus-within { transform: translateY(-2px); border-color: var(--color-primary); box-shadow: var(--shadow-raised); }
 .quest-card + .quest-card { margin-top: 8px; }
 .quest-card__head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
@@ -477,4 +477,13 @@
 .daily-modal__head h2 { flex: 1; font-size: var(--font-size-xl); }
 .daily-modal__body { max-width: 72ch; padding: var(--space-6) 0; white-space: pre-wrap; line-height: 1.85; font-family: var(--font-kai); color: var(--color-text-soft); }
 .daily-modal__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+
+/* ---------- 夜间模式卡片内光调整 ---------- */
+[data-theme="night"] .card,
+[data-theme="night"] .staff-card,
+[data-theme="night"] .visitor-card,
+[data-theme="night"] .quest-card,
+[data-theme="night"] .building {
+  box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(229 30% 28% / 0.35);
+}
 

@@ -1,0 +1,832 @@
+[    3906ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:8000/:0
+[    4470ms] [LOG] Loading locale data from ./locales/zh-cn.json @ http://127.0.0.1:8000/scripts/i18n.js:124
+[    5257ms] [LOG] monaco-editor loaded.  Module @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    5257ms] [LOG] ST-Prompt-Template initialized @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    5386ms] [LOG] [Prompt Template] Faker loaded @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    5386ms] [LOG] [Aircraft, BitcoinAddressFamily, BitcoinNetwork, CssFunction, CssSpace, Faker, FakerError, IPv4Network, Sex, SimpleFaker, af_ZA, allFakers, allLocales, ar, az, base, bn_BD, cs_CZ, cy, da, de, de_AT, de_CH, dv, el, en, en_AU, en_AU_ocker, en_BORK, en_CA, en_GB, en_GH, en_HK, en_IE, en_IN, en_NG, en_US, en_ZA, eo, es, es_MX, fa, faker, fakerAF_ZA, fakerAR, fakerAZ, fakerBASE, fakerBN_BD, fakerCS_CZ, fakerCY, fakerDA, fakerDE, fakerDE_AT, fakerDE_CH, fakerDV, fakerEL, fakerEN, fakerEN_AU, fakerEN_AU_ocker, fakerEN_BORK, fakerEN_CA, fakerEN_GB, fakerEN_GH, fakerEN_HK, fakerEN_IE, fakerEN_IN, fakerEN_NG, fakerEN_US, fakerEN_ZA, fakerEO, fakerES, fakerES_MX, fakerFA, fakerFI, fakerFR, fakerFR_BE, fakerFR_CA, fakerFR_CH, fakerFR_LU, fakerFR_SN, fakerHE, fakerHR, fakerHU, fakerHY, fakerID_ID, fakerIT, fakerJA, fakerKA_GE, fakerKO, fakerLV, fakerMK, fakerNB_NO, fakerNE, fakerNL, fakerNL_BE, fakerPL, fakerPT_BR, fakerPT_PT, fakerRO, fakerRO_MD] @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    5396ms] [LOG] [Prompt Template] xxhash loaded @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    5497ms] [INFO] Using default TTS Provider settings @ http://127.0.0.1:8000/scripts/extensions/tts/system.js:119
+[    5650ms] [LOG] [QR2] sets:  [QuickReplySet] @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    5650ms] [LOG] [QR2] settings:  QuickReplySettings @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    5706ms] [LOG] ______________________记忆插件：开始加载______________________ @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:18
+[    5708ms] [LOG] 电脑端 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:841
+[    5708ms] [LOG] 变量 tableDebugModeAble 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5708ms] [LOG] getTemplate index @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:346
+[    5719ms] [LOG] getTemplate appHeaderTableDrawer @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:346
+[    5724ms] [LOG] updateIndex 4 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/settings/userExtensionSetting.js:626
+[    5724ms] [LOG] 变量 deep 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 injection_mode 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 table_to_chat_mode 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 table_cell_width_mode 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 message_template 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 deep 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 clear_up_stairs 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 clear_up_stairs 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 rebuild_token_limit_value 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 rebuild_token_limit_value 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 custom_temperature 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 custom_temperature 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 step_by_step_user_prompt 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 separateReadContextLayers 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 separateReadLorebook 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5724ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 rebuild_message_template_list 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 lastSelectedTemplate 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 lastSelectedTemplate 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 默认 rebuild_base @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/settings/userExtensionSetting.js:715
+[    5725ms] [LOG] 变量 lastSelectedTemplate 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 tableDebugModeAble 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 isAiReadTable 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 isAiWriteTable 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 confirm_before_execution 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 use_main_api 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 step_by_step_use_main_api 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 bool_ignore_del 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 bool_silent_refresh 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 ignore_user_sent 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 show_settings_in_extension_menu 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 alternate_switch 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 show_drawer_in_extension_list 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 table_to_chat_can_edit 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5725ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5727ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5728ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5728ms] [LOG] 变量 table_to_chat_mode 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5728ms] [LOG] 设置已渲染 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/settings/userExtensionSetting.js:608
+[    5729ms] [LOG] 初始化绑定 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/settings/userExtensionSetting.js:285
+[    5729ms] [LOG] 变量 show_drawer_in_extension_list 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5729ms] [LOG] 变量 show_settings_in_extension_menu 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5729ms] [LOG] 变量 alternate_switch 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5729ms] [LOG] 变量 table_cell_width_mode 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    5729ms] [WARNING] [DEPRECATED] MacrosParser.registerMacro is deprecated and will be removed in a future version. Use macros.registry.registerMacro (from scripts/macros/macro-system.js) or substituteParams({ dynamicMacros }) instead. Arguments: [tablePrompt, ] @ http://127.0.0.1:8000/scripts/macros.js:64
+[    5729ms] [WARNING] [DEPRECATED] MacrosParser.registerMacro is deprecated and will be removed in a future version. Use macros.registry.registerMacro (from scripts/macros/macro-system.js) or substituteParams({ dynamicMacros }) instead. Arguments: [tableData, ] @ http://127.0.0.1:8000/scripts/macros.js:64
+[    5730ms] [WARNING] [DEPRECATED] MacrosParser.registerMacro is deprecated and will be removed in a future version. Use macros.registry.registerMacro (from scripts/macros/macro-system.js) or substituteParams({ dynamicMacros }) instead. Arguments: [GET_ALL_TABLES_JSON, ] @ http://127.0.0.1:8000/scripts/macros.js:64
+[    5730ms] [LOG] 设置表格编辑按钮 async function doNavbarIconClick() {
+    const icon = $(this).find('.drawer-icon');
+    const drawer = $(this).parent().find('.drawer-content');
+    const drawerWasOpenAlready = $(this).parent().find('.drawer-content').hasClass('openDrawer');
+    const targetDrawerID = $(this).parent().find('.drawer-content').attr('id');
+
+    if (!drawerWasOpenAlready) {
+        const $openDrawers = $('.openDrawer:not(.pinnedOpen)');
+        const $openIcons = $('.openIcon:not(.drawerPinnedOpen)');
+        for (const iconEl of $openIcons) {
+            $(iconEl).toggleClass('closedIcon openIcon');
+        }
+        for (const el of $openDrawers) {
+            $(el).toggleClass('closedDrawer openDrawer');
+        }
+        if ($openDrawers.length && animation_duration) {
+            await delay(animation_duration);
+        }
+        icon.toggleClass('openIcon closedIcon');
+        drawer.toggleClass('openDrawer closedDrawer');
+
+        if (targetDrawerID === 'right-nav-panel') {
+            favsToHotswap();
+            $('#rm_print_characters_block').trigger('scroll');
+        }
+
+        // Set the height of "autoSetHeight" textareas within the drawer to their scroll height
+        if (!CSS.supports('field-sizing', 'content')) {
+            const textareas = $(this).closest('.drawer').find('.drawer-content textarea.autoSetHeight');
+            for (const textarea of textareas) {
+                await resetScrollHeight($(textarea));
+            }
+        }
+    } else if (drawerWasOpenAlready) {
+        icon.toggleClass('closedIcon openIcon');
+        drawer.toggleClass('closedDrawer openDrawer');
+    }
+} @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:885
+[    5730ms] [LOG] getTemplate manager @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:346
+[    5731ms] [LOG] ______________________记忆插件：加载完成______________________ @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:931
+[    5735ms] [LOG] getTemplate sheetTemplateEditor @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:346
+[    5741ms] [LOG] dragSpace是什么 JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:420
+[    6313ms] [WARNING] [DEPRECATED] MacrosParser.registerMacro is deprecated and will be removed in a future version. Use macros.registry.registerMacro (from scripts/macros/macro-system.js) or substituteParams({ dynamicMacros }) instead. Arguments: [userAvatarPath, ] @ http://127.0.0.1:8000/scripts/macros.js:64
+[    6313ms] [WARNING] [DEPRECATED] MacrosParser.registerMacro is deprecated and will be removed in a future version. Use macros.registry.registerMacro (from scripts/macros/macro-system.js) or substituteParams({ dynamicMacros }) instead. Arguments: [charAvatarPath, ] @ http://127.0.0.1:8000/scripts/macros.js:64
+[    6392ms] [WARNING] Failed to process stylesheet on initial load: SecurityError: Failed to read the 'cssRules' property from 'CSSStyleSheet': Cannot access rules
+    at processImportedStylesheet (http://127.0.0.1:8000/scripts/dynamic-styles.js:106:28)
+    at http://127.0.0.1:8000/scripts/dynamic-styles.js:66:17
+    at Array.forEach (<anonymous>)
+    at processRules (http://127.0.0.1:8000/scripts/dynamic-styles.js:60:27)
+    at applyDynamicFocusStyles (http://127.0.0.1:8000/scripts/dynamic-styles.js:111:5)
+    at http://127.0.0.1:8000/scripts/dynamic-styles.js:198:13
+    at Array.forEach (<anonymous>)
+    at initDynamicStyles (http://127.0.0.1:8000/scripts/dynamic-styles.js:196:38)
+    at firstLoadInit (http://127.0.0.1:8000/script.js:753:5)
+    at async HTMLDocument.<anonymous> (http://127.0.0.1:8000/script.js:12529:5) @ http://127.0.0.1:8000/scripts/dynamic-styles.js:199
+[    6788ms] [LOG] JSHandle@node @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[    7592ms] [LOG] initializeMenuSections @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:712
+[    7592ms] [LOG] S @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:713
+[    7593ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1125
+[    7598ms] [LOG] displayVersion SillyTavern 1.18.0 'release' (8172dcd0e) @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:399
+[    8264ms] [INFO] Rendered 3 messages in 0.020 seconds. @ http://127.0.0.1:8000/script.js:1528
+[    8316ms] [LOG] [Prompt Template] *** PRELOADING WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    8317ms] [LOG] [Prompt Template] *** EVALUATING 0 WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    8318ms] [LOG] [Prompt Template] processing 0 world info in 3ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    8318ms] [LOG] [Prompt Template] *** UPDATE ALL MESSAGES *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    8320ms] [LOG] [QR2] calling {functionToCall: , args: Array(2)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    8324ms] [LOG] [Prompt Template] processing #0 messages in 5ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    8327ms] [LOG] [Prompt Template] processing #1 messages in 3ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    8327ms] [INFO] [Prompt Template] chat message #2.0 is generating @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[    8336ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    8336ms] [LOG] [QR2] CHAT_CHANGED 我们的家族又没落了？ - 2026-08-02@03h28m28s951ms @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[    8339ms] [LOG] ========================================
+更新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:781
+[    8339ms] [LOG] 刷新表格模板视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:484
+[    8340ms] [LOG] ========================================
+更新表格内容视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:783
+[    8340ms] [LOG] renderSheetsDOM_task [1] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[    8340ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    8340ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[    8340ms] [LOG] renderSheetsDOM_task [2] 任务耗时: 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[    8340ms] [LOG] 向上查询表格数据，深度 0 截断 1000 从最新开始 true @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:218
+[    8341ms] [LOG] 向上查询表格数据，找到表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T19:28:28.962Z, mes: # 一封来自远方的信
+
+> **星梦摇篮 · 家族遗产书**
+
+---
+
+【第一年，春季第1天，周一…灰尘，是时候彻底打扫一下了。一个干净的环境是良好开端的第一步。（报酬：声望+3）
+
+```
+```} @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:230
+[    8341ms] [LOG] renderSheetsDOM: {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T19:28:28.962Z, mes: # 一封来自远方的信
+
+> **星梦摇篮 · 家族遗产书**
+
+---
+
+【第一年，春季第1天，周一…灰尘，是时候彻底打扫一下了。一个干净的环境是良好开端的第一步。（报酬：声望+3）
+
+```
+```} [Sheet, Sheet, Sheet, Sheet, Sheet, Sheet] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:510
+[    8341ms] [LOG] renderSheetsDOM_task [3] 任务耗时: 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[    8341ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[    8341ms] [LOG] renderSheetsDOM_task [4] 任务耗时: 2ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[    8341ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[    8341ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[    8345ms] [LOG] 选择了 true [sheet_v5rcCUIm, sheet_Pg7E0adF, sheet_RrDGSIy4, sheet_1MvXbYnW, sheet_W6u4YMzG, sheet_iY1VaBGH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[    8346ms] [LOG] dragSpace是什么 JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:420
+[    8347ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[    8347ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[    8347ms] [LOG] 刷新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:593
+[    8352ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[    8352ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[    8354ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[    8354ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[    8354ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[    8354ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[    8355ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[    8355ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[    8355ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[    8458ms] [INFO] 变量结构注册成功 @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[    9090ms] [LOG] [ToolManager] Registered function tool: ToolDefinition @ http://127.0.0.1:8000/scripts/tool-calling.js:289
+[    9567ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1145
+[   10676ms] [LOG] Generate entered @ http://127.0.0.1:8000/script.js:4231
+[   10677ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[   10677ms] [LOG] [QR2] Before-generation hook skipped due to dryRun. @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[   10692ms] [LOG] Core/all messages: 3/3 @ http://127.0.0.1:8000/script.js:4546
+[   10696ms] [LOG] [WI] Hypothetically adding 0 entries to prompt [] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[   10696ms] [LOG] skipWIAN not active, adding WIAN @ http://127.0.0.1:8000/script.js:4605
+[   10700ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[   10706ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[   10767ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[   13618ms] [ERROR] Access to fetch at 'http://api.muyoo.com.cn/check-version' from origin 'http://127.0.0.1:8000' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://127.0.0.1:8000/:0
+[   13618ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://api.muyoo.com.cn/check-version:0
+[   13619ms] TypeError: Failed to fetch
+    at HTMLDocument.<anonymous> (http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:822:5)
+    at e (http://127.0.0.1:8000/lib/jquery-3.5.1.min.js:2:30005)
+    at http://127.0.0.1:8000/lib/jquery-3.5.1.min.js:2:30307
+[   14251ms] [INFO] Rendered 1 messages in 0.002 seconds. @ http://127.0.0.1:8000/script.js:1528
+[   14265ms] [LOG] [Prompt Template] *** PRELOADING WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[   14265ms] [LOG] [Prompt Template] *** EVALUATING 0 WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[   14265ms] [LOG] [Prompt Template] processing 0 world info in 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[   14270ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[   14270ms] [LOG] [QR2] CHAT_CHANGED 我们的家族又没落了？ - 2026-08-02@04h20m06s241ms @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[   14273ms] [LOG] ========================================
+更新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:781
+[   14273ms] [LOG] 刷新表格模板视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:484
+[   14273ms] [LOG] ========================================
+更新表格内容视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:783
+[   14273ms] [LOG] renderSheetsDOM_task [1] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[   14273ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[   14273ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[   14273ms] [LOG] renderSheetsDOM_task [2] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[   14273ms] [LOG] 向上查询表格数据，深度 0 截断 1000 从最新开始 true @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:218
+[   14273ms] [LOG] 尝试从模板中构建表格数据 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:267
+[   14273ms] [LOG] 全局模板 [Object, Object, Object, Object, Object, Object] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:61
+[   14274ms] [LOG] 从模板转化表格 {uid: template_RLN4YTPb, name: 时空表格, domain: global, type: dynamic, enable: true} Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:336
+[   14274ms] [LOG] 保存表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: ```
+<body>
+    <script>
+    $('body').load('htt…501/index.html')
+    </script>
+    </body>
+```} [Array(5)] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:209
+[   14274ms] [LOG] 从模板转化表格 {uid: template_pKJdn2P9, name: 角色特征表格, domain: global, type: dynamic, enable: true} Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:336
+[   14274ms] [LOG] 保存表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: ```
+<body>
+    <script>
+    $('body').load('htt…501/index.html')
+    </script>
+    </body>
+```} [Array(9)] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:209
+[   14274ms] [LOG] 从模板转化表格 {uid: template_eXrYlRa7, name: 角色与<user>社交表格, domain: global, type: dynamic, enable: true} Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:336
+[   14275ms] [LOG] 保存表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: ```
+<body>
+    <script>
+    $('body').load('htt…501/index.html')
+    </script>
+    </body>
+```} [Array(5)] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:209
+[   14275ms] [LOG] 从模板转化表格 {uid: template_0ygWzyI4, name: 任务、命令或者约定表格, domain: global, type: dynamic, enable: true} Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:336
+[   14275ms] [LOG] 保存表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: ```
+<body>
+    <script>
+    $('body').load('htt…501/index.html')
+    </script>
+    </body>
+```} [Array(5)] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:209
+[   14275ms] [LOG] 从模板转化表格 {uid: template_c5puqiBb, name: 重要事件历史表格, domain: global, type: dynamic, enable: true} Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:336
+[   14275ms] [LOG] 保存表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: ```
+<body>
+    <script>
+    $('body').load('htt…501/index.html')
+    </script>
+    </body>
+```} [Array(6)] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:209
+[   14275ms] [LOG] 从模板转化表格 {uid: template_SCVPUCP9, name: 重要物品表格, domain: global, type: dynamic, enable: true} Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:336
+[   14275ms] [LOG] 保存表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: ```
+<body>
+    <script>
+    $('body').load('htt…501/index.html')
+    </script>
+    </body>
+```} [Array(5)] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:209
+[   14275ms] [LOG] 保存表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: ```
+<body>
+    <script>
+    $('body').load('htt…501/index.html')
+    </script>
+    </body>
+```} [Array(5)] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:209
+[   14276ms] [LOG] 保存表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: ```
+<body>
+    <script>
+    $('body').load('htt…501/index.html')
+    </script>
+    </body>
+```} [Array(9)] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:209
+[   14276ms] [LOG] 保存表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: ```
+<body>
+    <script>
+    $('body').load('htt…501/index.html')
+    </script>
+    </body>
+```} [Array(5)] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:209
+[   14276ms] [LOG] 保存表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: ```
+<body>
+    <script>
+    $('body').load('htt…501/index.html')
+    </script>
+    </body>
+```} [Array(5)] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:209
+[   14276ms] [LOG] 保存表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: ```
+<body>
+    <script>
+    $('body').load('htt…501/index.html')
+    </script>
+    </body>
+```} [Array(6)] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:209
+[   14276ms] [LOG] 保存表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: ```
+<body>
+    <script>
+    $('body').load('htt…501/index.html')
+    </script>
+    </body>
+```} [Array(5)] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/table/sheet.js:209
+[   14276ms] [LOG] renderSheetsDOM: {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: ```
+<body>
+    <script>
+    $('body').load('htt…501/index.html')
+    </script>
+    </body>
+```} [Sheet, Sheet, Sheet, Sheet, Sheet, Sheet] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:510
+[   14276ms] [LOG] renderSheetsDOM_task [3] 任务耗时: 3ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[   14276ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[   14277ms] [LOG] 向上查询表格数据，深度 -2 截断 3 从最新开始 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:218
+[   14277ms] [LOG] renderSheetsDOM_task [4] 任务耗时: 3ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[   14277ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[   14277ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[   14281ms] [LOG] 选择了 true [] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[   14281ms] [LOG] 选择了 true [] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[   14282ms] [LOG] dragSpace是什么 JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:420
+[   14284ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[   14285ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[   14285ms] [LOG] 向上查询表格数据，深度 -2 截断 3 从最新开始 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:218
+[   14285ms] [LOG] 刷新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:593
+[   14291ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[   14291ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[   14291ms] [LOG] 向上查询表格数据，深度 -2 截断 3 从最新开始 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:218
+[   14292ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[   14293ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[   14293ms] [LOG] 向上查询表格数据，深度 -2 截断 3 从最新开始 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:218
+[   14293ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[   14293ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[   14293ms] [LOG] 向上查询表格数据，深度 -2 截断 3 从最新开始 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:218
+[   14294ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[   14294ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[   14294ms] [LOG] 向上查询表格数据，深度 -2 截断 3 从最新开始 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:218
+[   14294ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[   14301ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:8000/api/chats/save:0
+[   14302ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:8000/api/chats/save:0
+[   14335ms] [ERROR] Error: Internal Server Error
+    at Object.saveChat (http://127.0.0.1:8000/script.js:7397:19) @ http://127.0.0.1:8000/script.js:7417
+[   14336ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:8000/api/chats/save:0
+[   14339ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:8000/api/chats/save:0
+[   14339ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:8000/api/chats/save:0
+[   14340ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:8000/api/chats/save:0
+[   14340ms] [ERROR] Error: Internal Server Error
+    at Object.saveChat (http://127.0.0.1:8000/script.js:7397:19) @ http://127.0.0.1:8000/script.js:7417
+[   14343ms] [ERROR] Error: Internal Server Error
+    at Object.saveChat (http://127.0.0.1:8000/script.js:7397:19) @ http://127.0.0.1:8000/script.js:7417
+[   14346ms] [ERROR] Error: Internal Server Error
+    at Object.saveChat (http://127.0.0.1:8000/script.js:7397:19) @ http://127.0.0.1:8000/script.js:7417
+[   14348ms] [ERROR] Error: Internal Server Error
+    at Object.saveChat (http://127.0.0.1:8000/script.js:7397:19) @ http://127.0.0.1:8000/script.js:7417
+[   14349ms] [ERROR] Error: Internal Server Error
+    at Object.saveChat (http://127.0.0.1:8000/script.js:7397:19) @ http://127.0.0.1:8000/script.js:7417
+[   14350ms] [LOG] [ToolManager] Unregistered function tool: mvu_VariableUpdate_c6239df0-e231-4700-9572-14a16442f8e5 @ http://127.0.0.1:8000/scripts/tool-calling.js:302
+[   14377ms] [LOG] 变量初始化完成 @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[   14379ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[   14382ms] [LOG] [Prompt Template] processing #0 messages in 2ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[   14386ms] [LOG] [ToolManager] Registered function tool: ToolDefinition @ http://127.0.0.1:8000/scripts/tool-calling.js:289
+[   14387ms] [LOG] [QR2] calling {functionToCall: , args: Array(0)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[   14388ms] [LOG] [MVU] 对第一层永不进行额外模型解析 @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[   14388ms] [LOG] [QR2] calling {functionToCall: , args: Array(2)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[   14390ms] [LOG] [Prompt Template] processing #0 messages in 2ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[   14434ms] [LOG] [Prompt Template] processing receive result: 48 tokens and 101 chars @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[   14434ms] [LOG] [Prompt Template] processing receive result: 48 tokens and 101 chars @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[   15467ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1145
+[   15493ms] [LOG] Generate entered @ http://127.0.0.1:8000/script.js:4231
+[   15494ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[   15494ms] [LOG] [QR2] Before-generation hook skipped due to dryRun. @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[   15494ms] [LOG] Core/all messages: 1/1 @ http://127.0.0.1:8000/script.js:4546
+[   15496ms] [LOG] [WI] Hypothetically adding 0 entries to prompt [] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[   15496ms] [LOG] skipWIAN not active, adding WIAN @ http://127.0.0.1:8000/script.js:4605
+[   15497ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[   15510ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[   15547ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[   16607ms] [LOG] Generate entered @ http://127.0.0.1:8000/script.js:4231
+[   16608ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[   16608ms] [LOG] [QR2] Before-generation hook skipped due to dryRun. @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[   16622ms] [LOG] Core/all messages: 1/1 @ http://127.0.0.1:8000/script.js:4546
+[   16624ms] [LOG] [WI] Hypothetically adding 0 entries to prompt [] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[   16624ms] [LOG] skipWIAN not active, adding WIAN @ http://127.0.0.1:8000/script.js:4605
+[   16626ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[   16631ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[   16658ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[   99190ms] [INFO] [Pastoral][MainAPI] 开始 {beforeId: 0, purpose: normal} @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[   99352ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[   99356ms] [LOG] [Prompt Template] processing #1 messages in 2ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[   99360ms] [LOG] [Prompt Template] processing receive result: 48 tokens and 101 chars @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[   99593ms] [LOG] Generate entered @ http://127.0.0.1:8000/script.js:4231
+[   99595ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[   99623ms] [LOG] Core/all messages: 2/2 @ http://127.0.0.1:8000/script.js:4546
+[   99625ms] [LOG] [WI] Adding 0 entries to prompt [] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[   99625ms] [LOG] skipWIAN not active, adding WIAN @ http://127.0.0.1:8000/script.js:4605
+[   99627ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[   99634ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[   99661ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[   99664ms] [LOG] [Prompt Template] start generate after 6 messages @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[   99666ms] [LOG] [Prompt Template] processing 6 messages in 2ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[   99678ms] [LOG] [Prompt Template] processing send result: 3791 tokens and 7631 chars @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  116195ms] [WARNING] Stream stats: 18 tokens, 12.17 seconds, rate: 1.48 TPS @ http://127.0.0.1:8000/script.js:3839
+[  116215ms] [WARNING] [DEPRECATED] MacrosParser.registerMacro is deprecated and will be removed in a future version. Use macros.registry.registerMacro (from scripts/macros/macro-system.js) or substituteParams({ dynamicMacros }) instead. Arguments: [lastUserMessage, ] @ http://127.0.0.1:8000/scripts/macros.js:64
+[  116216ms] [WARNING] Macro lastUserMessage is already registered @ http://127.0.0.1:8000/scripts/macros.js:87
+[  116216ms] [WARNING] [Macro] Warning: Macro "lastUserMessage" is already registered and will be overwritten. {macroName: lastUserMessage} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:127
+[  116225ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  116254ms] [LOG] [WI] Adding 1 entries to prompt [Object] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[  116255ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  116334ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  116335ms] [LOG] [Prompt Template] start generate after 14 messages @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  116338ms] [LOG] [Prompt Template] processing 14 messages in 4ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  116347ms] [LOG] [Prompt Template] processing send result: 1078 tokens and 4011 chars @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  117233ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1145
+[  117307ms] [LOG] Generate entered @ http://127.0.0.1:8000/script.js:4231
+[  117309ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  117309ms] [LOG] [QR2] Before-generation hook skipped due to dryRun. @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  117325ms] [LOG] Core/all messages: 3/3 @ http://127.0.0.1:8000/script.js:4546
+[  117329ms] [LOG] [WI] Hypothetically adding 1 entries to prompt [Object] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[  117329ms] [LOG] skipWIAN not active, adding WIAN @ http://127.0.0.1:8000/script.js:4605
+[  117331ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[  117336ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[  117361ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  145445ms] [LOG] [Prompt Template] processing #7c297665-70cf-419b-a5ea-97f0158052aa custom generate in 3ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  145454ms] [ERROR] Error: "[MVU额外模型解析]从回复找到了<UpdateVariable>标签，但其内的更新命令无效": |-
+  nk>
+
+  <UpdateVariable>
+  {
+    "World": {
+      "Year": 1,
+      "Season": "春季",
+      "Day": 1,
+      "Time": "7:30",
+      "Weather": "晴天"
+    },
+    "Player": {
+      "Location": "某吃饭的地方",
+      "Action": "吃饭",
+      "Energy": "上升 (恢复体力)",
+      "Status": "正在饮用大苏打",
+      "Inventory": {
+        "Added": "大苏打"
+      }
+    }
+  }
+  </UpdateVariable>
+
+    at Rt (https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate/artifact/bundle.js:2:101753)
+    at async n (https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate/artifact/bundle.js:2:111885)
+    at async a (https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate/artifact/bundle.js:2:111996)
+    at async https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate/artifact/bundle.js:2:112867
+    at async Xt (https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate/artifact/bundle.js:2:111774)
+    at async EventEmitter.emit (http://127.0.0.1:8000/lib/eventemitter.js:146:17)
+    at async StreamingProcessor.finalizeIntermediaryMessage (http://127.0.0.1:8000/script.js:3740:13)
+    at async StreamingProcessor.onFinishStreaming (http://127.0.0.1:8000/script.js:3750:9)
+    at async finishGenerating (http://127.0.0.1:8000/script.js:5381:17)
+    at async SlashCommand.triggerGenerationCallback [as callback] (http://127.0.0.1:8000/scripts/slash-commands.js:5015:30) @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[  145455ms] [WARNING] [DEPRECATED] MacrosParser.unregisterMacro is deprecated and will be removed in a future version. Use macros.registry.unregisterMacro (from scripts/macros/macro-system.js) instead. Arguments: [lastUserMessage] @ http://127.0.0.1:8000/scripts/macros.js:64
+[  145458ms] [WARNING] [DEPRECATED] MacrosParser.registerMacro is deprecated and will be removed in a future version. Use macros.registry.registerMacro (from scripts/macros/macro-system.js) or substituteParams({ dynamicMacros }) instead. Arguments: [lastUserMessage, ] @ http://127.0.0.1:8000/scripts/macros.js:64
+[  145459ms] [WARNING] [DEPRECATED] MacrosParser.registerMacro is deprecated and will be removed in a future version. Use macros.registry.registerMacro (from scripts/macros/macro-system.js) or substituteParams({ dynamicMacros }) instead. Arguments: [lastUserMessage, ] @ http://127.0.0.1:8000/scripts/macros.js:64
+[  145459ms] [WARNING] Macro lastUserMessage is already registered @ http://127.0.0.1:8000/scripts/macros.js:87
+[  145459ms] [WARNING] [Macro] Warning: Macro "lastUserMessage" is already registered and will be overwritten. {macroName: lastUserMessage} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:127
+[  145469ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  145469ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  145508ms] [LOG] [WI] Adding 1 entries to prompt [Object] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[  145508ms] [LOG] [WI] Adding 1 entries to prompt [Object] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[  145508ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  145508ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  145586ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  145586ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  145587ms] [LOG] [Prompt Template] start generate after 14 messages @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  145587ms] [LOG] [Prompt Template] start generate after 14 messages @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  145595ms] [LOG] [Prompt Template] processing 14 messages in 9ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  145595ms] [LOG] [Prompt Template] processing 14 messages in 8ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  145603ms] [LOG] [Prompt Template] processing send result: 1078 tokens and 4011 chars @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  145603ms] [LOG] [Prompt Template] processing send result: 1078 tokens and 4011 chars @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  146483ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1145
+[  158520ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1145
+[  160101ms] [ERROR] 点击停止按钮 @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[  160101ms] [ERROR] 点击停止按钮 @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[  160101ms] [WARNING] [DEPRECATED] MacrosParser.unregisterMacro is deprecated and will be removed in a future version. Use macros.registry.unregisterMacro (from scripts/macros/macro-system.js) instead. Arguments: [lastUserMessage] @ http://127.0.0.1:8000/scripts/macros.js:64
+[  160108ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  160113ms] [LOG] [Prompt Template] processing #2 messages in 3ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  160115ms] [LOG] [QR2] calling {functionToCall: , args: Array(2)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  160118ms] [LOG] [Prompt Template] processing #2 messages in 3ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  160131ms] [LOG] [Prompt Template] processing receive result: 48 tokens and 101 chars @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  160144ms] [LOG] [Prompt Template] processing receive result: 52 tokens and 108 chars @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  160262ms] [INFO] [Pastoral][MainAPI] 完成 {messageId: 2, purpose: normal} @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[  160265ms] [INFO] [Pastoral][SecondAPI] 开始 {purpose: normal, attempt: 1, messageId: 2, target: api.guanxinyun.online, model: gemini-3.1-flash-lite-high} @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[  160592ms] [ERROR] AbortReason @ http://127.0.0.1:8000/scripts/openai.js:4460
+[  160593ms] [ERROR] AbortReason @ http://127.0.0.1:8000/scripts/openai.js:4460
+[  160594ms] [ERROR] AbortReason @ http://127.0.0.1:8000/scripts/openai.js:4460
+[  161274ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  161293ms] [LOG] [WI] Adding 1 entries to prompt [Object] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[  161293ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  161294ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[  161302ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[  161368ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  161370ms] [LOG] [Prompt Template] start generate after 6 messages @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  161372ms] [LOG] [Prompt Template] processing 6 messages in 2ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  161408ms] [LOG] [Prompt Template] processing send result: 20355 tokens and 37675 chars @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  161612ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1145
+[  161706ms] [LOG] Generate entered @ http://127.0.0.1:8000/script.js:4231
+[  161707ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  161707ms] [LOG] [QR2] Before-generation hook skipped due to dryRun. @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  161722ms] [LOG] Core/all messages: 3/3 @ http://127.0.0.1:8000/script.js:4546
+[  161724ms] [LOG] [WI] Hypothetically adding 1 entries to prompt [Object] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[  161724ms] [LOG] skipWIAN not active, adding WIAN @ http://127.0.0.1:8000/script.js:4605
+[  161726ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[  161733ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[  161795ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  163591ms] [ERROR] AbortReason @ http://127.0.0.1:8000/scripts/openai.js:4460
+[  163592ms] [ERROR] AbortReason @ http://127.0.0.1:8000/scripts/openai.js:4460
+[  163593ms] [ERROR] AbortReason @ http://127.0.0.1:8000/scripts/openai.js:4460
+[  164605ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1145
+[  164705ms] [LOG] Generate entered @ http://127.0.0.1:8000/script.js:4231
+[  164706ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  164706ms] [LOG] [QR2] Before-generation hook skipped due to dryRun. @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  164721ms] [LOG] Core/all messages: 3/3 @ http://127.0.0.1:8000/script.js:4546
+[  164724ms] [LOG] [WI] Hypothetically adding 1 entries to prompt [Object] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[  164724ms] [LOG] skipWIAN not active, adding WIAN @ http://127.0.0.1:8000/script.js:4605
+[  164725ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[  164730ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[  164752ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  165509ms] [LOG] [Prompt Template] processing #pastoral-second-1 custom generate in 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  165510ms] [INFO] [Pastoral][VariableRequest] {stage: normal, mode: fixed, targetPreset: 测试, taskCount: 1, taskFingerprint: b906ecd0} @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[  165510ms] [INFO] [Pastoral][SecondAPI] 完成 {id: pastoral-second-1, attempt: 1, elapsedMs: 5246, target: api.guanxinyun.online, repaired: false} @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[  165515ms] [LOG] Reconciling schema with current data state... @ https://testingcf.jsdelivr.net/gh/N0VI028/JS-Slash-Runner/src/iframe/node_modules/log.js:9
+[  198045ms] [LOG] [Prompt Template] processing #0 messages in 18ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  198053ms] [LOG] [Prompt Template] processing receive result: 48 tokens and 101 chars @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  213752ms] [INFO] Rendered 3 messages in 0.024 seconds. @ http://127.0.0.1:8000/script.js:1528
+[  213877ms] [LOG] [Prompt Template] *** PRELOADING WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  213878ms] [LOG] [Prompt Template] *** EVALUATING 0 WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  213878ms] [LOG] [Prompt Template] processing 0 world info in 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  213878ms] [LOG] [Prompt Template] *** UPDATE ALL MESSAGES *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  213881ms] [LOG] [Prompt Template] processing #0 messages in 2ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  213881ms] [LOG] [Prompt Template] processing #1 messages in 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  213882ms] [LOG] [Prompt Template] processing #2 messages in 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  213891ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  213891ms] [LOG] [QR2] CHAT_CHANGED 我们的家族又没落了？ - 2026-08-02@04h20m06s241ms @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  213895ms] [LOG] ========================================
+更新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:781
+[  213895ms] [LOG] 刷新表格模板视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:484
+[  213895ms] [LOG] ========================================
+更新表格内容视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:783
+[  213895ms] [LOG] renderSheetsDOM_task [1] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  213895ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  213895ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[  213895ms] [LOG] renderSheetsDOM_task [2] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  213895ms] [LOG] 向上查询表格数据，深度 0 截断 1000 从最新开始 true @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:218
+[  213895ms] [LOG] 向上查询表格数据，找到表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: # 一封来自远方的信
+
+> **星梦摇篮 · 家族遗产书**
+
+---
+
+【第一年，春季第1天，周一…灰尘，是时候彻底打扫一下了。一个干净的环境是良好开端的第一步。（报酬：声望+3）
+
+```
+```} @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:230
+[  213895ms] [LOG] renderSheetsDOM: {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: # 一封来自远方的信
+
+> **星梦摇篮 · 家族遗产书**
+
+---
+
+【第一年，春季第1天，周一…灰尘，是时候彻底打扫一下了。一个干净的环境是良好开端的第一步。（报酬：声望+3）
+
+```
+```} [Sheet, Sheet, Sheet, Sheet, Sheet, Sheet] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:510
+[  213895ms] [LOG] renderSheetsDOM_task [3] 任务耗时: 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  213895ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  213895ms] [LOG] renderSheetsDOM_task [4] 任务耗时: 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  213895ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  213895ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[  213907ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  213907ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  213907ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  213908ms] [LOG] dragSpace是什么 JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:420
+[  213908ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  213909ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  213909ms] [LOG] 刷新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:593
+[  213920ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  213921ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  213922ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  213922ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  213923ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  213923ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  213923ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  213923ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  213933ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  214949ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1145
+[  216056ms] [LOG] Generate entered @ http://127.0.0.1:8000/script.js:4231
+[  216056ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  216057ms] [LOG] [QR2] Before-generation hook skipped due to dryRun. @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  216072ms] [LOG] Core/all messages: 3/3 @ http://127.0.0.1:8000/script.js:4546
+[  216074ms] [LOG] [WI] Hypothetically adding 1 entries to prompt [Object] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[  216074ms] [LOG] skipWIAN not active, adding WIAN @ http://127.0.0.1:8000/script.js:4605
+[  216075ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[  216085ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[  216106ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  217050ms] [LOG] displaying shadow @ http://127.0.0.1:8000/script.js:11540
+[  218034ms] [INFO] Rendered 3 messages in 0.018 seconds. @ http://127.0.0.1:8000/script.js:1528
+[  218067ms] [LOG] [Prompt Template] *** PRELOADING WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  218068ms] [LOG] [Prompt Template] *** EVALUATING 0 WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  218068ms] [LOG] [Prompt Template] processing 0 world info in 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  218068ms] [LOG] [Prompt Template] *** UPDATE ALL MESSAGES *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  218070ms] [LOG] [Prompt Template] processing #0 messages in 3ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  218072ms] [LOG] [Prompt Template] processing #1 messages in 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  218072ms] [INFO] [Prompt Template] chat message #2.0 is generating @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  218080ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  218080ms] [LOG] [QR2] CHAT_CHANGED 我们的家族又没落了？ - 2026-08-02@03h28m28s951ms @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  218083ms] [LOG] ========================================
+更新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:781
+[  218083ms] [LOG] 刷新表格模板视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:484
+[  218083ms] [LOG] ========================================
+更新表格内容视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:783
+[  218083ms] [LOG] renderSheetsDOM_task [1] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  218083ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  218083ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[  218083ms] [LOG] renderSheetsDOM_task [2] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  218083ms] [LOG] 向上查询表格数据，深度 0 截断 1000 从最新开始 true @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:218
+[  218083ms] [LOG] 向上查询表格数据，找到表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T19:28:28.962Z, mes: # 一封来自远方的信
+
+> **星梦摇篮 · 家族遗产书**
+
+---
+
+【第一年，春季第1天，周一…灰尘，是时候彻底打扫一下了。一个干净的环境是良好开端的第一步。（报酬：声望+3）
+
+```
+```} @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:230
+[  218083ms] [LOG] renderSheetsDOM: {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T19:28:28.962Z, mes: # 一封来自远方的信
+
+> **星梦摇篮 · 家族遗产书**
+
+---
+
+【第一年，春季第1天，周一…灰尘，是时候彻底打扫一下了。一个干净的环境是良好开端的第一步。（报酬：声望+3）
+
+```
+```} [Sheet, Sheet, Sheet, Sheet, Sheet, Sheet] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:510
+[  218083ms] [LOG] renderSheetsDOM_task [3] 任务耗时: 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  218083ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  218083ms] [LOG] renderSheetsDOM_task [4] 任务耗时: 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  218083ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  218083ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[  218092ms] [LOG] 选择了 true [sheet_v5rcCUIm, sheet_Pg7E0adF, sheet_RrDGSIy4, sheet_1MvXbYnW, sheet_W6u4YMzG, sheet_iY1VaBGH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  218092ms] [LOG] 选择了 true [sheet_v5rcCUIm, sheet_Pg7E0adF, sheet_RrDGSIy4, sheet_1MvXbYnW, sheet_W6u4YMzG, sheet_iY1VaBGH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  218092ms] [LOG] 选择了 true [sheet_v5rcCUIm, sheet_Pg7E0adF, sheet_RrDGSIy4, sheet_1MvXbYnW, sheet_W6u4YMzG, sheet_iY1VaBGH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  218092ms] [LOG] 选择了 true [sheet_v5rcCUIm, sheet_Pg7E0adF, sheet_RrDGSIy4, sheet_1MvXbYnW, sheet_W6u4YMzG, sheet_iY1VaBGH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  218093ms] [LOG] dragSpace是什么 JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:420
+[  218093ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  218093ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  218094ms] [LOG] 刷新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:593
+[  218102ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  218102ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  218104ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  218104ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  218104ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  218104ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  218105ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  218105ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  218105ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  218185ms] [LOG] [ToolManager] Unregistered function tool: mvu_VariableUpdate_c6239df0-e231-4700-9572-14a16442f8e5 @ http://127.0.0.1:8000/scripts/tool-calling.js:302
+[  218186ms] [LOG] [ToolManager] Registered function tool: ToolDefinition @ http://127.0.0.1:8000/scripts/tool-calling.js:289
+[  219249ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1145
+[  220370ms] [LOG] Generate entered @ http://127.0.0.1:8000/script.js:4231
+[  220371ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  220371ms] [LOG] [QR2] Before-generation hook skipped due to dryRun. @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  220385ms] [LOG] Core/all messages: 3/3 @ http://127.0.0.1:8000/script.js:4546
+[  220393ms] [LOG] [WI] Hypothetically adding 1 entries to prompt [Object] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[  220393ms] [LOG] skipWIAN not active, adding WIAN @ http://127.0.0.1:8000/script.js:4605
+[  220394ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[  220401ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[  220419ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  224877ms] [LOG] displaying shadow @ http://127.0.0.1:8000/script.js:11540
+[  227665ms] [INFO] Rendered 3 messages in 0.020 seconds. @ http://127.0.0.1:8000/script.js:1528
+[  227699ms] [LOG] [Prompt Template] *** PRELOADING WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  227699ms] [LOG] [Prompt Template] *** EVALUATING 0 WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  227699ms] [LOG] [Prompt Template] processing 0 world info in 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  227699ms] [LOG] [Prompt Template] *** UPDATE ALL MESSAGES *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  227702ms] [LOG] [Prompt Template] processing #0 messages in 2ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  227703ms] [LOG] [Prompt Template] processing #1 messages in 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  227704ms] [LOG] [Prompt Template] processing #2 messages in 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  227711ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  227712ms] [LOG] [QR2] CHAT_CHANGED 我们的家族又没落了？ - 2026-08-02@04h20m06s241ms @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  227714ms] [LOG] ========================================
+更新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:781
+[  227714ms] [LOG] 刷新表格模板视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:484
+[  227715ms] [LOG] ========================================
+更新表格内容视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:783
+[  227715ms] [LOG] renderSheetsDOM_task [1] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  227715ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  227715ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[  227715ms] [LOG] renderSheetsDOM_task [2] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  227715ms] [LOG] 向上查询表格数据，深度 0 截断 1000 从最新开始 true @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:218
+[  227715ms] [LOG] 向上查询表格数据，找到表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: # 一封来自远方的信
+
+> **星梦摇篮 · 家族遗产书**
+
+---
+
+【第一年，春季第1天，周一…灰尘，是时候彻底打扫一下了。一个干净的环境是良好开端的第一步。（报酬：声望+3）
+
+```
+```} @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:230
+[  227715ms] [LOG] renderSheetsDOM: {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: # 一封来自远方的信
+
+> **星梦摇篮 · 家族遗产书**
+
+---
+
+【第一年，春季第1天，周一…灰尘，是时候彻底打扫一下了。一个干净的环境是良好开端的第一步。（报酬：声望+3）
+
+```
+```} [Sheet, Sheet, Sheet, Sheet, Sheet, Sheet] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:510
+[  227715ms] [LOG] renderSheetsDOM_task [3] 任务耗时: 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  227715ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  227715ms] [LOG] renderSheetsDOM_task [4] 任务耗时: 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  227715ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  227715ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[  227724ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  227724ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  227724ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  227724ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  227724ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  227725ms] [LOG] dragSpace是什么 JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:420
+[  227725ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  227726ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  227726ms] [LOG] 刷新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:593
+[  227735ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  227736ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  227737ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  227738ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  227738ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  227738ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  227738ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  227739ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  227739ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  227825ms] [LOG] [ToolManager] Unregistered function tool: mvu_VariableUpdate_c6239df0-e231-4700-9572-14a16442f8e5 @ http://127.0.0.1:8000/scripts/tool-calling.js:302
+[  227826ms] [LOG] [ToolManager] Registered function tool: ToolDefinition @ http://127.0.0.1:8000/scripts/tool-calling.js:289
+[  228889ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1145
+[  230003ms] [LOG] Generate entered @ http://127.0.0.1:8000/script.js:4231
+[  230003ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  230003ms] [LOG] [QR2] Before-generation hook skipped due to dryRun. @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  230018ms] [LOG] Core/all messages: 3/3 @ http://127.0.0.1:8000/script.js:4546
+[  230020ms] [LOG] [WI] Hypothetically adding 1 entries to prompt [Object] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[  230020ms] [LOG] skipWIAN not active, adding WIAN @ http://127.0.0.1:8000/script.js:4605
+[  230022ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[  230027ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[  230045ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  252092ms] [INFO] Rendered 3 messages in 0.019 seconds. @ http://127.0.0.1:8000/script.js:1528
+[  252126ms] [LOG] [Prompt Template] *** PRELOADING WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  252127ms] [LOG] [Prompt Template] *** EVALUATING 0 WORLD INFO *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  252127ms] [LOG] [Prompt Template] processing 0 world info in 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  252127ms] [LOG] [Prompt Template] *** UPDATE ALL MESSAGES *** @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  252129ms] [LOG] [QR2] calling {functionToCall: , args: Array(2)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  252132ms] [LOG] [Prompt Template] processing #0 messages in 5ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  252135ms] [LOG] [Prompt Template] processing #1 messages in 2ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  252137ms] [LOG] [Prompt Template] processing #2 messages in 3ms @ http://127.0.0.1:8000/scripts/extensions/third-party/ST-Prompt-Template/dist/index.js:0
+[  252147ms] [LOG] [QR2] calling {functionToCall: , args: Array(1)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  252147ms] [LOG] [QR2] CHAT_CHANGED 我们的家族又没落了？ - 2026-08-02@04h20m06s241ms @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  252149ms] [LOG] ========================================
+更新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:781
+[  252149ms] [LOG] 刷新表格模板视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:484
+[  252150ms] [LOG] ========================================
+更新表格内容视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/index.js:783
+[  252150ms] [LOG] renderSheetsDOM_task [1] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  252150ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  252150ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[  252150ms] [LOG] renderSheetsDOM_task [2] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  252150ms] [LOG] 向上查询表格数据，深度 0 截断 1000 从最新开始 true @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:218
+[  252150ms] [LOG] 向上查询表格数据，找到表格数据 {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: # 一封来自远方的信
+
+> **星梦摇篮 · 家族遗产书**
+
+---
+
+【第一年，春季第1天，周一…灰尘，是时候彻底打扫一下了。一个干净的环境是良好开端的第一步。（报酬：声望+3）
+
+```
+```} @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/core/manager.js:230
+[  252150ms] [LOG] renderSheetsDOM: {name: 我们的家族又没落了？, is_user: false, is_system: false, send_date: 2026-08-01T20:20:06.247Z, mes: # 一封来自远方的信
+
+> **星梦摇篮 · 家族遗产书**
+
+---
+
+【第一年，春季第1天，周一…灰尘，是时候彻底打扫一下了。一个干净的环境是良好开端的第一步。（报酬：声望+3）
+
+```
+```} [Sheet, Sheet, Sheet, Sheet, Sheet, Sheet] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:510
+[  252150ms] [LOG] renderSheetsDOM_task [3] 任务耗时: 0ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  252150ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  252150ms] [LOG] renderSheetsDOM_task [4] 任务耗时: 1ms @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/system.js:22
+[  252150ms] [LOG] 变量 isTableToChat 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40
+[  252150ms] [LOG] 更新最后一条 System 消息的 <tableStatus> 标签内容 false @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/renderer/tablePushToChat.js:370
+[  252161ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  252161ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  252161ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  252161ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  252161ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  252161ms] [LOG] 选择了 true [sheet_tam1hr0u, sheet_eSKg04mR, sheet_6udGMclg, sheet_vVS23hpo, sheet_vpuHO8ly, sheet_KXusxFJH] @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:164
+[  252162ms] [LOG] dragSpace是什么 JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/tableTemplateEditView.js:420
+[  252163ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  252163ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  252163ms] [LOG] 刷新表格视图 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:593
+[  252175ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  252175ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  252176ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  252176ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  252177ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  252177ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  252177ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  252177ms] [LOG] 渲染： Sheet @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:438
+[  252186ms] [LOG] 渲染表格： JSHandle@node @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/scripts/editor/chatSheetsDataView.js:462
+[  253198ms] [LOG] APP_READY undefined @ https://jnai2d9kgnbs6xzx5c.com/regex_bind/inject.js:1145
+[  254319ms] [LOG] Generate entered @ http://127.0.0.1:8000/script.js:4231
+[  254321ms] [LOG] [QR2] calling {functionToCall: , args: Array(3)} @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  254321ms] [LOG] [QR2] Before-generation hook skipped due to dryRun. @ http://127.0.0.1:8000/scripts/extensions/quick-reply/index.js:18
+[  254336ms] [LOG] Core/all messages: 3/3 @ http://127.0.0.1:8000/script.js:4546
+[  254339ms] [LOG] [WI] Hypothetically adding 1 entries to prompt [Object] @ http://127.0.0.1:8000/scripts/world-info.js:5158
+[  254339ms] [LOG] skipWIAN not active, adding WIAN @ http://127.0.0.1:8000/script.js:4605
+[  254341ms] [WARNING] [Macro] Warning: Invalid roll formula: Alphabet {macroName: roll, range: Object, raw: roll Alphabet, call: Object, def: Object} @ http://127.0.0.1:8000/scripts/macros/engine/MacroDiagnostics.js:106
+[  254348ms] [LOG] Message role not set, defaulting to 'system' for identifier 'personaDescription' @ http://127.0.0.1:8000/scripts/openai.js:3448
+[  254368ms] [LOG] 变量 step_by_step 未找到, 已从默认设置中获取 @ http://127.0.0.1:8000/scripts/extensions/third-party/st-memory-enhancement/utils/codeProxy.js:40

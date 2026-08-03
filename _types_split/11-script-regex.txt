@@ -1,0 +1,246 @@
+ * 获取所有处于启用状态的酒馆助手脚本按钮, 主要是方便 QR 助手等兼容脚本按钮
+ */
+declare function getAllEnabledScriptButtons(): { [script_id: string]: { button_id: string; button_name: string }[] };
+
+type ScriptButton = {
+  name: string;
+  visible: boolean;
+};
+
+type Script = {
+  type: 'script';
+  enabled: boolean;
+  name: string;
+  id: string;
+  content: string;
+  info: string;
+  button: {
+    enabled: boolean;
+    buttons: Array<ScriptButton>;
+  };
+  data: Record<string, any>;
+  export_with: {
+    data: boolean;
+    button: boolean;
+  };
+};
+type ScriptFolder = {
+  type: 'folder';
+  enabled: boolean;
+  name: string;
+  id: string;
+  icon: string;
+  color: string;
+  scripts: Script[];
+};
+type ScriptTree = Script | ScriptFolder;
+
+type ScriptTreesOptions = {
+  /** 对全局脚本 (`'chat'`)、当前预设脚本 (`'preset'`) 或当前角色卡脚本 (`'global'`) 进行操作 */
+  type: 'global' | 'preset' | 'character';
+};
+
+/**
+ * 获取酒馆助手脚本列表
+ *
+ * @param option 要操作的酒馆助手脚本类型
+ *
+ * @returns 酒馆助手脚本列表
+ */
+declare function getScriptTrees(option: ScriptTreesOptions): ScriptTree[];
+
+/**
+ * 完全替换酒馆助手列表为 `script_trees`
+ *
+ * @param script_trees 要用于替换的酒馆助手列表
+ * @param option 要操作的酒馆助手脚本类型
+ */
+declare function replaceScriptTrees(script_trees: TypeFest.PartialDeep<ScriptTree>[], option: ScriptTreesOptions): void;
+
+/**
+ * 用 `updater` 函数更新酒馆助手列表
+ *
+ * @param updater 用于更新酒馆助手列表的函数. 它应该接收酒馆助手列表作为参数, 并返回更新后的酒馆助手列表.
+ * @param option 要操作的酒馆助手脚本类型
+ *
+ * @returns 更新后的酒馆助手列表
+ */
+declare function updateScriptTreesWith(
+  updater: (script_trees: ScriptTree[]) => TypeFest.PartialDeep<ScriptTree>[],
+  option: ScriptTreesOptions,
+): ScriptTree[];
+
+/**
+ * 用 `updater` 函数更新酒馆助手列表
+ *
+ * @param updater 用于更新酒馆助手列表的函数. 它应该接收酒馆助手列表作为参数, 并返回更新后的酒馆助手列表.
+ * @param option 要操作的酒馆助手脚本类型
+ *
+ * @returns 更新后的酒馆助手列表
+ */
+declare function updateScriptTreesWith(
+  updater: (script_trees: ScriptTree[]) => Promise<TypeFest.PartialDeep<ScriptTree>[]>,
+  option: ScriptTreesOptions,
+): Promise<ScriptTree[]>;
+/**
+ * 运行 Slash 命令, 注意如果命令写错了将不会有任何反馈
+ *
+ * 能使用的命令请参考[编写模板](https://stagedog.github.io/青空莉/工具经验/实时编写前端界面或脚本/)的 `slash_command.txt` 或[命令手册](https://rentry.org/sillytavern-script-book).
+ *
+ * @param command 要运行的 Slash 命令
+ * @returns Slash 管道结果, 如果命令出错或执行了 `/abort` 则返回 `undefined`
+ *
+ * @throws Slash 命令出错时, 将会抛出错误
+ *
+ * @example
+ * // 在酒馆界面弹出提示语 `运行成功!`
+ * triggerSlash('/echo severity=success 运行成功!');
+ * // 但更建议你直接用 toastr 弹出提示
+ * toastr.success('运行成功!');
+ *
+ * @example
+ * // 获取当前聊天消息最后一条消息对应的 id
+ * const last_message_id = await triggerSlash('/pass {{lastMessageId}}');
+ * // 但更建议你用酒馆助手函数
+ * const last_message = getLastMessageId();
+ *
+ * @example
+ * // 创建一条用户输入到消息楼层末尾
+ * await createChatMessages([{ role: 'user', content: '你好' }]);
+ * // 触发 AI 回复
+ * await triggerSlash('/trigger');
+ */
+declare function triggerSlash(command: string): Promise<string>;
+type FormatAsTavernRegexedStringOption = {
+  /** 文本所在的深度; 不填则不考虑酒馆正则的`深度`选项: 无论该深度是否在酒馆正则的`最小深度`和`最大深度`范围内都生效 */
+  depth?: number;
+  /** 角色卡名称; 不填则使用当前角色卡名称 */
+  character_name?: string;
+};
+
+/**
+ * 对 `text` 应用酒馆正则
+ *
+ * @param text 要应用酒馆正则的文本
+ * @param source 文本来源, 例如来自用户输入或 AI 输出. 对应于酒馆正则的`作用范围`选项.
+ * @param destination 文本将作为什么而使用, 例如用于显示或作为提示词. 对应于酒馆正则的`仅格式显示`和`仅格式提示词`选项.
+ * @param option 可选选项
+ *   - `depth?:number`: 文本所在的深度; 不填则不考虑酒馆正则的`深度`选项: 无论该深度是否在酒馆正则的`最小深度`和`最大深度`范围内都生效
+ *   - `character_name?:string`: 角色卡名称; 不填则使用当前角色卡名称
+ *
+ * @example
+ * // 获取最后一楼文本, 将它视为将会作为显示的 AI 输出, 对它应用酒馆正则
+ * const message = getChatMessages(-1)[0];
+ * const result = formatAsTavernRegexedString(message.message, 'ai_output', 'display', { depth: 0 });
+ */
+declare function formatAsTavernRegexedString(
+  text: string,
+  source: 'user_input' | 'ai_output' | 'slash_command' | 'world_info' | 'reasoning',
+  destination: 'display' | 'prompt',
+  { depth, character_name }?: FormatAsTavernRegexedStringOption,
+): string;
+
+type TavernRegex = {
+  id: string;
+  script_name: string;
+  enabled: boolean;
+  /** @deprecated 使用新 API 时不再返回此字段，仅在使用旧 scope 参数时返回 */
+  scope?: 'global' | 'character';
+
+  find_regex: string;
+  replace_string: string;
+  trim_strings: string[];
+
+  source: {
+    user_input: boolean;
+    ai_output: boolean;
+    slash_command: boolean;
+    world_info: boolean;
+  };
+
+  destination: {
+    display: boolean;
+    prompt: boolean;
+  };
+  run_on_edit: boolean;
+
+  min_depth: number | null;
+  max_depth: number | null;
+};
+
+/**
+ * 判断局部正则是否启用
+ */
+declare function isCharacterTavernRegexesEnabled(): boolean;
+
+type TavernRegexOptionGlobal = {
+  /** 对全局正则 (`'global'`) 进行操作 */
+  type: 'global';
+};
+type TavernRegexOptionCharacter = {
+  /** 对角色卡局部 (`'character'`) 进行操作 */
+  type: 'character';
+  name?: string | 'current';
+};
+type TavernRegexOptionPreset = {
+  /** 对预设正则 (`'preset'`) 进行操作 */
+  type: 'preset';
+  name?: string | 'in_use';
+};
+type TavernRegexOption = TavernRegexOptionGlobal | TavernRegexOptionCharacter | TavernRegexOptionPreset;
+
+/**
+ * 获取酒馆正则
+ *
+ * @param option 要操作的酒馆正则类型
+ *
+ * @returns 一个数组, 数组的元素是酒馆正则 `TavernRegex`. 该数组依据正则作用于文本的顺序排序, 也就是酒馆显示正则的地方从上到下排列.
+ */
+declare function getTavernRegexes(option: TavernRegexOption): TavernRegex[];
+
+type ReplaceTavernRegexesOption = {
+  scope?: 'all' | 'global' | 'character';
+};
+
+/**
+ * 完全替换酒馆正则为 `regexes`.
+ * - **这是一个很慢的操作!** 尽量对正则做完所有事后再一次性 replaceTavernRegexes.
+ * - **为了重新应用正则, 它会重新载入整个聊天消息**, 将会触发 `tavern_events.CHAT_CHANGED` 进而重新加载楼层消息.
+ *
+ * 之所以提供这么直接的函数, 是因为你可能需要调换正则顺序等.
+ *
+ * @param regexes 要用于替换的酒馆正则
+ * @param option 要操作的酒馆正则类型
+ */
+declare function replaceTavernRegexes(regexes: TavernRegex[], option: TavernRegexOption): Promise<void>;
+
+type TavernRegexUpdater =
+  | ((regexes: TavernRegex[]) => TavernRegex[])
+  | ((regexes: TavernRegex[]) => Promise<TavernRegex[]>);
+
+/**
+ * 用 `updater` 函数更新酒馆正则
+ *
+ * @param updater 用于更新酒馆正则的函数. 它应该接收酒馆正则作为参数, 并返回更新后的酒馆正则.
+ * @param option 要操作的酒馆正则类型
+ *
+ * @returns 更新后的酒馆正则
+ *
+ * @example
+ * // 开启所有名字里带 "舞台少女" 的全局正则
+ * await updateTavernRegexesWith(
+ *   regexes => {
+ *     regexes.forEach(regex => {
+ *       if (regex.script_name.includes('舞台少女')) {
+ *         regex.enabled = true;
+ *       }
+ *     });
+ *     return regexes;
+ *   },
+ *   { type: 'global' },
+ * );
+ */
+declare function updateTavernRegexesWith(
+  updater: TavernRegexUpdater,
+  option: TavernRegexOption,
+): Promise<TavernRegex[]>;

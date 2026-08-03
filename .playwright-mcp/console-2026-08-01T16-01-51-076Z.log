@@ -1,0 +1,7 @@
+[     349ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:8000/:0
+[    2014ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8000/csrf-token:0
+[    2013ms] Error: Initialization failed
+    at firstLoadInit (http://127.0.0.1:8000/script.js:699:15)
+    at async HTMLDocument.<anonymous> (http://127.0.0.1:8000/script.js:12529:5)
+[    2033ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8000/img/apple-icon-144x144.png:0
+[    2034ms] [WARNING] Error while trying to use the following icon from the Manifest: http://127.0.0.1:8000/img/apple-icon-144x144.png (Download error or resource isn't a valid image) @ http://127.0.0.1:8000/:0

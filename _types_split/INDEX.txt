@@ -1,0 +1,32 @@
+============================================================
+  TavernHelper / SillyTavern 类型定义 — 分文件索引
+  原始文件: _types .txt (4786 行 → 拆分为 17 个文件)
+============================================================
+
+每个文件聚焦单一 API 领域，按需查阅，避免一次性消耗 ~47K tokens。
+
+ 文件                        | 内容领域
+-----------------------------|----------------------------------
+ 01-audio.txt                | Audio 类型、playAudio/pauseAudio 等
+ 02-builtin.txt              | builtin 对象（楼层渲染、剪贴板等）
+ 03-character.txt            | Character CRUD（创建/读取/更新/删除角色卡）
+ 04-chat-message.txt         | ChatMessage 系列（消息增删改查、楼层操作）
+ 05-extension.txt            | Extension 安装/卸载/更新
+ 06-generate.txt             | generate / generateRaw / 工具调用 / JSON Schema
+ 07-global-import-window-inject.txt | initializeGlobal, import*, Window 接口, injectPrompts
+ 08-lorebook-deprecated.txt  | @deprecated Lorebook API（请用 Worldbook 替代）
+ 09-preset.txt               | Preset 预设 + MacroLike 宏注册
+ 10-raw-character.txt        | RawCharacter 类 + getCharData/getCharAvatarPath
+ 11-script-regex.txt         | Script 树、triggerSlash、TavernRegex
+ 12-util-variables.txt       | 工具函数 + Variables 变量系统 + Version
+ 13-worldbook.txt            | Worldbook CRUD + WorldbookEntry 类型
+ 14-events.txt               | eventOn/eventEmit + iframe_events + tavern_events + ListenerType
+ 15-ejs-mvu.txt              | EjsTemplate 命名空间 + Mvu 变量框架
+ 16-sillytavern.txt          | SillyTavern 核心接口（getContext 等）
+ 17-script-buttons-iframe.txt| Script 按钮 + reloadIframe + getIframeName 等
+
+用法提示:
+  - 需要查 generate 相关类型 → 只看 06-generate.txt
+  - 需要查世界书 API → 只看 13-worldbook.txt
+  - 需要查事件系统 → 只看 14-events.txt
+  - 需要查 SillyTavern 原生接口 → 只看 16-sillytavern.txt

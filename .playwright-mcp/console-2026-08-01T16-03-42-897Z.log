@@ -1,0 +1,280 @@
+[    2716ms] [INFO] %c[libdiscore] 
+font-weight: bold;
+color: purple;
+ [experiment_manager] Loaded experiments from cache @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[    2835ms] [LOG] %c[ProcessUtilsElectron] 
+font-weight: bold;
+color: purple;
+ setMemoryInformation not available. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[    3073ms] [LOG] %c[default] 
+font-weight: bold;
+color: purple;
+ [BUILD INFO] Release Channel: stable, Build Number: 586984, Version Hash: 060db27ba71fcdaa609e766684ebd08516bb7d93 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[    3077ms] [LOG] AppCrashedFatalReport: getLastCrash not supported. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[    3228ms] [INFO] %c[libdiscore] 
+font-weight: bold;
+color: purple;
+ The answer for life the universe and everything is: 42 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[    3770ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://discord.com/api/v9/promotions?locale=zh-CN&platform=0:0
+[   10055ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:6463/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ https://discord.com/assets/web.c01c1db6d97b320d.js:65
+[   10056ms] [LOG] %c[Routing/Utils] 
+font-weight: bold;
+color: purple;
+ transitionTo - Transitioning to /login?redirect_to=%2Fchannels%2F1380075940285124724%2F1480878747291881654 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[   10101ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [0ms] connecting to wss://remote-auth-gateway.discord.gg/?v=2 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[   11038ms] [LOG] %c[Routing/Utils] 
+font-weight: bold;
+color: purple;
+ transitionTo - Transitioning to /login?redirect_to=%2Flogin%3Fredirect_to%3D%252Fchannels%252F1380075940285124724%252F1480878747291881654 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[   12088ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:6464/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ https://discord.com/assets/web.c01c1db6d97b320d.js:65
+[   12222ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [2123ms] got hello, auth timeout=241305ms @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[   12399ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [2299ms] connected, handshaking with fingerprint: jTr256ugwfm-0tVIDHx1lYXRw5-i1hMjFc9LPZo8V4g @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[   12809ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [2709ms] computed nonce proof @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[   13135ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [3035ms] handshake complete awaiting remote auth. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[   14105ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:6465/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ https://discord.com/assets/web.c01c1db6d97b320d.js:65
+[   16135ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:6466/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ https://discord.com/assets/web.c01c1db6d97b320d.js:65
+[   18172ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:6467/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ https://discord.com/assets/web.c01c1db6d97b320d.js:65
+[   20188ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:6468/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ https://discord.com/assets/web.c01c1db6d97b320d.js:65
+[   22221ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:6469/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ https://discord.com/assets/web.c01c1db6d97b320d.js:65
+[   24254ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:6470/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ https://discord.com/assets/web.c01c1db6d97b320d.js:65
+[   26304ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:6471/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ https://discord.com/assets/web.c01c1db6d97b320d.js:65
+[   28337ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:6472/?v=1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ https://discord.com/assets/web.c01c1db6d97b320d.js:65
+[  253516ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [243416ms] disconnected, code: 4003 Handshake Timeout @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  253516ms] [ERROR] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ Could not complete Remote Auth login, trying to restart with a new Remote Auth session. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  257146ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [247047ms] cleaning up @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  257148ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [0ms] connecting to wss://remote-auth-gateway.discord.gg/?v=2 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  258998ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1852ms] got hello, auth timeout=286136ms @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  259159ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [2013ms] connected, handshaking with fingerprint: 5D1JRAR5yiMby0STPQFSuQH0Xtl7xBEJa9hmiFbQ49M @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  259607ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [2461ms] computed nonce proof @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  260025ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [2878ms] handshake complete awaiting remote auth. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  545043ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [287897ms] disconnected, code: 4003 Handshake Timeout @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  545044ms] [ERROR] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ Could not complete Remote Auth login, trying to restart with a new Remote Auth session. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  549200ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [292053ms] cleaning up @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  549200ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [0ms] connecting to wss://remote-auth-gateway.discord.gg/?v=2 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  549805ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [605ms] got hello, auth timeout=259623ms @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  549852ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [652ms] connected, handshaking with fingerprint: wYK0bUVf-8-8KfPI25iGs19CtjTah1m12oJzvSgm8f0 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  550115ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [915ms] computed nonce proof @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  550374ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1174ms] handshake complete awaiting remote auth. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  809421ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [260221ms] disconnected, code: 4003 Handshake Timeout @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  809421ms] [ERROR] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ Could not complete Remote Auth login, trying to restart with a new Remote Auth session. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  811756ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [262556ms] cleaning up @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  811756ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [0ms] connecting to wss://remote-auth-gateway.discord.gg/?v=2 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  812789ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1033ms] got hello, auth timeout=265826ms @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  812835ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1080ms] connected, handshaking with fingerprint: iVifbH8D5clE09Nw12x2Cj-cSOFUcRZpICnw84hY4Sg @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  813136ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1381ms] computed nonce proof @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[  813420ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1665ms] handshake complete awaiting remote auth. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1078524ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [266768ms] disconnected, code: 4003 Handshake Timeout @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1078524ms] [ERROR] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ Could not complete Remote Auth login, trying to restart with a new Remote Auth session. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1081442ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [269686ms] cleaning up @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1081443ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [0ms] connecting to wss://remote-auth-gateway.discord.gg/?v=2 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1082106ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [664ms] got hello, auth timeout=269660ms @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1082147ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [704ms] connected, handshaking with fingerprint: h5kH8FHT5dtH20IAPp082EpLFebCg137B_F1pimvweo @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1082425ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [983ms] computed nonce proof @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1082704ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1262ms] handshake complete awaiting remote auth. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1351792ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [270349ms] disconnected, code: 4003 Handshake Timeout @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1351792ms] [ERROR] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ Could not complete Remote Auth login, trying to restart with a new Remote Auth session. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1354044ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [272602ms] cleaning up @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1354045ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [0ms] connecting to wss://remote-auth-gateway.discord.gg/?v=2 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1354801ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [757ms] got hello, auth timeout=274577ms @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1354936ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [892ms] connected, handshaking with fingerprint: MClZIsL8KdDHF1Msp2-lqZEEKWpPA00q8B4o4n-U4i8 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1355251ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1207ms] computed nonce proof @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1355541ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1496ms] handshake complete awaiting remote auth. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1629379ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [275334ms] disconnected, code: 4003 Handshake Timeout @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1629379ms] [ERROR] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ Could not complete Remote Auth login, trying to restart with a new Remote Auth session. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1632384ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [278339ms] cleaning up @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1632385ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [0ms] connecting to wss://remote-auth-gateway.discord.gg/?v=2 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1633772ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1387ms] got hello, auth timeout=292046ms @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1633816ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1431ms] connected, handshaking with fingerprint: 1cTKkq2iBENpY61xJ7ENq8fwV0eQy9KuwnXKBoKqlS4 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1634203ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1818ms] computed nonce proof @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1634558ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [2174ms] handshake complete awaiting remote auth. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1925765ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [293381ms] disconnected, code: 4003 Handshake Timeout @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1925765ms] [ERROR] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ Could not complete Remote Auth login, trying to restart with a new Remote Auth session. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1927888ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [295503ms] cleaning up @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1927888ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [0ms] connecting to wss://remote-auth-gateway.discord.gg/?v=2 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1928565ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [678ms] got hello, auth timeout=296142ms @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1928642ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [754ms] connected, handshaking with fingerprint: VEGY-JE07aNjwSps62cCqT94rIFcxwxjaEBj5vRcw04 @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1928920ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1033ms] computed nonce proof @ https://discord.com/assets/24159.16f64d32f019fb82.js:464
+[ 1929199ms] [INFO] %c[useAuthWebsocket] 
+font-weight: bold;
+color: purple;
+ [1311ms] handshake complete awaiting remote auth. @ https://discord.com/assets/24159.16f64d32f019fb82.js:464

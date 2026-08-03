@@ -1,0 +1,155 @@
+- generic [active] [ref=f1e1]:
+  - region [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - paragraph [ref=f1e4]: A tale of hearth & inheritance
+      - heading "我们的家族 又没落了？" [level=1] [ref=f1e5]: 我们的家族又没落了？
+      - paragraph [ref=f1e6]: 作者 · 观心
+      - button "开始游戏" [ref=f1e7] [cursor=pointer]
+      - paragraph [ref=f1e9]:
+        - link "卡免费发布 · 类脑 / 旅程" [ref=f1e10] [cursor=pointer]:
+          - /url: https://discord.com/channels/1380075940285124724/1480878747291881654
+      - status [ref=f1e11]
+  - main [ref=f1e12]:
+    - tablist "手机全屏页面" [ref=f1e264]:
+      - tab "经营页" [selected] [ref=f1e265] [cursor=pointer]
+      - tab "剧情页" [ref=f1e266] [cursor=pointer]
+      - button "退出全屏" [ref=f1e267] [cursor=pointer]: 退出
+    - generic [ref=f1e13]:
+      - navigation "功能切换" [ref=f1e268]:
+        - button "总览" [ref=f1e269] [cursor=pointer]
+        - button "库存 库存与食谱" [ref=f1e270] [cursor=pointer]:
+          - generic [ref=f1e27]: 库存
+          - text: 库存与食谱
+        - button "建筑 建筑与蓝图" [ref=f1e271] [cursor=pointer]:
+          - generic [ref=f1e34]: 建筑
+          - text: 建筑与蓝图
+        - button "地图 地图与探索" [ref=f1e272] [cursor=pointer]:
+          - generic [ref=f1e42]: 地图
+          - text: 地图与探索
+        - button "员工 员工名册" [ref=f1e273] [cursor=pointer]:
+          - generic [ref=f1e48]: 员工
+          - text: 员工名册
+        - button "访客 宾客盈门" [ref=f1e274] [cursor=pointer]:
+          - generic [ref=f1e55]: 访客
+          - text: 宾客盈门
+        - button "任务 任务日志" [ref=f1e275] [cursor=pointer]:
+          - generic [ref=f1e62]: 任务
+          - text: 任务日志
+        - button "农牧 农牧总览" [ref=f1e276] [cursor=pointer]:
+          - generic [ref=f1e69]: 农牧
+          - text: 农牧总览
+      - generic [ref=f1e71]:
+        - generic [ref=f1e72]:
+          - text: 六维引力
+          - generic [ref=f1e73]: 总引力 65
+        - img "六维引力雷达" [ref=f1e277]:
+          - generic [ref=f1e80]: 美食
+          - generic [ref=f1e82]: 知识
+          - generic [ref=f1e84]: 舒适
+          - generic [ref=f1e85]: 冒险
+          - generic [ref=f1e87]: 文化
+          - generic [ref=f1e89]: 自然
+          - generic [ref=f1e92]: "11"
+          - generic [ref=f1e94]: "7"
+          - generic [ref=f1e96]: "10"
+          - generic [ref=f1e98]: "1"
+          - generic [ref=f1e100]: "8"
+          - generic [ref=f1e102]: "10"
+        - generic [ref=f1e103]: 引力公式
+        - generic [ref=f1e104]:
+          - generic [ref=f1e105] [cursor=pointer]:
+            - generic [ref=f1e106]: 声望
+            - generic [ref=f1e107]: "2"
+          - generic [ref=f1e108]: +
+          - generic [ref=f1e109] [cursor=pointer]:
+            - generic [ref=f1e110]: 设施
+            - generic [ref=f1e111]: "47"
+          - generic [ref=f1e112]: +
+          - generic [ref=f1e113] [cursor=pointer]:
+            - generic [ref=f1e114]: 服务
+            - generic [ref=f1e115]: "9"
+          - generic [ref=f1e116]: +
+          - generic [ref=f1e117] [cursor=pointer]:
+            - generic [ref=f1e118]: 环境
+            - generic [ref=f1e119]: "7"
+          - generic [ref=f1e120]: =
+          - generic [ref=f1e121]:
+            - generic [ref=f1e122]: 总引力
+            - generic [ref=f1e123]: "65"
+        - generic [ref=f1e124]: 当日预报
+        - generic [ref=f1e125]:
+          - generic [ref=f1e126]:
+            - generic [ref=f1e127]: 天气 · 晴
+            - generic [ref=f1e133]: 引力 · 46
+          - generic [ref=f1e134]:
+            - generic [ref=f1e135]:
+              - text: 日初资金 ·
+              - strong [ref=f1e136]: 5金
+            - generic [ref=f1e137]:
+              - text: 当前资金 ·
+              - strong [ref=f1e138]: 5金
+            - generic [ref=f1e139]:
+              - text: 今日变化 ·
+              - strong [ref=f1e140]: +0铜
+          - generic [ref=f1e141]: 访客池：流浪旅人×2、游方术士×1、行商×1、未知×1
+          - generic [ref=f1e142]: 注意事项
+          - generic [ref=f1e144]: · 后院老井净水符文已激活，今日汤水质效提升。
+          - generic [ref=f1e145]: · 厨房柴火仅余 3 捆，傍晚前需补充。
+          - generic [ref=f1e146]: · 山莓进入成熟期，可前往林缘采集。
+      - generic [ref=f1e147]:
+        - button "切换昼夜" [ref=f1e278] [cursor=pointer]
+        - button "进入全屏" [ref=f1e279] [cursor=pointer]
+        - button "设置" [ref=f1e285] [cursor=pointer]
+    - generic [ref=f1e164]:
+      - generic [ref=f1e165]:
+        - generic [ref=f1e172]:
+          - strong [ref=f1e173]: 第1年 · 春季第3天
+          - generic [ref=f1e174]: 周三 · 晴
+        - generic [ref=f1e175]:
+          - generic [ref=f1e181]: 暮归旅店
+          - generic [ref=f1e182]: 声望 · 星辉
+        - generic [ref=f1e183]:
+          - generic [ref=f1e184]: 5金
+          - generic [ref=f1e190]: 声望
+      - generic:
+        - generic "对话记录" [ref=f1e286]:
+          - article [ref=f1e196]:
+            - generic [ref=f1e197]:
+              - generic [ref=f1e198]: 暮归旅店
+              - generic [ref=f1e199]: "#0"
+            - generic [ref=f1e200]:
+              - text: 晨雾尚未散尽，旅店的木招牌在风里轻轻晃了一下。你推开吱呀作响的门，灰尘在斜射的日光里浮动——这间祖传的旅店，如今只剩你一个人了。所幸灶台还稳，地窖里还剩半袋晨露麦粉。一位披着
+              - emphasis [ref=f1e201]: 褪色法袍
+              - text: 的旅人推门而入，斗篷上还沾着露水。他环顾四周，目光在空荡的大堂停留了片刻，轻声道：「听说这里的麦酒还算暖人……若不嫌弃，给我来一份热汤便好。」
+              - blockquote [ref=f1e202]: 后院那口老井泛起淡淡的薄荷蓝微光——井底的净水符文被春水唤醒了。
+              - text: 为褪袍旅人烹制一碗清露松茸汤先去后院查看老井的微光与旅人攀谈，询问他的来路暂不理会，先整理今日账目
+        - generic [ref=f1e203]:
+          - button "◇ 为褪袍旅人烹制一碗清露松茸汤" [ref=f1e287] [cursor=pointer]:
+            - generic [ref=f1e205]: ◇
+            - generic [ref=f1e206]: 为褪袍旅人烹制一碗清露松茸汤
+          - button "◈ 先去后院查看老井的微光" [ref=f1e288] [cursor=pointer]:
+            - generic [ref=f1e208]: ◈
+            - generic [ref=f1e209]: 先去后院查看老井的微光
+          - button "✦ 与旅人攀谈，询问他的来路" [ref=f1e289] [cursor=pointer]:
+            - generic [ref=f1e211]: ✦
+            - generic [ref=f1e212]: 与旅人攀谈，询问他的来路
+          - button "❖ 暂不理会，先整理今日账目" [ref=f1e290] [cursor=pointer]:
+            - generic [ref=f1e214]: ❖
+            - generic [ref=f1e215]: 暂不理会，先整理今日账目
+        - generic [ref=f1e216]:
+          - textbox "输入行动" [ref=f1e291]:
+            - /placeholder: 写下你的行动……（Enter 发送 · Shift+Enter 换行）
+          - button "发送" [ref=f1e292] [cursor=pointer]
+      - generic [ref=f1e223]:
+        - generic [ref=f1e229]:
+          - generic [ref=f1e230]: 精力
+          - generic [ref=f1e231]: 78/100
+        - generic [ref=f1e239]:
+          - generic [ref=f1e240]: 压力
+          - generic [ref=f1e241]: 34/100
+        - generic [ref=f1e244]:
+          - button [ref=f1e293] [cursor=pointer]
+          - button [ref=f1e294] [cursor=pointer]
+          - button [ref=f1e295] [cursor=pointer]
+          - button [ref=f1e296] [cursor=pointer]
+      - button "回到底部" [ref=f1e297] [cursor=pointer]

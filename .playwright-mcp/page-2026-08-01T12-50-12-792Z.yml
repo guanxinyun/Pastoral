@@ -1,0 +1,125 @@
+- main [ref=f2e2]:
+  - generic [ref=f2e4]:
+    - navigation "功能切换" [ref=f2e5]:
+      - button "总览 旅店总览" [ref=f2e255] [cursor=pointer]:
+        - generic [ref=f2e12]: 总览
+        - text: 旅店总览
+      - button "库存 库存与食谱" [ref=f2e13] [cursor=pointer]:
+        - generic [ref=f2e18]: 库存
+        - text: 库存与食谱
+      - button "建筑 建筑与蓝图" [ref=f2e19] [cursor=pointer]:
+        - generic [ref=f2e25]: 建筑
+        - text: 建筑与蓝图
+      - button "地图" [ref=f2e256] [cursor=pointer]
+      - button "员工 员工名册" [ref=f2e34] [cursor=pointer]:
+        - generic [ref=f2e39]: 员工
+        - text: 员工名册
+      - button "访客 宾客盈门" [ref=f2e40] [cursor=pointer]:
+        - generic [ref=f2e46]: 访客
+        - text: 宾客盈门
+      - button "任务 任务日志" [ref=f2e47] [cursor=pointer]:
+        - generic [ref=f2e53]: 任务
+        - text: 任务日志
+      - button "农牧 农牧总览" [ref=f2e54] [cursor=pointer]:
+        - generic [ref=f2e60]: 农牧
+        - text: 农牧总览
+    - generic [ref=f2e257]:
+      - generic [ref=f2e258]:
+        - text: 疆域图志
+        - generic [ref=f2e259]: 探索约耗 15 精力
+      - generic [ref=f2e260]: 点击已探明地块查看详情；点击迷雾边缘探索新地。
+      - generic [ref=f2e266]:
+        - generic [ref=f2e349] [cursor=pointer]: "?"
+        - generic [ref=f2e351] [cursor=pointer]: "?"
+        - generic [ref=f2e354] [cursor=pointer]: "?"
+        - generic [ref=f2e366] [cursor=pointer]: "?"
+        - generic "山岩 (0,-1)" [ref=f2e368] [cursor=pointer]:
+          - button "山岩 (0,-1)，右键或长按更换图标" [ref=f2e369]
+        - generic "洞穴 (1,-1)" [ref=f2e374] [cursor=pointer]:
+          - button "洞穴 (1,-1)，右键或长按更换图标" [ref=f2e375]
+        - generic [ref=f2e380] [cursor=pointer]: "?"
+        - generic "田地 (3,-1)" [ref=f2e382] [cursor=pointer]:
+          - button "田地 (3,-1)，右键或长按更换图标" [ref=f2e383]
+        - generic [ref=f2e388] [cursor=pointer]: "?"
+        - generic [ref=f2e398] [cursor=pointer]: "?"
+        - generic "溪流 (-1,0)" [ref=f2e400] [cursor=pointer]:
+          - button "溪流 (-1,0)，右键或长按更换图标" [ref=f2e401]
+        - generic "旅店 (0,0)" [ref=f2e406] [cursor=pointer]:
+          - button "旅店 (0,0)，右键或长按更换图标" [ref=f2e407]
+        - generic "森林 (1,0)" [ref=f2e413] [cursor=pointer]:
+          - button "森林 (1,0)，右键或长按更换图标" [active] [ref=f2e414]
+        - generic [ref=f2e418] [cursor=pointer]: "?"
+        - generic [ref=f2e420] [cursor=pointer]: "?"
+        - generic [ref=f2e430] [cursor=pointer]: "?"
+        - generic "森林 (-2,1)" [ref=f2e432] [cursor=pointer]:
+          - button "森林 (-2,1)，右键或长按更换图标" [ref=f2e433]
+        - generic [ref=f2e437] [cursor=pointer]: "?"
+        - generic "田地 (0,1)" [ref=f2e439] [cursor=pointer]:
+          - button "田地 (0,1)，右键或长按更换图标" [ref=f2e440]
+        - generic [ref=f2e445] [cursor=pointer]: "?"
+        - generic "森林 (2,1)" [ref=f2e447] [cursor=pointer]:
+          - button "森林 (2,1)，右键或长按更换图标" [ref=f2e448]
+        - generic [ref=f2e452] [cursor=pointer]: "?"
+        - generic [ref=f2e463] [cursor=pointer]: "?"
+        - generic [ref=f2e465] [cursor=pointer]: "?"
+        - generic "田地 (0,2)" [ref=f2e467] [cursor=pointer]:
+          - button "田地 (0,2)，右键或长按更换图标" [ref=f2e468]
+        - generic [ref=f2e473] [cursor=pointer]: "?"
+        - generic [ref=f2e475] [cursor=pointer]: "?"
+        - generic [ref=f2e489] [cursor=pointer]: "?"
+    - generic [ref=f2e138]:
+      - button "切换昼夜" [ref=f2e139] [cursor=pointer]
+      - button "进入全屏" [ref=f2e143] [cursor=pointer]
+      - button "设置" [ref=f2e150] [cursor=pointer]
+  - generic [ref=f2e155]:
+    - generic [ref=f2e156]:
+      - generic [ref=f2e163]:
+        - strong [ref=f2e164]: 第1年 · 春季第3天
+        - generic [ref=f2e165]: 周三 · 晴
+      - generic [ref=f2e166]:
+        - generic [ref=f2e172]: 暮归旅店
+        - generic [ref=f2e173]: 声望 · 星辉
+      - generic [ref=f2e174]:
+        - generic [ref=f2e175]: 5金
+        - generic [ref=f2e181]: 声望
+    - generic [ref=f2e185]:
+      - generic "对话记录" [ref=f2e186]:
+        - article [ref=f2e187]:
+          - generic [ref=f2e188]:
+            - generic [ref=f2e189]: 暮归旅店
+            - generic [ref=f2e190]: "#0"
+          - generic [ref=f2e191]:
+            - text: 晨雾尚未散尽，旅店的木招牌在风里轻轻晃了一下。你推开吱呀作响的门，灰尘在斜射的日光里浮动——这间祖传的旅店，如今只剩你一个人了。所幸灶台还稳，地窖里还剩半袋晨露麦粉。 一位披着
+            - emphasis [ref=f2e192]: 褪色法袍
+            - text: 的旅人推门而入，斗篷上还沾着露水。他环顾四周，目光在空荡的大堂停留了片刻，轻声道：「听说这里的麦酒还算暖人……若不嫌弃，给我来一份热汤便好。」
+            - blockquote [ref=f2e193]: 后院那口老井泛起淡淡的薄荷蓝微光——井底的净水符文被春水唤醒了。
+            - text: 为褪袍旅人烹制一碗清露松茸汤 先去后院查看老井的微光 与旅人攀谈，询问他的来路 暂不理会，先整理今日账目
+      - generic [ref=f2e194]:
+        - button "◇ 为褪袍旅人烹制一碗清露松茸汤" [ref=f2e195] [cursor=pointer]:
+          - generic [ref=f2e196]: ◇
+          - generic [ref=f2e197]: 为褪袍旅人烹制一碗清露松茸汤
+        - button "◈ 先去后院查看老井的微光" [ref=f2e198] [cursor=pointer]:
+          - generic [ref=f2e199]: ◈
+          - generic [ref=f2e200]: 先去后院查看老井的微光
+        - button "✦ 与旅人攀谈，询问他的来路" [ref=f2e201] [cursor=pointer]:
+          - generic [ref=f2e202]: ✦
+          - generic [ref=f2e203]: 与旅人攀谈，询问他的来路
+        - button "❖ 暂不理会，先整理今日账目" [ref=f2e204] [cursor=pointer]:
+          - generic [ref=f2e205]: ❖
+          - generic [ref=f2e206]: 暂不理会，先整理今日账目
+      - generic [ref=f2e207]:
+        - textbox "输入行动" [ref=f2e208]:
+          - /placeholder: 写下你的行动……（Enter 发送 · Shift+Enter 换行）
+        - button "发送" [ref=f2e209] [cursor=pointer]
+    - generic [ref=f2e214]:
+      - generic [ref=f2e220]:
+        - generic [ref=f2e221]: 精力
+        - generic [ref=f2e222]: 78/100
+      - generic [ref=f2e230]:
+        - generic [ref=f2e231]: 压力
+        - generic [ref=f2e232]: 34/100
+      - generic [ref=f2e235]:
+        - button [ref=f2e236] [cursor=pointer]
+        - button [ref=f2e241] [cursor=pointer]
+        - button [ref=f2e245] [cursor=pointer]
+        - button [ref=f2e251] [cursor=pointer]

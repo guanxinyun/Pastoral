@@ -1,0 +1,217 @@
+- generic [ref=e1]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - button "" [ref=e48] [cursor=pointer]
+      - text:                         S                + No items                         ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☑ ☰ ☑ ☰ ☑ ☰ ☑ ☰ ☑ ☰ ☑ ☰ ☐ ☰ ☐ ☰ ☐ ☰                                  + No items      ☰ ☰ ☰ ☰ ☰ ☰ ☰  ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰  ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰  ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰ ☰                   +     No items   X                                       
+    - generic [ref=e9]:
+      - button "" [ref=e49] [cursor=pointer]
+      - text:                                                                        
+    - generic [ref=e12]:
+      - button "" [ref=e50] [cursor=pointer]
+      - text:                                               
+    - generic [ref=e15]:
+      - button "" [ref=e51] [cursor=pointer]
+      - text:                +     
+    - generic [ref=e18]:
+      - button "" [ref=e52] [cursor=pointer]
+      - text:                                   
+    - generic [ref=e21]:
+      - generic "更改背景图片" [ref=e53]:
+        - button "" [ref=e54] [cursor=pointer]
+      - text:       +                            
+    - generic [ref=e24]:
+      - button "" [ref=e55] [cursor=pointer]
+      - text:         +                                                                       +                                                                                                                                     +   + +  +     +        +        +        +                                                           没有找到脚本                              
+    - generic [ref=e56]:
+      - button "" [ref=e58] [cursor=pointer]
+      - text:             +                          +      
+    - generic [ref=e27]:
+      - button "" [ref=e59] [cursor=pointer]
+      - text:                    
+    - generic [ref=e30]:
+      - button "" [ref=e60] [cursor=pointer]
+      - text:                                                     群聊暂无成员。          无可用角色                           
+  - generic:                      +                                                                                +    + +                  
+  - generic:                  
+  - generic [ref=e33]:
+    - text: 
+    - generic [ref=e61]:
+      - generic [ref=e62]: "#0"
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e69]:
+            - generic [ref=e70]: 我们的家族又没落了？
+            - text: 
+            - generic [ref=e71]: 2026年8月2日 00:38
+          - generic [ref=e72]:
+            - button "" [ref=e73] [cursor=pointer]
+            - text:              
+            - button "" [ref=e74] [cursor=pointer]
+          - text:       
+        - text:       
+        - generic [ref=e75]:
+          - generic:
+            - text: 
+            - iframe [active] [ref=e76]:
+              - generic [active] [ref=f5e1]:
+                - text: ✦ 来自白帆城以外 槐 ✦
+                - main [ref=f5e2]:
+                  - generic [ref=f5e4]:
+                    - navigation "功能切换" [ref=f5e5]:
+                      - button "总览" [ref=f5e6] [cursor=pointer]
+                      - button "库存 库存与食谱" [ref=f5e13] [cursor=pointer]:
+                        - generic [ref=f5e18]: 库存
+                        - text: 库存与食谱
+                      - button "建筑 建筑与蓝图" [ref=f5e19] [cursor=pointer]:
+                        - generic [ref=f5e25]: 建筑
+                        - text: 建筑与蓝图
+                      - button "地图 地图与探索" [ref=f5e26] [cursor=pointer]:
+                        - generic [ref=f5e33]: 地图
+                        - text: 地图与探索
+                      - button "员工 员工名册" [ref=f5e34] [cursor=pointer]:
+                        - generic [ref=f5e39]: 员工
+                        - text: 员工名册
+                      - button "访客 宾客盈门" [ref=f5e40] [cursor=pointer]:
+                        - generic [ref=f5e46]: 访客
+                        - text: 宾客盈门
+                      - button "任务 任务日志" [ref=f5e47] [cursor=pointer]:
+                        - generic [ref=f5e53]: 任务
+                        - text: 任务日志
+                      - button "农牧 农牧总览" [ref=f5e54] [cursor=pointer]:
+                        - generic [ref=f5e60]: 农牧
+                        - text: 农牧总览
+                    - generic [ref=f5e62]:
+                      - generic [ref=f5e63]:
+                        - text: 六维引力
+                        - generic [ref=f5e64]: 总引力 113
+                      - img "六维引力雷达" [ref=f5e66]:
+                        - generic [ref=f5e71]: 美食
+                        - generic [ref=f5e73]: 知识
+                        - generic [ref=f5e75]: 舒适
+                        - generic [ref=f5e76]: 冒险
+                        - generic [ref=f5e78]: 文化
+                        - generic [ref=f5e80]: 自然
+                        - generic [ref=f5e83]: "20"
+                        - generic [ref=f5e85]: "8"
+                        - generic [ref=f5e87]: "16"
+                        - generic [ref=f5e89]: "7"
+                        - generic [ref=f5e91]: "18"
+                        - generic [ref=f5e93]: "13"
+                      - generic [ref=f5e94]: 引力公式
+                      - generic [ref=f5e95]:
+                        - generic [ref=f5e96] [cursor=pointer]:
+                          - generic [ref=f5e97]: 声望
+                          - generic [ref=f5e98]: "16"
+                        - generic [ref=f5e99]: +
+                        - generic [ref=f5e100] [cursor=pointer]:
+                          - generic [ref=f5e101]: 设施
+                          - generic [ref=f5e102]: "82"
+                        - generic [ref=f5e103]: +
+                        - generic [ref=f5e104] [cursor=pointer]:
+                          - generic [ref=f5e105]: 服务
+                          - generic [ref=f5e106]: "8"
+                        - generic [ref=f5e107]: +
+                        - generic [ref=f5e108] [cursor=pointer]:
+                          - generic [ref=f5e109]: 环境
+                          - generic [ref=f5e110]: "7"
+                        - generic [ref=f5e111]: =
+                        - generic [ref=f5e112]:
+                          - generic [ref=f5e113]: 总引力
+                          - generic [ref=f5e114]: "113"
+                      - generic [ref=f5e115]: 当日预报
+                      - generic [ref=f5e116]:
+                        - generic [ref=f5e117]:
+                          - generic [ref=f5e118]: 天气 · 多云
+                          - generic [ref=f5e122]: 引力 · 68
+                        - generic [ref=f5e123]:
+                          - generic [ref=f5e124]:
+                            - text: 日初资金 ·
+                            - strong [ref=f5e125]: 182金
+                          - generic [ref=f5e126]:
+                            - text: 当前资金 ·
+                            - strong [ref=f5e127]: 185金
+                          - generic [ref=f5e128]:
+                            - text: 今日变化 ·
+                            - strong [ref=f5e129]: +3金
+                        - generic [ref=f5e130]: 访客池：旅行商人1~2 冒险者2~3 文人雅客1 精灵旅者0~1 矮人工匠1 流浪艺人0~1
+                        - generic [ref=f5e131]: 注意事项
+                        - generic [ref=f5e133]: · 农田(0,1)(1,1)秋蓝莓已成熟待收获，过熟天数2天，尽快收获
+                        - generic [ref=f5e134]: · 魔法农田(2,0)星辉蘑菇今日未灌溉未养护，魔力稳定度72注意
+                        - generic [ref=f5e135]: · 堆肥箱明日可取出
+                        - generic [ref=f5e136]: · 牛棚饲料仅剩2天，需尽快补充
+                        - generic [ref=f5e137]: · 委托·寻找失踪药草商还剩2天到期
+                        - generic [ref=f5e138]: · 委托·秋收祭典供餐还剩7天，需准备10道菜
+                        - generic [ref=f5e139]: · 农田(4,0)秋葡萄今日未浇水
+                        - generic [ref=f5e140]: · 今日为集镇集市日（周四），可前往采购
+                    - generic [ref=f5e141]:
+                      - button "切换昼夜" [ref=f5e142] [cursor=pointer]
+                      - button "退出全屏" [pressed] [ref=f5e146] [cursor=pointer]
+                      - button "设置" [ref=f5e153] [cursor=pointer]
+                  - generic [ref=f5e158]:
+                    - generic [ref=f5e159]:
+                      - generic [ref=f5e164]:
+                        - strong [ref=f5e165]: 第2年 · 秋季第18天
+                        - generic [ref=f5e166]: 周四 · 多云
+                      - generic [ref=f5e167]:
+                        - generic [ref=f5e173]: 暮归旅店
+                        - generic [ref=f5e174]: 声望 · 日耀
+                      - generic [ref=f5e175]:
+                        - generic [ref=f5e176]: 185金
+                        - generic [ref=f5e182]: 声望
+                    - generic [ref=f5e186]:
+                      - generic "对话记录" [ref=f5e187]:
+                        - article [ref=f5e188]:
+                          - generic [ref=f5e189]:
+                            - generic [ref=f5e190]: 我们的家族又没落了？
+                            - generic [ref=f5e191]: "#0"
+                          - generic [ref=f5e192]: "``` ```"
+                      - generic [ref=f5e199]:
+                        - textbox "输入行动" [ref=f5e200]:
+                          - /placeholder: 写下你的行动……（Enter 发送 · Shift+Enter 换行）
+                        - button "发送" [ref=f5e201] [cursor=pointer]
+                    - generic [ref=f5e206]:
+                      - generic [ref=f5e212]:
+                        - generic [ref=f5e213]: 精力
+                        - generic [ref=f5e214]: 85/100
+                      - generic [ref=f5e222]:
+                        - generic [ref=f5e223]: 压力
+                        - generic [ref=f5e224]: 35/100
+                      - generic [ref=f5e227]:
+                        - button [ref=f5e228] [cursor=pointer]
+                        - button [ref=f5e233] [cursor=pointer]
+                        - button [ref=f5e237] [cursor=pointer]
+                        - button [ref=f5e243] [cursor=pointer]
+      - generic:
+        - button "" [ref=e77] [cursor=pointer]
+        - generic [ref=e78]: 1/1
+    - generic [ref=e36]:
+      - generic [ref=e79]:
+        - button "重新处理变量" [ref=e80] [cursor=pointer]
+        - button "重新读取初始变量" [ref=e81] [cursor=pointer]
+        - button "快照楼层" [ref=e82] [cursor=pointer]
+        - button "重演楼层" [ref=e83] [cursor=pointer]
+        - button "重试额外模型解析" [ref=e84] [cursor=pointer]
+        - button "清除旧楼层变量" [ref=e85] [cursor=pointer]
+      - text:  
+      - generic [ref=e37]:
+        - generic [ref=e38]:
+          - generic [ref=e39] [cursor=pointer]: 
+          - generic "扩展程序" [ref=e86] [cursor=pointer]: 
+        - textbox "输入想发送的消息，或输入 /? 获取帮助" [ref=e87]
+        - generic [ref=e41]:
+          - text:      
+          - generic "发送消息" [ref=e88] [cursor=pointer]: 
+  - text:                      1      
+  - generic [ref=e89]: 
+  - status [ref=e90]
+  - status [ref=e91]
+  - status [ref=e92]
+  - status [ref=e93]
+  - status [ref=e94]
+  - status [ref=e95]
+  - status [ref=e96]
+  - status [ref=e97]
+  - status [ref=e98]
+  - status [ref=e99]
+  - status [ref=e100]
+  - status [ref=e101]

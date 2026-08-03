@@ -49,9 +49,13 @@
   --color-danger:      var(--ochre-red);
   --color-magic:       var(--mint);
 
+  /* 底纹图片层（昼/夜自动切换） */
+  --texture-base-image: url("img/羊皮纸底纹-昼.jpg");
+  --texture-page-image: url("img/书页纸张纹理.jpg");
+
   /* 标题山谷 / 序章信纸 */
   /* 可选图床原图直链：改为 url("https://...")；none 时使用下方纯 CSS 山谷 */
-  --title-scene-image: none;
+  --title-scene-image: url("img/标题山谷背景.jpg");
   --color-title-sky: hsl(211 42% 18%);
   --color-title-horizon: hsl(35 58% 54%);
   --color-title-forest: hsl(154 35% 12%);
@@ -117,23 +121,25 @@
   --t-slow: 360ms;
   --t-slower: 520ms;
 
-  /* ---------- 阴影 · 翘边纸张 ---------- */
-  --shadow-paper: 0 1px 1px hsl(28 30% 20% / 0.06),
-                  0 2px 4px hsl(28 30% 20% / 0.08),
-                  0 6px 14px hsl(28 30% 20% / 0.07);
+  /* ---------- 阴影 · 翘边纸张（增强深度） ---------- */
+  --shadow-paper: 0 1px 2px hsl(28 30% 20% / 0.08),
+                  0 3px 6px hsl(28 30% 20% / 0.1),
+                  0 8px 18px hsl(28 30% 20% / 0.09);
   --shadow-raised: 0 1px 2px hsl(28 30% 20% / 0.08),
-                   0 6px 12px hsl(28 30% 20% / 0.1),
-                   0 14px 30px hsl(28 30% 20% / 0.1);
-  --shadow-float:  0 4px 10px hsl(28 30% 20% / 0.12),
-                   0 18px 40px hsl(28 30% 20% / 0.18),
-                   0 30px 70px hsl(28 30% 20% / 0.16);
+                   0 6px 12px hsl(28 30% 20% / 0.12),
+                   0 16px 34px hsl(28 30% 20% / 0.12);
+  --shadow-float:  0 4px 10px hsl(28 30% 20% / 0.14),
+                   0 20px 44px hsl(28 30% 20% / 0.2),
+                   0 34px 76px hsl(28 30% 20% / 0.18);
   --shadow-inset: inset 0 1px 3px hsl(28 30% 20% / 0.12);
   --shadow-glow-amber: 0 0 0 1px hsl(40 80% 55% / 0.25),
                        0 0 16px 2px hsl(40 80% 55% / 0.22);
   --shadow-glow-mint:  0 0 0 1px hsl(180 50% 60% / 0.3),
                        0 0 16px 2px hsl(180 50% 60% / 0.22);
   --shadow-letter: 0 16px 38px hsl(28 35% 18% / 0.2), 0 3px 8px hsl(28 35% 18% / 0.12);
-  --shadow-book: 0 30px 80px hsl(28 36% 12% / 0.2), 0 8px 24px hsl(28 36% 12% / 0.12);
+  --shadow-book: 0 30px 80px hsl(28 36% 12% / 0.25),
+                0 8px 24px hsl(28 36% 12% / 0.15),
+                0 2px 6px hsl(28 36% 12% / 0.1);
 
   /* ---------- 纹理（内联 SVG，无外部依赖） ---------- */
   /* 亚麻纤维细纹 */
@@ -165,6 +171,8 @@
   --ink-brown:        hsl(40 40% 88%);    /* 夜间正文转暖白 */
   --ink-brown-soft:   hsl(40 24% 74%);
   --ink-green:        hsl(151 30% 55%);
+
+  --texture-base-image: url("img/深色皮革底纹-夜.jpg");
 
   --color-bg:          var(--parchment);
   --color-bg-deep:     var(--parchment-deep);
@@ -199,21 +207,24 @@
     repeating-linear-gradient(27deg,
       hsl(220 40% 80% / 0.02) 0 1px, transparent 1px 4px);
   --vignette:
-    radial-gradient(120% 90% at 50% 0%, transparent 50%, hsl(229 50% 4% / 0.5) 100%),
-    radial-gradient(80% 60% at 50% 110%, transparent 55%, hsl(229 50% 4% / 0.45) 100%);
+    radial-gradient(120% 90% at 50% 0%, transparent 45%, hsl(229 50% 4% / 0.55) 100%),
+    radial-gradient(80% 60% at 50% 110%, transparent 50%, hsl(229 50% 4% / 0.5) 100%);
 
-  --shadow-paper: 0 1px 2px hsl(229 60% 3% / 0.4),
-                  0 4px 10px hsl(229 60% 3% / 0.4);
-  --shadow-raised: 0 2px 6px hsl(229 60% 3% / 0.5),
-                   0 14px 32px hsl(229 60% 3% / 0.5);
-  --shadow-float:  0 8px 24px hsl(229 60% 3% / 0.6),
-                   0 28px 64px hsl(229 60% 3% / 0.6);
+  --shadow-paper: 0 1px 2px hsl(229 60% 3% / 0.45),
+                  0 4px 10px hsl(229 60% 3% / 0.45),
+                  0 1px 0 hsl(229 30% 28% / 0.3) inset;
+  --shadow-raised: 0 2px 6px hsl(229 60% 3% / 0.55),
+                   0 16px 36px hsl(229 60% 3% / 0.55);
+  --shadow-float:  0 8px 24px hsl(229 60% 3% / 0.65),
+                   0 30px 70px hsl(229 60% 3% / 0.65);
   --shadow-glow-amber: 0 0 0 1px hsl(40 80% 55% / 0.35),
                        0 0 22px 3px hsl(40 80% 55% / 0.28);
   --shadow-glow-mint:  0 0 0 1px hsl(180 50% 60% / 0.4),
                        0 0 22px 3px hsl(180 50% 60% / 0.3);
   --shadow-letter: 0 18px 44px hsl(229 60% 3% / 0.48), 0 3px 10px hsl(229 60% 3% / 0.4);
-  --shadow-book: 0 34px 90px hsl(229 60% 3% / 0.62), 0 9px 28px hsl(229 60% 3% / 0.5);
+  --shadow-book: 0 34px 90px hsl(229 60% 3% / 0.65),
+                0 9px 28px hsl(229 60% 3% / 0.55),
+                0 2px 6px hsl(229 60% 3% / 0.4);
 }
 
 /* 减少动效偏好 */
@@ -238,11 +249,16 @@ body {
   line-height: 1.6;
   color: var(--color-text);
   background-color: var(--color-bg);
-  /* 多层纹理叠加：颗粒 + 亚麻纤维 + 暖光晕 */
+  /* 多层纹理叠加：颗粒 + 亚麻纤维 + 暖光晕 + 底纹图片 */
   background-image:
     var(--texture-noise),
     var(--texture-linen),
-    var(--vignette);
+    var(--vignette),
+    var(--texture-base-image);
+  background-size: 180px, auto, auto, cover;
+  background-repeat: repeat, repeat, no-repeat, no-repeat;
+  background-position: center, center, center, center;
+  background-attachment: scroll, scroll, scroll, fixed;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   transition: background-color var(--t-slow) var(--ease-ink),
@@ -457,13 +473,13 @@ body.in-tavern.is-game .prologue { display: none !important; }
   background-size: cover, auto, auto;
   background-repeat: no-repeat;
 }
-.title-screen__mountains--far { inset: 32% 0 0; clip-path: polygon(0 54%,8% 35%,17% 52%,27% 22%,38% 51%,51% 17%,62% 48%,74% 28%,87% 54%,100% 35%,100% 100%,0 100%); background: hsl(211 38% 19% / .78); }
-.title-screen__mountains--near { inset: 45% 0 0; clip-path: polygon(0 43%,12% 25%,23% 48%,36% 16%,48% 46%,64% 23%,77% 49%,90% 20%,100% 44%,100% 100%,0 100%); background: hsl(166 25% 13% / .9); }
-.title-screen__lake { inset: 60% 0 0; background: linear-gradient(180deg, hsl(205 36% 27% / .8), hsl(165 31% 10% / .92)), repeating-linear-gradient(177deg, transparent 0 11px, hsl(41 74% 69% / .12) 12px 13px); clip-path: polygon(5% 15%,100% 0,100% 100%,0 100%); }
+.title-screen__mountains--far { inset: 32% 0 0; clip-path: polygon(0 54%,8% 35%,17% 52%,27% 22%,38% 51%,51% 17%,62% 48%,74% 28%,87% 54%,100% 35%,100% 100%,0 100%); background: hsl(211 38% 19% / .78); opacity: 0.3; }
+.title-screen__mountains--near { inset: 45% 0 0; clip-path: polygon(0 43%,12% 25%,23% 48%,36% 16%,48% 46%,64% 23%,77% 49%,90% 20%,100% 44%,100% 100%,0 100%); background: hsl(166 25% 13% / .9); opacity: 0.35; }
+.title-screen__lake { inset: 60% 0 0; background: linear-gradient(180deg, hsl(205 36% 27% / .8), hsl(165 31% 10% / .92)), repeating-linear-gradient(177deg, transparent 0 11px, hsl(41 74% 69% / .12) 12px 13px); clip-path: polygon(5% 15%,100% 0,100% 100%,0 100%); opacity: 0.25; }
 .title-screen__mist { inset: 53% 0 auto; height: 28%; background: radial-gradient(ellipse at center, hsl(42 44% 87% / .19), transparent 67%); filter: blur(12px); }
 .title-screen__mist--two { top: 62%; transform: translateX(-12%); opacity: .62; }
-.title-screen__tree { inset: 0 auto 0 0; width: 58%; background: radial-gradient(ellipse at 21% 45%, hsl(154 42% 5% / .98) 0 18%, transparent 45%), linear-gradient(74deg, transparent 0 25%, hsl(151 33% 5%) 26% 31%, transparent 32%); }
-.title-screen__inn { right: 13%; bottom: 12%; width: min(340px, 38vw); height: min(210px, 25vw); background: hsl(28 42% 11%); clip-path: polygon(4% 35%,48% 3%,96% 35%,90% 35%,90% 100%,10% 100%,10% 35%); filter: drop-shadow(0 18px 24px hsl(0 0% 0% / .45)); }
+.title-screen__tree { inset: 0 auto 0 0; width: 58%; background: radial-gradient(ellipse at 21% 45%, hsl(154 42% 5% / .98) 0 18%, transparent 45%), linear-gradient(74deg, transparent 0 25%, hsl(151 33% 5%) 26% 31%, transparent 32%); opacity: 0.3; }
+.title-screen__inn { right: 13%; bottom: 12%; width: min(340px, 38vw); height: min(210px, 25vw); background: hsl(28 42% 11%); clip-path: polygon(4% 35%,48% 3%,96% 35%,90% 35%,90% 100%,10% 100%,10% 35%); filter: drop-shadow(0 18px 24px hsl(0 0% 0% / .45)); opacity: 0; pointer-events: none; }
 .title-screen__inn::before { content: ""; position: absolute; inset: 30% 10% 0; background: repeating-linear-gradient(90deg, transparent 0 19%, hsl(33 32% 18%) 20% 23%); }
 .title-screen__inn i { position: absolute; z-index: 2; width: 9%; aspect-ratio: .75; bottom: 28%; background: hsl(42 90% 68%); box-shadow: 0 0 22px hsl(42 90% 64% / .7); }
 .title-screen__inn i:nth-child(1) { left: 27%; } .title-screen__inn i:nth-child(2) { left: 47%; } .title-screen__inn i:nth-child(3) { right: 27%; }
@@ -551,7 +567,14 @@ body.in-tavern.is-game .prologue { display: none !important; }
   gap: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
-  background: var(--texture-linen), linear-gradient(165deg, var(--color-surface-raised), var(--color-surface));
+  background-color: var(--color-surface);
+  background-image:
+    var(--texture-linen),
+    var(--texture-page-image),
+    linear-gradient(165deg, var(--color-surface-raised), var(--color-surface));
+  background-size: auto, cover, auto;
+  background-repeat: repeat, no-repeat, no-repeat;
+  background-position: center, center, center;
   box-shadow: var(--shadow-book);
 }
 
@@ -698,12 +721,12 @@ body.is-immersive .page {
     margin: 8px -7px;
     background:
       linear-gradient(90deg,
-        hsl(28 30% 20% / 0.18) 0%,
-        hsl(28 30% 20% / 0.05) 40%,
-        hsl(28 30% 20% / 0.05) 60%,
-        hsl(28 30% 20% / 0.18) 100%);
+        hsl(28 30% 20% / 0.24) 0%,
+        hsl(28 30% 20% / 0.06) 35%,
+        hsl(28 30% 20% / 0.06) 65%,
+        hsl(28 30% 20% / 0.24) 100%);
     border-radius: 2px;
-    box-shadow: inset 1px 0 2px hsl(0 0% 0% / 0.1), inset -1px 0 2px hsl(0 0% 0% / 0.1);
+    box-shadow: inset 2px 0 4px hsl(0 0% 0% / 0.15), inset -2px 0 4px hsl(0 0% 0% / 0.15);
     position: relative;
   }
   .book__spine::before,
@@ -719,6 +742,15 @@ body.is-immersive .page {
   }
   .book__spine::before { top: 20px; }
   .book__spine::after { bottom: 20px; }
+  [data-theme="night"] .book__spine {
+    background:
+      linear-gradient(90deg,
+        hsl(229 40% 8% / 0.4) 0%,
+        hsl(229 40% 8% / 0.1) 35%,
+        hsl(229 40% 8% / 0.1) 65%,
+        hsl(229 40% 8% / 0.4) 100%);
+    box-shadow: inset 2px 0 5px hsl(229 60% 3% / 0.3), inset -2px 0 5px hsl(229 60% 3% / 0.3);
+  }
 }
 
 /* 页：羊皮纸卡片 —— 窄屏整行堆叠，宽屏严格等分（见下方 900px 断点） */
@@ -728,10 +760,15 @@ body.is-immersive .page {
   display: flex;
   flex-direction: column;
   padding: 16px;
-  background:
+  background-color: var(--color-surface);
+  background-image:
     radial-gradient(circle at 12% 4%, hsl(42 82% 72% / .08), transparent 26%),
     var(--texture-linen),
+    var(--texture-page-image),
     linear-gradient(165deg, var(--color-surface-raised), var(--color-surface));
+  background-size: auto, auto, cover, auto;
+  background-repeat: no-repeat, repeat, no-repeat, no-repeat;
+  background-position: center, center, center, center;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-paper);
@@ -752,6 +789,21 @@ body.is-immersive .page {
   border-top-left-radius: var(--radius-lg);
   background: linear-gradient(135deg, hsl(28 30% 20% / 0.07), transparent 55%);
   pointer-events: none;
+}
+
+/* 夜间模式：纸张纹理暗化覆盖层，让暖色纸张在烛光下呈现古旧感 */
+[data-theme="night"] .page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  background: hsl(229 38% 12% / 0.65);
+  pointer-events: none;
+  z-index: 0;
+}
+[data-theme="night"] .page > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* ============ 左页：标签 + 面板 ============ */
@@ -855,7 +907,7 @@ body.is-immersive .panels::-webkit-scrollbar-thumb:hover { background: var(--col
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: linear-gradient(145deg, var(--surface-glass), transparent), var(--texture-linen);
-  box-shadow: var(--shadow-paper);
+  box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(42 80% 92% / 0.2);
   flex-wrap: wrap;
 }
 .hud__left { display: flex; align-items: center; gap: 8px; }
@@ -1261,7 +1313,7 @@ body.is-game .scroll-bottom-btn.is-visible {
   background: linear-gradient(165deg, var(--color-surface-raised), var(--color-surface));
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-paper);
+  box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(42 80% 92% / 0.25);
   transition: transform var(--t-base) var(--ease-soft), box-shadow var(--t-base), border-color var(--t-base);
 }
 .card + .card { margin-top: 10px; }
@@ -1357,7 +1409,7 @@ body.is-game .scroll-bottom-btn.is-visible {
 .g-total__val { font-family: var(--font-mono); font-weight: 700; color: var(--color-primary); font-size: var(--font-size-xl); text-shadow: 0 0 10px var(--amber-glow); }
 
 /* ---------- 建筑 ---------- */
-.building { position: relative; padding: 12px; overflow: hidden; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); box-shadow: var(--shadow-paper); transition: all var(--t-base) var(--ease-soft); }
+.building { position: relative; padding: 12px; overflow: hidden; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(42 80% 92% / 0.25); transition: all var(--t-base) var(--ease-soft); }
 .building::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: linear-gradient(var(--color-primary), transparent); opacity: .72; }
 .building + .building { margin-top: 8px; }
 .building:hover { border-color: var(--color-primary); box-shadow: var(--shadow-paper); }
@@ -1452,7 +1504,7 @@ body.is-game .scroll-bottom-btn.is-visible {
 .livestock-card + .livestock-card { margin-top: 6px; }
 
 /* ---------- 员工 ---------- */
-.staff-card { position: relative; padding: 12px; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); box-shadow: var(--shadow-paper); transition: transform var(--t-base), border-color var(--t-base), box-shadow var(--t-base); }
+.staff-card { position: relative; padding: 12px; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(42 80% 92% / 0.25); transition: transform var(--t-base), border-color var(--t-base), box-shadow var(--t-base); }
 .staff-card + .staff-card { margin-top: 8px; }
 .staff-card:hover, .staff-card:focus-within { transform: translateY(-2px); border-color: var(--color-primary); box-shadow: var(--shadow-raised); }
 .staff-card.low-morale { filter: saturate(0.6); }
@@ -1490,7 +1542,7 @@ body.is-game .scroll-bottom-btn.is-visible {
 .gem-tag--dark { background: hsl(280 45% 50% / 0.18); color: hsl(280 45% 65%); border: 1px solid hsl(280 45% 50%); }
 
 /* ---------- 访客 ---------- */
-.visitor-card { position: relative; padding: 12px; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); box-shadow: var(--shadow-paper); transition: all var(--t-base) var(--ease-soft); overflow: hidden; }
+.visitor-card { position: relative; padding: 12px; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(42 80% 92% / 0.25); transition: all var(--t-base) var(--ease-soft); overflow: hidden; }
 .visitor-card + .visitor-card { margin-top: 8px; }
 .visitor-card:hover { border-color: var(--color-primary); transform: translateY(-2px); box-shadow: var(--shadow-paper); }
 .visitor-card.special { border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--amber-glow), var(--shadow-paper); }
@@ -1505,7 +1557,7 @@ body.is-game .scroll-bottom-btn.is-visible {
 .resist-tag { border-style: dashed; }
 
 /* ---------- 任务 ---------- */
-.quest-card { padding: 12px; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary); box-shadow: var(--shadow-paper); transition: transform var(--t-base), border-color var(--t-base), box-shadow var(--t-base); }
+.quest-card { padding: 12px; border-radius: var(--radius-md); background: linear-gradient(155deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary); box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(42 80% 92% / 0.25); transition: transform var(--t-base), border-color var(--t-base), box-shadow var(--t-base); }
 .quest-card:hover, .quest-card:focus-within { transform: translateY(-2px); border-color: var(--color-primary); box-shadow: var(--shadow-raised); }
 .quest-card + .quest-card { margin-top: 8px; }
 .quest-card__head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
@@ -1715,6 +1767,15 @@ body.is-game .scroll-bottom-btn.is-visible {
 .daily-modal__head h2 { flex: 1; font-size: var(--font-size-xl); }
 .daily-modal__body { max-width: 72ch; padding: var(--space-6) 0; white-space: pre-wrap; line-height: 1.85; font-family: var(--font-kai); color: var(--color-text-soft); }
 .daily-modal__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+
+/* ---------- 夜间模式卡片内光调整 ---------- */
+[data-theme="night"] .card,
+[data-theme="night"] .staff-card,
+[data-theme="night"] .visitor-card,
+[data-theme="night"] .quest-card,
+[data-theme="night"] .building {
+  box-shadow: var(--shadow-paper), inset 0 1px 0 hsl(229 30% 28% / 0.35);
+}
 
 
 
