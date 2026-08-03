@@ -19,6 +19,7 @@
   let composerFocused = false;
   let keyboardWasOpen = false;
   let mobileBaselineHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
+  let updateScrollBottom = () => {};
 
   function isMobileViewport() { return window.innerWidth < 900; }
 
@@ -65,6 +66,7 @@
     requestAnimationFrame(() => {
       const target = pages[mobilePage];
       if (target) target.scrollTop = mobileScrollPositions[mobilePage];
+      updateScrollBottom();
     });
     queueMobileViewportSync();
   }
@@ -592,6 +594,28 @@
     lastRaw = raw;
   }
 
+  /* ---------- 剧情页：一键到底 ---------- */
+  function setupScrollBottom() {
+    const btn = document.getElementById('scrollBottomBtn');
+    const stream = document.getElementById('stream');
+    const page = document.getElementById('pageRight');
+    if (!btn || !stream || !page) return;
+    const nearBottom = (el) => !el || el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    const sync = () => { btn.classList.toggle('is-visible', !(nearBottom(stream) && nearBottom(page))); };
+    const toBottom = () => {
+      [stream, page].forEach((el) => {
+        if (el && el.scrollHeight - el.clientHeight > 1) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+      });
+      btn.classList.remove('is-visible');
+    };
+    stream.addEventListener('scroll', sync, { passive: true });
+    page.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('pastoral:chat', () => requestAnimationFrame(sync));
+    btn.addEventListener('click', toBottom);
+    updateScrollBottom = sync;
+    requestAnimationFrame(sync);
+  }
+
   /* ---------- 初始化 ---------- */
   async function init() {
     Icon.render(document);
@@ -651,6 +675,7 @@
       composerInput.addEventListener('blur', () => { composerFocused = false; setTimeout(queueMobileViewportSync, 80); });
     }
     queueMobileViewportSync();
+    setupScrollBottom();
     const setBtn = $('#settingsBtn'); if (setBtn) setBtn.addEventListener('click', () => openSettings());
     window.addEventListener('pastoral:open-settings', (event) => openSettings(event.detail || { page: 'api' }));
 
@@ -667,6 +692,7 @@
       const entering = Host.immersive && !wasImmersive;
       syncFullscreenBtn();
       syncMobileImmersiveState(entering);
+      requestAnimationFrame(updateScrollBottom);
     });
 
     // 1s 状态轮询（对话流由 Chat 以 400ms 独立轮询）

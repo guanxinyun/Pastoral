@@ -555,6 +555,39 @@ body.is-immersive .journal__stream {
 }
 .journal__stream::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
 
+/* 一键到底浮动按钮（仅沉浸式剧情页，上滑离开底部时浮出） */
+.scroll-bottom-btn {
+  position: fixed;
+  right: 14px;
+  bottom: 84px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface));
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-paper);
+  color: var(--color-text-soft);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity var(--t-base) var(--ease-soft), transform var(--t-base) var(--ease-soft), color var(--t-base) var(--ease-soft), border-color var(--t-base) var(--ease-soft), box-shadow var(--t-base) var(--ease-soft);
+  z-index: 20;
+}
+.scroll-bottom-btn .ic { --ic: 22px; width: 22px; height: 22px; }
+body.is-immersive .scroll-bottom-btn.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.scroll-bottom-btn:hover { color: var(--color-primary); border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber), var(--shadow-paper); }
+.scroll-bottom-btn:active { transform: translateY(1px); }
+.scroll-bottom-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+
 /* 气泡 */
 .bub {
   position: relative;

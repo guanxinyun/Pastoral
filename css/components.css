@@ -146,7 +146,24 @@
 .cond-list .no { color: var(--color-danger); }
 
 /* ---------- 地图 ---------- */
-.map-grid { display: grid; gap: 3px; padding: 8px; border-radius: var(--radius-sm); background: var(--color-bg-deep); border: 1px solid var(--color-border); box-shadow: var(--shadow-inset); }
+.map-viewport {
+  position: relative;
+  overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+  height: clamp(280px, 50dvh, 460px);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-deep);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-inset);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+  cursor: grab;
+}
+.map-viewport::-webkit-scrollbar { height: 8px; width: 8px; }
+.map-viewport::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: var(--radius-full); }
+.map-grid { display: grid; gap: 3px; padding: 8px; width: max-content; margin: 0 auto; }
 .map-cell { position: relative; aspect-ratio: 1; border-radius: 3px; display: grid; place-items: center; font-size: 9px; transition: all var(--t-base) var(--ease-soft); }
 .map-cell .ic { --ic: 70%; width: 70%; height: 70%; }
 .map-cell.explored { background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-soft); cursor: pointer; }

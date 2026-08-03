@@ -14,6 +14,75 @@
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const expandedStaff = new Set();
 
+  /* ---------- 地图：缩放/平移持久状态（跨重渲染保留） ---------- */
+  let mapCellSize = 44;
+  const MAP_CELL_MIN = 26, MAP_CELL_MAX = 96;
+  const mapScroll = { left: 0, top: 0, inited: false };
+  function attachMapGestures(viewport) {
+    if (viewport.dataset.gestures) return;
+    viewport.dataset.gestures = '1';
+    const setSize = (v) => { mapCellSize = Math.max(MAP_CELL_MIN, Math.min(MAP_CELL_MAX, Math.round(v))); viewport.style.setProperty('--map-cell-size', mapCellSize + 'px'); };
+    const save = () => { mapScroll.left = viewport.scrollLeft; mapScroll.top = viewport.scrollTop; };
+    // 滚轮缩放（无需 Ctrl；以光标为锚点）
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const r = viewport.getBoundingClientRect();
+      const cx = e.clientX - r.left, cy = e.clientY - r.top;
+      const cellX = (cx + viewport.scrollLeft) / mapCellSize;
+      const cellY = (cy + viewport.scrollTop) / mapCellSize;
+      setSize(mapCellSize + (e.deltaY > 0 ? -3 : 3));
+      viewport.scrollLeft = cellX * mapCellSize - cx;
+      viewport.scrollTop = cellY * mapCellSize - cy;
+      save();
+    }, { passive: false });
+    // 鼠标拖拽平移（按住左键拖动；拖拽后抑制地图格点击）
+    let dragStart = null, dragMoved = false;
+    viewport.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      dragStart = { x: e.clientX, y: e.clientY, sx: viewport.scrollLeft, sy: viewport.scrollTop };
+      dragMoved = false;
+      try { viewport.setPointerCapture(e.pointerId); } catch (_) { /* 合成事件无有效 pointerId 时忽略 */ }
+      viewport.style.cursor = 'grabbing';
+    });
+    viewport.addEventListener('pointermove', (e) => {
+      if (!dragStart) return;
+      const dx = e.clientX - dragStart.x, dy = e.clientY - dragStart.y;
+      if (Math.abs(dx) + Math.abs(dy) > 4) dragMoved = true;
+      viewport.scrollLeft = dragStart.sx - dx;
+      viewport.scrollTop = dragStart.sy - dy;
+      save();
+    });
+    viewport.addEventListener('pointerup', (e) => {
+      if (dragStart) { viewport.releasePointerCapture(e.pointerId); viewport.style.cursor = ''; }
+      dragStart = null;
+    });
+    viewport.addEventListener('pointerleave', () => { dragStart = null; viewport.style.cursor = ''; });
+    viewport.addEventListener('click', (e) => {
+      if (dragMoved) { e.stopPropagation(); e.preventDefault(); dragMoved = false; }
+    }, true);
+    // 触屏双指捏合缩放（以初始捏合中心的内容点为锚）
+    let pinch = null;
+    const mid = (t) => ({ x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 });
+    const dd = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    viewport.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 2) return;
+      const r = viewport.getBoundingClientRect();
+      const m = mid(e.touches);
+      pinch = { d0: dd(e.touches), size0: mapCellSize, cellX: (m.x - r.left + viewport.scrollLeft) / mapCellSize, cellY: (m.y - r.top + viewport.scrollTop) / mapCellSize };
+    }, { passive: true });
+    viewport.addEventListener('touchmove', (e) => {
+      if (e.touches.length !== 2 || !pinch) return;
+      e.preventDefault();
+      const r = viewport.getBoundingClientRect();
+      const m = mid(e.touches);
+      setSize(pinch.size0 * (dd(e.touches) / pinch.d0));
+      viewport.scrollLeft = pinch.cellX * mapCellSize - (m.x - r.left);
+      viewport.scrollTop = pinch.cellY * mapCellSize - (m.y - r.top);
+      save();
+    }, { passive: false });
+    viewport.addEventListener('touchend', () => { pinch = null; }, { passive: true });
+  }
+
   /* ---------- 通用 DOM ---------- */
   function h(tag, attrs = {}, children = []) {
     const e = document.createElement(tag);
@@ -501,13 +570,26 @@
   function renderMap(container, s) {
     const tiles = get(s, '世界.地块', {});
     const explored = new Set(entries(tiles).map(([k]) => k));
-    const N = 15, C = 7;
+    // 包围盒：按已探明地块计算并外扩 1 圈，保证边缘迷雾始终可探索（无限拓展）
+    const coords = entries(tiles).map(([k, t]) => {
+      const x = Number.isFinite(+get(t, 'x')) ? +get(t, 'x') : +k.split(',')[0];
+      const y = Number.isFinite(+get(t, 'y')) ? +get(t, 'y') : +k.split(',')[1];
+      return [x, y];
+    });
+    let minX = -1, maxX = 1, minY = -1, maxY = 1;
+    if (coords.length) {
+      minX = Math.min(...coords.map((c) => c[0])) - 1;
+      maxX = Math.max(...coords.map((c) => c[0])) + 1;
+      minY = Math.min(...coords.map((c) => c[1])) - 1;
+      maxY = Math.max(...coords.map((c) => c[1])) + 1;
+    }
+    const cols = maxX - minX + 1;
     const neighbors = (x, y) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => explored.has(`${x + dx},${y + dy}`));
 
     let cells = '';
-    for (let r = 0; r < N; r++) {
-      for (let c = 0; c < N; c++) {
-        const x = c - C, y = r - C, key = `${x},${y}`;
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const key = `${x},${y}`;
         if (explored.has(key)) {
           const t = tiles[key];
           const center = x === 0 && y === 0;
@@ -523,10 +605,31 @@
 
     container.innerHTML =
       panelH('疆域图志', '探索约耗 15 精力') +
-      `<div class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>点击已探明地块查看详情；点击迷雾边缘探索新地。</div></div>` +
-      `<div class="map-grid" style="grid-template-columns:repeat(${N},1fr)">${cells}</div>` +
+      `<div class="notice notice--info"><span class="ic notice__icon" data-i="info"></span><div>点击已探明地块查看详情；点击迷雾边缘探索新地。双指捏合可缩放地图。</div></div>` +
+      `<div class="map-viewport" id="mapViewport"><div class="map-grid" style="grid-template-columns:repeat(${cols},var(--map-cell-size,44px))">${cells}</div></div>` +
       `<div id="tileDetail"></div>`;
     Icon.render(container); decorateIcons(container);
+
+    const viewport = $('#mapViewport', container);
+    if (viewport) {
+      viewport.style.setProperty('--map-cell-size', mapCellSize + 'px');
+      attachMapGestures(viewport);
+      viewport.addEventListener('scroll', () => { mapScroll.left = viewport.scrollLeft; mapScroll.top = viewport.scrollTop; }, { passive: true });
+      requestAnimationFrame(() => {
+        if (!mapScroll.inited) {
+          const origin = viewport.querySelector('.map-cell[data-x="0"][data-y="0"]') || viewport.querySelector('.map-cell.center');
+          if (origin) {
+            viewport.scrollLeft = origin.offsetLeft - viewport.clientWidth / 2 + origin.offsetWidth / 2;
+            viewport.scrollTop = origin.offsetTop - viewport.clientHeight / 2 + origin.offsetHeight / 2;
+          }
+          mapScroll.inited = true;
+        } else {
+          viewport.scrollLeft = mapScroll.left;
+          viewport.scrollTop = mapScroll.top;
+        }
+        mapScroll.left = viewport.scrollLeft; mapScroll.top = viewport.scrollTop;
+      });
+    }
 
     $$('.map-cell.explored', container).forEach((cell) => {
       cell.addEventListener('click', () => showTile(container, tiles, +cell.dataset.x, +cell.dataset.y));
