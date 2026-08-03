@@ -16,6 +16,17 @@ function read(p) {
   return fs.readFileSync(path.join(root, p), 'utf8');
 }
 
+/** 递归复制目录 */
+function copyDir(src, dest) {
+  fs.mkdirSync(dest, { recursive: true });
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const s = path.join(src, entry.name);
+    const d = path.join(dest, entry.name);
+    if (entry.isDirectory()) copyDir(s, d);
+    else fs.copyFileSync(s, d);
+  }
+}
+
 function build() {
   // 内置变量更新指导始终与源 txt 保持同步
   require('./tools/gen-rules').build();
@@ -36,6 +47,13 @@ function build() {
   fs.mkdirSync(publicDir, { recursive: true });
   fs.writeFileSync(path.join(root, 'index.html'), tpl);
   fs.writeFileSync(path.join(publicDir, 'index.html'), tpl);
+
+  // 将 img/ 静态资源复制到 public/img/，确保 Vercel 部署包含图片
+  const imgSrc = path.join(root, 'img');
+  if (fs.existsSync(imgSrc)) {
+    copyDir(imgSrc, path.join(publicDir, 'img'));
+  }
+
   return tpl.length;
 }
 
