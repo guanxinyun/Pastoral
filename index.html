@@ -938,7 +938,8 @@ body.is-immersive .journal__stream {
   z-index: 20;
 }
 .scroll-bottom-btn .ic { --ic: 22px; width: 22px; height: 22px; }
-body.is-immersive .scroll-bottom-btn.is-visible {
+body.is-immersive .scroll-bottom-btn.is-visible,
+body.is-game .scroll-bottom-btn.is-visible {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
@@ -7812,17 +7813,39 @@ window.Intro = Intro;
     const btn = document.getElementById('scrollBottomBtn');
     const stream = document.getElementById('stream');
     const page = document.getElementById('pageRight');
+    const book = document.querySelector('.book');
     if (!btn || !stream || !page) return;
+
+    /* 判断当前实际的滚动容器：
+       - 桌面沉浸式 → #stream 内部滚动
+       - 手机沉浸式剧情页 → #pageRight 整页滚动
+       - 非沉浸式 (dynamic iframe) → .book 滚动 */
+    const getScrollTarget = () => {
+      const isScrollable = (el) => el && el.scrollHeight - el.clientHeight > 1;
+      if (isScrollable(stream)) return stream;
+      if (isScrollable(page)) return page;
+      if (book && isScrollable(book)) return book;
+      return stream; // fallback
+    };
+
     const nearBottom = (el) => !el || el.scrollHeight - el.scrollTop - el.clientHeight < 120;
-    const sync = () => { btn.classList.toggle('is-visible', !(nearBottom(stream) && nearBottom(page))); };
+
+    const sync = () => {
+      const target = getScrollTarget();
+      btn.classList.toggle('is-visible', !nearBottom(target));
+    };
+
     const toBottom = () => {
-      [stream, page].forEach((el) => {
-        if (el && el.scrollHeight - el.clientHeight > 1) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-      });
+      const target = getScrollTarget();
+      if (target && target.scrollHeight - target.clientHeight > 1) {
+        target.scrollTo({ top: target.scrollHeight, behavior: 'smooth' });
+      }
       btn.classList.remove('is-visible');
     };
+
     stream.addEventListener('scroll', sync, { passive: true });
     page.addEventListener('scroll', sync, { passive: true });
+    if (book) book.addEventListener('scroll', sync, { passive: true });
     window.addEventListener('pastoral:chat', () => requestAnimationFrame(sync));
     btn.addEventListener('click', toBottom);
     updateScrollBottom = sync;
