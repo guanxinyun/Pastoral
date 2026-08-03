@@ -41,12 +41,12 @@
   --color-magic:       var(--mint);
 
   /* 底纹图片层（昼/夜自动切换） */
-  --texture-base-image: url("img/羊皮纸底纹-昼.jpg");
-  --texture-page-image: url("img/书页纸张纹理.jpg");
+  --texture-base-image: url("https://pastoral-rho.vercel.app/img/羊皮纸底纹-昼.jpg");
+  --texture-page-image: url("https://pastoral-rho.vercel.app/img/书页纸张纹理.jpg");
 
   /* 标题山谷 / 序章信纸 */
   /* 可选图床原图直链：改为 url("https://...")；none 时使用下方纯 CSS 山谷 */
-  --title-scene-image: url("img/标题山谷背景.jpg");
+  --title-scene-image: url("https://pastoral-rho.vercel.app/img/标题山谷背景.jpg");
   --color-title-sky: hsl(211 42% 18%);
   --color-title-horizon: hsl(35 58% 54%);
   --color-title-forest: hsl(154 35% 12%);
@@ -163,7 +163,7 @@
   --ink-brown-soft:   hsl(40 24% 74%);
   --ink-green:        hsl(151 30% 55%);
 
-  --texture-base-image: url("img/深色皮革底纹-夜.jpg");
+  --texture-base-image: url("https://pastoral-rho.vercel.app/img/深色皮革底纹-夜.jpg");
 
   --color-bg:          var(--parchment);
   --color-bg-deep:     var(--parchment-deep);
