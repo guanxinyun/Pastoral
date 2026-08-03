@@ -1853,7 +1853,7 @@ body.is-game .scroll-bottom-btn.is-visible {
   <!-- 双页书 -->
   <main class="book" id="book" inert aria-hidden="true">
 
-    <nav class="mobile-page-switcher" data-mobile-page-switcher hidden role="tablist" aria-label="手机全屏页面">
+    <nav class="mobile-page-switcher" data-mobile-page-switcher role="tablist" aria-label="手机全屏页面">
       <button class="mobile-page-switcher__tab is-active" type="button" role="tab" aria-selected="true" aria-controls="pageLeft" data-mobile-page="ledger">经营页</button>
       <button class="mobile-page-switcher__tab" type="button" role="tab" aria-selected="false" aria-controls="pageRight" data-mobile-page="story">剧情页</button>
       <button class="mobile-page-switcher__exit" type="button" data-mobile-exit aria-label="退出全屏">退出</button>
@@ -7279,7 +7279,12 @@ window.Intro = Intro;
     });
     requestAnimationFrame(() => {
       const target = pages[mobilePage];
-      if (target) target.scrollTop = mobileScrollPositions[mobilePage];
+      if (mobilePage === 'story') {
+        // 切到剧情页时自动滚到底部
+        scrollStoryToBottom();
+      } else if (target) {
+        target.scrollTop = mobileScrollPositions[mobilePage];
+      }
       updateScrollBottom();
     });
     queueMobileViewportSync();
@@ -7287,10 +7292,6 @@ window.Intro = Intro;
 
   function syncMobileImmersiveState(resetOnEnter) {
     const active = Host.immersive && isMobileViewport();
-    const switcher = $('[data-mobile-page-switcher]');
-    const exit = $('[data-mobile-exit]');
-    if (switcher) switcher.hidden = !active;
-    if (exit) exit.hidden = !active;
     if (active) setMobilePage(resetOnEnter ? 'ledger' : mobilePage);
     else {
       document.body.classList.remove('mobile-page--ledger', 'mobile-page--story', 'is-mobile-keyboard-open');
@@ -7808,6 +7809,19 @@ window.Intro = Intro;
     lastRaw = raw;
   }
 
+  /* ---------- 剧情页：自动滚到底部 ---------- */
+  function scrollStoryToBottom() {
+    const stream = document.getElementById('stream');
+    const page = document.getElementById('pageRight');
+    const book = document.querySelector('.book');
+    // 按优先级找到实际的滚动容器并滚到底
+    [stream, page, book].forEach((el) => {
+      if (el && el.scrollHeight - el.clientHeight > 1) {
+        el.scrollTop = el.scrollHeight;
+      }
+    });
+  }
+
   /* ---------- 剧情页：一键到底 ---------- */
   function setupScrollBottom() {
     const btn = document.getElementById('scrollBottomBtn');
@@ -7928,6 +7942,8 @@ window.Intro = Intro;
       const entering = Host.immersive && !wasImmersive;
       syncFullscreenBtn();
       syncMobileImmersiveState(entering);
+      // 进入全屏时自动滚到剧情底部
+      if (entering) requestAnimationFrame(scrollStoryToBottom);
       requestAnimationFrame(updateScrollBottom);
     });
 
