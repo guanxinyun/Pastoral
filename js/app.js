@@ -78,6 +78,8 @@
 
   function syncMobileImmersiveState(resetOnEnter) {
     const active = Host.immersive && isMobileViewport();
+    const switcher = $('[data-mobile-page-switcher]');
+    if (switcher) switcher.style.display = active ? 'grid' : '';
     if (active) setMobilePage(resetOnEnter ? 'ledger' : mobilePage);
     else {
       document.body.classList.remove('mobile-page--ledger', 'mobile-page--story', 'is-mobile-keyboard-open');
@@ -727,10 +729,14 @@
     window.addEventListener('pastoral:immersive', () => {
       const entering = Host.immersive && !wasImmersive;
       syncFullscreenBtn();
-      syncMobileImmersiveState(entering);
-      // 进入全屏时自动滚到剧情底部
-      if (entering) requestAnimationFrame(scrollStoryToBottom);
-      requestAnimationFrame(updateScrollBottom);
+      // 进入沉浸时 iframe 尺寸可能尚未更新，延迟一帧确保 innerWidth 正确
+      const doSync = () => {
+        syncMobileImmersiveState(entering);
+        if (entering) requestAnimationFrame(scrollStoryToBottom);
+        requestAnimationFrame(updateScrollBottom);
+      };
+      if (entering) requestAnimationFrame(doSync);
+      else doSync();
     });
 
     // 1s 状态轮询（对话流由 Chat 以 400ms 独立轮询）
