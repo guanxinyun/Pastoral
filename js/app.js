@@ -78,6 +78,10 @@
 
   function syncMobileImmersiveState(resetOnEnter) {
     const active = Host.immersive && isMobileViewport();
+    const switcher = $('[data-mobile-page-switcher]');
+    const exit = $('[data-mobile-exit]');
+    if (switcher) switcher.hidden = !active;
+    if (exit) exit.hidden = !active;
     if (active) setMobilePage(resetOnEnter ? 'ledger' : mobilePage);
     else {
       document.body.classList.remove('mobile-page--ledger', 'mobile-page--story', 'is-mobile-keyboard-open');
