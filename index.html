@@ -1164,6 +1164,9 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
 .imgslot .imagegen-loading { margin-top: 0; }
 .imgslot .imagegen-result { margin-top: 0; }
 
+/* 按钮组容器 */
+.imgslot-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
 /* "生成图片"按钮 */
 .imgslot-btn {
   display: inline-flex; align-items: center; gap: 6px;
@@ -1185,6 +1188,16 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
   box-shadow: var(--shadow-sm);
 }
 .imgslot-btn:active { transform: scale(0.97); }
+
+/* LLM生图按钮变体 */
+.imgslot-btn--llm {
+  border-color: hsl(var(--color-accent) / 0.4);
+}
+.imgslot-btn--llm:hover {
+  background: hsl(var(--color-accent) / 0.12);
+  border-color: hsl(var(--color-accent));
+  color: hsl(var(--color-accent));
+}
 
 .imgslot-error {
   display: flex; align-items: center; gap: 8px;
@@ -2565,6 +2578,7 @@ const ICONS = {
   cabbage:  '<circle cx="12" cy="13" r="5.5"/><path d="M12 7.5c-2 0-3 2-3 4M12 7.5c2 0 3 2 3 4M8 11.5c-2 1-2 3-1 4M16 11.5c2 1 2 3 1 4"/>',
 
   paintbrush:'<path d=\"M18.5 3.5l2 2-9.5 9.5-3 1 1-3z\"/><path d=\"M14.5 7.5l2 2\"/><path d=\"M9 15c-1.5.5-3 2-3.5 4.5 2.5-.5 4-2 4.5-3.5\"/>',
+  sparkles:  '<path d=\"M12 3c.5 3 1.5 4 4.5 4.5-3 .5-4 1.5-4.5 4.5-.5-3-1.5-4-4.5-4.5 3-.5 4-1.5 4.5-4.5z\"/><path d=\"M18 14c.3 1.5.8 2 2.2 2.2-1.5.3-2 .8-2.2 2.2-.3-1.5-.8-2-2.2-2.2 1.5-.3 2-.8 2.2-2.2z\"/>',
 
   /* ---------- 伪同层 / 视口 ---------- */
   expand:   '<path d="M9.5 4.5H4.5V9.5"/><path d="M14.5 4.5h5V9.5"/><path d="M4.5 14.5v5h5"/><path d="M19.5 14.5v5h-5"/>',
@@ -4296,6 +4310,87 @@ const ImageAutoGen = (function () {
         && typeof eventRemoveListener === 'function';
   }
 
+  /* ---------- 父窗口 DOM 操作（楼层伪装） ---------- */
+  function parentDoc() {
+    try {
+      if (window.parent === window) return null;
+      var d = window.parent.document;
+      return d && d.body ? d : null;
+    } catch (e) { return null; }
+  }
+
+  /**
+   * 在父窗口 DOM 中找到指定 message_id 对应的 .mes[mesid] .mes_text 元素。
+   * Pastoral 的 Host CSS 隐藏了非 0 楼，但 DOM 元素仍然存在。
+   */
+  function findParentMesText(messageId) {
+    var d = parentDoc();
+    if (!d) return null;
+    var mes = d.querySelector('div.mes[mesid="' + messageId + '"]');
+    if (!mes) return null;
+    return mes.querySelector('.mes_text') || null;
+  }
+
+  /**
+   * 触发 st-chatu8 的 LLM 图片生成流程：
+   * 1. 临时取消隐藏目标楼层（st-chatu8 的 getElContext 需要元素可见）
+   * 2. 在目标 .mes_text 上触发 dblclick 事件（st-chatu8 的 clickTrigger 绑定）
+   * 3. 恢复隐藏
+   *
+   * 这样 st-chatu8 会弹出操作面板（图片生成/角色设计等），
+   * 且操作的是正确的楼层而非 0 楼。
+   */
+  function triggerFloorLLMImageGen(messageId) {
+    var d = parentDoc();
+    if (!d) { toast('warn', '无法触发', '未检测到父窗口，请在酒馆环境中使用。'); return; }
+
+    var mesEl = d.querySelector('div.mes[mesid="' + messageId + '"]');
+    if (!mesEl) { toast('warn', '楼层未找到', '父窗口中未找到第 ' + messageId + ' 楼。'); return; }
+
+    var mesText = mesEl.querySelector('.mes_text');
+    if (!mesText) { toast('warn', '内容未找到', '第 ' + messageId + ' 楼缺少 .mes_text 元素。'); return; }
+
+    // 临时取消隐藏，让 st-chatu8 能正确读取元素
+    var parentWin = d.defaultView || window.parent;
+    var computedDisplay = 'none';
+    try { computedDisplay = parentWin.getComputedStyle(mesEl).display; } catch (e) { /* cross-origin fallback */ }
+    var wasHidden = mesEl.style.display === 'none' || computedDisplay === 'none';
+    if (wasHidden) {
+      mesEl.style.setProperty('display', 'block', 'important');
+      mesEl.style.setProperty('position', 'fixed', 'important');
+      mesEl.style.setProperty('left', '-9999px', 'important');
+      mesEl.style.setProperty('top', '-9999px', 'important');
+      mesEl.style.setProperty('opacity', '0', 'important');
+      mesEl.style.setProperty('pointer-events', 'none', 'important');
+    }
+
+    // 触发 dblclick 让 st-chatu8 的 clickTrigger 捕获
+    try {
+      var rect = mesText.getBoundingClientRect();
+      var evt = new MouseEvent('dblclick', {
+        bubbles: true, cancelable: true, view: d.defaultView,
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2
+      });
+      mesText.dispatchEvent(evt);
+      toast('info', 'LLM 生图', '已触发第 ' + messageId + ' 楼的图片生成面板。');
+    } catch (e) {
+      toast('error', '触发失败', String(e && e.message || e));
+    }
+
+    // 延迟恢复隐藏（给 st-chatu8 时间读取 DOM）
+    if (wasHidden) {
+      setTimeout(function () {
+        mesEl.style.removeProperty('display');
+        mesEl.style.removeProperty('position');
+        mesEl.style.removeProperty('left');
+        mesEl.style.removeProperty('top');
+        mesEl.style.removeProperty('opacity');
+        mesEl.style.removeProperty('pointer-events');
+      }, 3000);
+    }
+  }
+
   /* ---------- IndexedDB 操作 ---------- */
   function getDB() {
     if (window.Assets && typeof Assets._db === 'function') return Assets._db();
@@ -4384,9 +4479,9 @@ const ImageAutoGen = (function () {
       }
     }
 
-    // 注册 prompt（不自动触发，等用户点击）
+    // 注册 prompt + messageId（不自动触发，等用户点击）
     blocks.forEach(function (b) {
-      promptRegistry.set(b.slotId, b.prompt);
+      promptRegistry.set(b.slotId, { prompt: b.prompt, messageId: b.messageId });
     });
 
     return result;
@@ -4421,6 +4516,10 @@ const ImageAutoGen = (function () {
 
   function showButton(slot, slotId) {
     slot.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.className = 'imgslot-actions';
+
+    // 主按钮：直接用 <image> 标签里的 prompt 生图
     var btn = document.createElement('button');
     btn.className = 'imgslot-btn';
     btn.type = 'button';
@@ -4431,7 +4530,33 @@ const ImageAutoGen = (function () {
       e.stopPropagation();
       requestGenerate(slotId);
     });
-    slot.appendChild(btn);
+    wrap.appendChild(btn);
+
+    // 副按钮：触发 st-chatu8 的 LLM 生图（需要父窗口有对应楼层）
+    var reg = promptRegistry.get(slotId);
+    // 从 registry 获取 messageId
+    var messageId = reg && typeof reg === 'object' ? reg.messageId : null;
+    // 如果 registry 里没有，从 slot 的 DOM 上下文找 bub[data-mid]
+    if (messageId == null) {
+      var bub = slot.closest && slot.closest('.bub');
+      if (bub && bub.dataset.mid) messageId = Number(bub.dataset.mid);
+    }
+    if (messageId != null && parentDoc() && findParentMesText(messageId)) {
+      var llmBtn = document.createElement('button');
+      llmBtn.className = 'imgslot-btn imgslot-btn--llm';
+      llmBtn.type = 'button';
+      llmBtn.innerHTML = '<span class="ic" data-i="sparkles"></span><span>LLM生图</span>';
+      if (window.Icon) Icon.render(llmBtn);
+      var mid = messageId; // 闭包捕获
+      llmBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerFloorLLMImageGen(mid);
+      });
+      wrap.appendChild(llmBtn);
+    }
+
+    slot.appendChild(wrap);
   }
 
   function showLoading(slot) {
@@ -4493,7 +4618,7 @@ const ImageAutoGen = (function () {
 
       // 默认：显示"生成图片"按钮（仅酒馆环境）
       if (promptRegistry.has(slotId) && hasEventApi()) {
-        if (!slot.querySelector('.imgslot-btn')) showButton(slot, slotId);
+        if (!slot.querySelector('.imgslot-btn') && !slot.querySelector('.imgslot-actions')) showButton(slot, slotId);
         return;
       }
     });
@@ -4502,7 +4627,8 @@ const ImageAutoGen = (function () {
   /* ---------- 用户点击按钮触发生成 ---------- */
   function requestGenerate(slotId) {
     if (!hasEventApi()) { toast('error', '无法绘图', '未检测到酒馆事件系统。'); return; }
-    var prompt = promptRegistry.get(slotId);
+    var reg = promptRegistry.get(slotId);
+    var prompt = reg && (typeof reg === 'string' ? reg : reg.prompt);
     if (!prompt) { toast('warn', '无可用内容', '未找到该位置的绘图关键词。'); return; }
 
     // 先检查 IndexedDB 缓存
@@ -4569,6 +4695,7 @@ const ImageAutoGen = (function () {
   return {
     extractAndReplace: extractAndReplace,
     init: init,
+    triggerFloorLLMImageGen: triggerFloorLLMImageGen,
     get pending() { return pending.size; }
   };
 })();

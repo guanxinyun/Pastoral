@@ -788,6 +788,9 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
 .imgslot .imagegen-loading { margin-top: 0; }
 .imgslot .imagegen-result { margin-top: 0; }
 
+/* 按钮组容器 */
+.imgslot-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
 /* "生成图片"按钮 */
 .imgslot-btn {
   display: inline-flex; align-items: center; gap: 6px;
@@ -809,6 +812,16 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
   box-shadow: var(--shadow-sm);
 }
 .imgslot-btn:active { transform: scale(0.97); }
+
+/* LLM生图按钮变体 */
+.imgslot-btn--llm {
+  border-color: hsl(var(--color-accent) / 0.4);
+}
+.imgslot-btn--llm:hover {
+  background: hsl(var(--color-accent) / 0.12);
+  border-color: hsl(var(--color-accent));
+  color: hsl(var(--color-accent));
+}
 
 .imgslot-error {
   display: flex; align-items: center; gap: 8px;
