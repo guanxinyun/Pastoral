@@ -6421,7 +6421,12 @@ const ImageGen = (function () {
       if (msg.role === 'user' || Number(msg.message_id) === 0) continue;
       const raw = msg.message || '';
       if (!raw.trim()) continue;
-      const html = Extract.extractCleanContent(raw);
+      // 优先提取 <image> 标签内的结构化 prompt
+      const imageMatch = raw.match(/<image>([\s\S]*?)<\/image>/i);
+      if (imageMatch && imageMatch[1].trim()) {
+        return { text: imageMatch[1].trim(), messageId: msg.message_id };
+      }
+      const html = Extract.extractCleanContent(raw, msg.message_id);
       let text = htmlToText(html);
       if (!text) continue;
       if (text.length > MAX_PROMPT_LEN) text = text.slice(0, MAX_PROMPT_LEN);
