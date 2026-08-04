@@ -139,13 +139,28 @@ const ImageAutoGen = (function () {
     return result;
   }
 
+  /* ---------- 工具：构建图片 src ---------- */
+  function toDataUri(raw) {
+    if (!raw) return '';
+    // 已是完整 data URI
+    if (raw.indexOf('data:') === 0) return raw;
+    // 已是完整 URL（http/blob）
+    if (raw.indexOf('http') === 0 || raw.indexOf('blob:') === 0) return raw;
+    // 纯 base64 → 自动检测格式
+    // JPEG: /9j/  PNG: iVBOR  WebP: UklGR  GIF: R0lGO
+    if (raw.indexOf('/9j/') === 0) return 'data:image/jpeg;base64,' + raw;
+    if (raw.indexOf('UklGR') === 0) return 'data:image/webp;base64,' + raw;
+    if (raw.indexOf('R0lGO') === 0) return 'data:image/gif;base64,' + raw;
+    return 'data:image/png;base64,' + raw;
+  }
+
   /* ---------- DOM 注入 ---------- */
   function injectImage(slot, base64Data) {
     slot.innerHTML = '';
     var figure = document.createElement('figure');
     figure.className = 'imagegen-result';
     var img = document.createElement('img');
-    img.src = 'data:image/png;base64,' + base64Data;
+    img.src = toDataUri(base64Data);
     img.alt = '场景绘图';
     img.loading = 'lazy';
     img.addEventListener('click', function () {

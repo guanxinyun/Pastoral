@@ -70,12 +70,23 @@ const ImageGen = (function () {
     if (el) el.remove();
   }
 
+  /* ---------- 工具：构建图片 src ---------- */
+  function toDataUri(raw) {
+    if (!raw) return '';
+    if (raw.indexOf('data:') === 0) return raw;
+    if (raw.indexOf('http') === 0 || raw.indexOf('blob:') === 0) return raw;
+    if (raw.indexOf('/9j/') === 0) return 'data:image/jpeg;base64,' + raw;
+    if (raw.indexOf('UklGR') === 0) return 'data:image/webp;base64,' + raw;
+    if (raw.indexOf('R0lGO') === 0) return 'data:image/gif;base64,' + raw;
+    return 'data:image/png;base64,' + raw;
+  }
+
   function doInjectImage(body, base64Data, prompt) {
     if (body.querySelector('.imagegen-result')) return;
     const figure = document.createElement('figure');
     figure.className = 'imagegen-result';
     const img = document.createElement('img');
-    img.src = 'data:image/png;base64,' + base64Data;
+    img.src = toDataUri(base64Data);
     img.alt = '场景绘图';
     img.loading = 'lazy';
     img.addEventListener('click', function () { openLightbox(img.src); });
