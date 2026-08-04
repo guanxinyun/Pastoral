@@ -823,6 +823,16 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
   color: hsl(var(--color-accent));
 }
 
+/* AI 气泡底部的 LLM 生图按钮 */
+.bub__body > .llm-gen-btn {
+  margin-top: var(--space-3);
+  font-size: var(--font-size-xs);
+  padding: 4px 12px;
+  opacity: 0.55;
+  transition: opacity var(--transition-fast);
+}
+.bub__body > .llm-gen-btn:hover { opacity: 1; }
+
 .imgslot-error {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 14px;

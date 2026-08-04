@@ -1199,6 +1199,16 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
   color: hsl(var(--color-accent));
 }
 
+/* AI 气泡底部的 LLM 生图按钮 */
+.bub__body > .llm-gen-btn {
+  margin-top: var(--space-3);
+  font-size: var(--font-size-xs);
+  padding: 4px 12px;
+  opacity: 0.55;
+  transition: opacity var(--transition-fast);
+}
+.bub__body > .llm-gen-btn:hover { opacity: 1; }
+
 .imgslot-error {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 14px;
@@ -4333,12 +4343,11 @@ const ImageAutoGen = (function () {
 
   /**
    * 触发 st-chatu8 的 LLM 图片生成流程：
-   * 1. 临时取消隐藏目标楼层（st-chatu8 的 getElContext 需要元素可见）
-   * 2. 在目标 .mes_text 上触发 dblclick 事件（st-chatu8 的 clickTrigger 绑定）
-   * 3. 恢复隐藏
-   *
-   * 这样 st-chatu8 会弹出操作面板（图片生成/角色设计等），
-   * 且操作的是正确的楼层而非 0 楼。
+   * 1. 临时取消隐藏目标楼层（在视口内可见位置，让 st-chatu8 能正确读取）
+   * 2. 在目标 .mes_text 上触发 dblclick 事件
+   * 3. 等待 st-chatu8 的操作面板弹出
+   * 4. 自动点击"图片生成"按钮
+   * 5. 恢复隐藏
    */
   function triggerFloorLLMImageGen(messageId) {
     var d = parentDoc();
@@ -4350,45 +4359,90 @@ const ImageAutoGen = (function () {
     var mesText = mesEl.querySelector('.mes_text');
     if (!mesText) { toast('warn', '内容未找到', '第 ' + messageId + ' 楼缺少 .mes_text 元素。'); return; }
 
-    // 临时取消隐藏，让 st-chatu8 能正确读取元素
     var parentWin = d.defaultView || window.parent;
+
+    // 判断是否被 Host CSS 隐藏
     var computedDisplay = 'none';
-    try { computedDisplay = parentWin.getComputedStyle(mesEl).display; } catch (e) { /* cross-origin fallback */ }
+    try { computedDisplay = parentWin.getComputedStyle(mesEl).display; } catch (e) { /* cross-origin */ }
     var wasHidden = mesEl.style.display === 'none' || computedDisplay === 'none';
+
+    // 临时取消隐藏 — 放在视口中央（不是 -9999px），让 getBoundingClientRect 返回有效坐标
     if (wasHidden) {
       mesEl.style.setProperty('display', 'block', 'important');
       mesEl.style.setProperty('position', 'fixed', 'important');
-      mesEl.style.setProperty('left', '-9999px', 'important');
-      mesEl.style.setProperty('top', '-9999px', 'important');
+      mesEl.style.setProperty('left', '50%', 'important');
+      mesEl.style.setProperty('top', '50%', 'important');
+      mesEl.style.setProperty('transform', 'translate(-50%,-50%)', 'important');
       mesEl.style.setProperty('opacity', '0', 'important');
       mesEl.style.setProperty('pointer-events', 'none', 'important');
+      mesEl.style.setProperty('z-index', '-1', 'important');
+      mesEl.style.setProperty('max-height', '1px', 'important');
+      mesEl.style.setProperty('overflow', 'hidden', 'important');
     }
 
-    // 触发 dblclick 让 st-chatu8 的 clickTrigger 捕获
+    // 恢复隐藏的辅助函数
+    function restoreHidden() {
+      if (!wasHidden) return;
+      ['display','position','left','top','transform','opacity','pointer-events','z-index','max-height','overflow'].forEach(function (p) {
+        mesEl.style.removeProperty(p);
+      });
+    }
+
+    // 触发 dblclick — 使用视口中央坐标
     try {
       var rect = mesText.getBoundingClientRect();
+      var cx = rect.left + rect.width / 2;
+      var cy = rect.top + rect.height / 2;
+      // 如果坐标异常（元素太小），用视口中央
+      if (!cx || !cy || cx < 0 || cy < 0) {
+        cx = (parentWin.innerWidth || 800) / 2;
+        cy = (parentWin.innerHeight || 600) / 2;
+      }
       var evt = new MouseEvent('dblclick', {
-        bubbles: true, cancelable: true, view: d.defaultView,
-        clientX: rect.left + rect.width / 2,
-        clientY: rect.top + rect.height / 2
+        bubbles: true, cancelable: true, view: parentWin,
+        clientX: cx, clientY: cy
       });
       mesText.dispatchEvent(evt);
-      toast('info', 'LLM 生图', '已触发第 ' + messageId + ' 楼的图片生成面板。');
     } catch (e) {
       toast('error', '触发失败', String(e && e.message || e));
+      restoreHidden();
+      return;
     }
 
-    // 延迟恢复隐藏（给 st-chatu8 时间读取 DOM）
-    if (wasHidden) {
-      setTimeout(function () {
-        mesEl.style.removeProperty('display');
-        mesEl.style.removeProperty('position');
-        mesEl.style.removeProperty('left');
-        mesEl.style.removeProperty('top');
-        mesEl.style.removeProperty('opacity');
-        mesEl.style.removeProperty('pointer-events');
-      }, 3000);
-    }
+    // 等待 st-chatu8 的操作面板弹出，然后自动点击"图片生成"
+    var attempts = 0;
+    var maxAttempts = 20; // 最多等 2 秒
+    var pollTimer = setInterval(function () {
+      attempts++;
+      var bubble = d.querySelector('.st-chatu8-click-trigger-bubble');
+      if (bubble) {
+        clearInterval(pollTimer);
+        // 找到"图片生成"按钮并点击
+        var btns = bubble.querySelectorAll('button');
+        var found = false;
+        for (var i = 0; i < btns.length; i++) {
+          var txt = (btns[i].textContent || '').trim();
+          if (txt.indexOf('图片生成') >= 0) {
+            btns[i].click();
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          toast('warn', '面板异常', '未在操作面板中找到"图片生成"按钮。');
+        } else {
+          toast('info', 'LLM 生图', '已触发第 ' + messageId + ' 楼的 LLM 图片生成。');
+        }
+        // 延迟恢复隐藏（给 st-chatu8 的 handlePromptRequest 时间读取 DOM）
+        setTimeout(restoreHidden, 5000);
+        return;
+      }
+      if (attempts >= maxAttempts) {
+        clearInterval(pollTimer);
+        toast('warn', '面板未弹出', 'st-chatu8 操作面板未出现，请确认已启用点击触发功能。');
+        restoreHidden();
+      }
+    }, 100);
   }
 
   /* ---------- IndexedDB 操作 ---------- */
@@ -4516,10 +4570,6 @@ const ImageAutoGen = (function () {
 
   function showButton(slot, slotId) {
     slot.innerHTML = '';
-    var wrap = document.createElement('div');
-    wrap.className = 'imgslot-actions';
-
-    // 主按钮：直接用 <image> 标签里的 prompt 生图
     var btn = document.createElement('button');
     btn.className = 'imgslot-btn';
     btn.type = 'button';
@@ -4530,33 +4580,7 @@ const ImageAutoGen = (function () {
       e.stopPropagation();
       requestGenerate(slotId);
     });
-    wrap.appendChild(btn);
-
-    // 副按钮：触发 st-chatu8 的 LLM 生图（需要父窗口有对应楼层）
-    var reg = promptRegistry.get(slotId);
-    // 从 registry 获取 messageId
-    var messageId = reg && typeof reg === 'object' ? reg.messageId : null;
-    // 如果 registry 里没有，从 slot 的 DOM 上下文找 bub[data-mid]
-    if (messageId == null) {
-      var bub = slot.closest && slot.closest('.bub');
-      if (bub && bub.dataset.mid) messageId = Number(bub.dataset.mid);
-    }
-    if (messageId != null && parentDoc() && findParentMesText(messageId)) {
-      var llmBtn = document.createElement('button');
-      llmBtn.className = 'imgslot-btn imgslot-btn--llm';
-      llmBtn.type = 'button';
-      llmBtn.innerHTML = '<span class="ic" data-i="sparkles"></span><span>LLM生图</span>';
-      if (window.Icon) Icon.render(llmBtn);
-      var mid = messageId; // 闭包捕获
-      llmBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        triggerFloorLLMImageGen(mid);
-      });
-      wrap.appendChild(llmBtn);
-    }
-
-    slot.appendChild(wrap);
+    slot.appendChild(btn);
   }
 
   function showLoading(slot) {
@@ -4618,9 +4642,40 @@ const ImageAutoGen = (function () {
 
       // 默认：显示"生成图片"按钮（仅酒馆环境）
       if (promptRegistry.has(slotId) && hasEventApi()) {
-        if (!slot.querySelector('.imgslot-btn') && !slot.querySelector('.imgslot-actions')) showButton(slot, slotId);
+        if (!slot.querySelector('.imgslot-btn')) showButton(slot, slotId);
         return;
       }
+    });
+
+    // 为每条 AI 气泡注入"LLM生图"按钮（仅酒馆环境 + 父窗口有对应楼层时）
+    injectLLMButtons();
+  }
+
+  /** 在每条 AI 气泡底部注入 LLM 生图按钮 */
+  function injectLLMButtons() {
+    if (!hasEventApi() || !parentDoc()) return;
+    var bubbles = document.querySelectorAll('.bub--ai');
+    bubbles.forEach(function (bub) {
+      var mid = Number(bub.dataset.mid);
+      if (!mid || mid === 0) return; // 跳过 0 楼
+      var body = bub.querySelector('.bub__body');
+      if (!body) return;
+      // 已经注入过 → 跳过
+      if (body.querySelector('.llm-gen-btn')) return;
+      // 父窗口有对应楼层才显示
+      if (!findParentMesText(mid)) return;
+
+      var btn = document.createElement('button');
+      btn.className = 'imgslot-btn imgslot-btn--llm llm-gen-btn';
+      btn.type = 'button';
+      btn.innerHTML = '<span class="ic" data-i="sparkles"></span><span>LLM生图</span>';
+      if (window.Icon) Icon.render(btn);
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerFloorLLMImageGen(mid);
+      });
+      body.appendChild(btn);
     });
   }
 
