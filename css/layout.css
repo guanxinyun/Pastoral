@@ -782,6 +782,34 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
 }
 .imagegen-loading .ic { --ic: 18px; animation: breathe 2s ease-in-out infinite; }
 
+/* ===== 自动文生图占位 ===== */
+.imgslot { display: block; margin: 0.8em 0; min-height: 0; }
+.imgslot:empty { display: none; }
+.imgslot .imagegen-loading { margin-top: 0; }
+.imgslot .imagegen-result { margin-top: 0; }
+.imgslot-error {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: hsl(0 40% 18% / 0.5);
+  border: 1px dashed hsl(0 40% 40%);
+  font-family: var(--font-kai); font-size: var(--font-size-xs);
+  color: hsl(0 40% 70%);
+}
+.imgslot-error .imgslot-retry {
+  margin-left: auto;
+  cursor: pointer;
+  text-decoration: underline;
+  color: hsl(var(--color-primary));
+  transition: opacity var(--transition-fast);
+}
+.imgslot-error .imgslot-retry:hover { opacity: 0.7; }
+[data-theme="day"] .imgslot-error {
+  background: hsl(0 60% 95% / 0.6);
+  border-color: hsl(0 50% 60%);
+  color: hsl(0 50% 40%);
+}
+
 /* ===== 图片灯箱 ===== */
 .lightbox {
   position: fixed; inset: 0; z-index: 500;

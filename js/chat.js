@@ -96,7 +96,7 @@ const Chat = (function () {
       if (raw.length > MAX_RAW) {
         body.innerHTML = '<p class="muted">（本楼内容为界面源码，已折叠）</p>';
       } else {
-        const html = Extract.extractCleanContent(raw);
+        const html = Extract.extractCleanContent(raw, msg.message_id);
         body.innerHTML = (html && html.trim())
           ? html
           : '<p class="muted">（本楼无可显示正文）</p>';

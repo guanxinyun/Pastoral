@@ -669,6 +669,9 @@
     // 文生图模块
     if (window.ImageGen) ImageGen.init();
 
+    // 自动文生图模块
+    if (window.ImageAutoGen) ImageAutoGen.init();
+
     // 首屏渲染
     Render.state = MVU.getState();
     Render.raw = Chat.latestRaw();

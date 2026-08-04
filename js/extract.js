@@ -193,10 +193,15 @@ const Extract = {
   },
 
   /** 正文清理：跑酒馆正则 -> DOM 手术剥结构壳 -> 保留内联美化 */
-  extractCleanContent(rawText) {
+  extractCleanContent(rawText, messageId) {
     if (!rawText) return '';
     // 先剥离选项块，避免选项混入正文
     let text = rawText.replace(/<\/?(?:option|options|choice|choices|select)>/gi, '');
+
+    // 在 DOM 解析前提取 <image> 块并替换为占位符（浏览器会把 <image> 转成 <img>）
+    if (window.ImageAutoGen) {
+      text = ImageAutoGen.extractAndReplace(text, messageId);
+    }
 
     // 让酒馆正则处理（切思维链、执行美化正则等）
     if (typeof formatAsTavernRegexedString === 'function') {

@@ -6,7 +6,7 @@ const Assets = (function () {
   'use strict';
 
   const DB_NAME = 'pastoral_assets';
-  const DB_VERSION = 2;
+  const DB_VERSION = 3;
   const STORE = 'Assets';
   const ICON_MAX_BYTES = 2 * 1024 * 1024;
   const ICON_MAX_COUNT = 100;
@@ -38,6 +38,7 @@ const Assets = (function () {
       req.onupgradeneeded = () => {
         const db = req.result;
         if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'key' });
+        if (!db.objectStoreNames.contains('ImageCache')) db.createObjectStore('ImageCache', { keyPath: 'slotId' });
       };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error || new Error('IndexedDB 打开失败'));
@@ -184,7 +185,8 @@ const Assets = (function () {
     ICON_MAX_BYTES, ICON_MAX_COUNT, ICON_MIME: Array.from(ICON_MIME), available, staffKey,
     putStaffAvatar, getStaffAvatar, removeStaffAvatar, avatarUrl,
     listCustomIcons, putCustomIcon, getCustomIcon, renameCustomIcon, removeCustomIcon, customIconUrl,
-    getIconBindings, setIconBindings, removeBindingsForIcon, cleanup
+    getIconBindings, setIconBindings, removeBindingsForIcon, cleanup,
+    _db: open
   };
 })();
 window.Assets = Assets;
