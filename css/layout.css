@@ -741,6 +741,78 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
   line-height: 1.5;
 }
 
+/* ===== 气泡内图片（文生图 / AI 内嵌图） ===== */
+.bub__body img {
+  display: block;
+  max-width: min(100%, 480px);
+  height: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-paper);
+  margin-top: 0.8em;
+  cursor: pointer;
+  transition: border-color var(--t-base) var(--ease-soft),
+              box-shadow var(--t-base) var(--ease-soft),
+              transform var(--t-base) var(--ease-soft);
+}
+.bub__body img:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-glow-amber);
+  transform: scale(1.01);
+}
+.bub__body figure { margin: 0.8em 0 0; max-width: min(100%, 480px); }
+.bub__body figcaption {
+  margin-top: 4px;
+  font-family: var(--font-kai);
+  font-size: var(--font-size-2xs);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* 图片生成加载态 */
+.imagegen-loading {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px; margin-top: 0.8em;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-deep);
+  border: 1px dashed var(--color-border-strong);
+  font-family: var(--font-kai); font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  animation: inkBleed var(--t-slow) var(--ease-ink) both;
+}
+.imagegen-loading .ic { --ic: 18px; animation: breathe 2s ease-in-out infinite; }
+
+/* ===== 图片灯箱 ===== */
+.lightbox {
+  position: fixed; inset: 0; z-index: 500;
+  display: grid; place-items: center; padding: var(--space-4);
+  background: hsl(229 35% 8% / 0.85); backdrop-filter: blur(8px);
+  animation: inkBleed var(--t-base) var(--ease-ink) both;
+  cursor: pointer;
+}
+.lightbox[hidden] { display: none; }
+.lightbox__img {
+  max-width: min(90vw, 1200px); max-height: 85vh;
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-float);
+  object-fit: contain; cursor: default;
+  animation: toastIn var(--t-slow) var(--ease-page) both;
+}
+.lightbox__close {
+  position: absolute; top: var(--space-4); right: var(--space-4);
+  width: 40px; height: 40px; display: grid; place-items: center;
+  border-radius: var(--radius-full);
+  color: hsl(0 0% 90%); background: hsl(0 0% 0% / 0.4);
+  border: 1px solid hsl(0 0% 100% / 0.15);
+  cursor: pointer;
+  transition: all var(--t-base) var(--ease-soft);
+}
+.lightbox__close:hover { color: white; background: hsl(0 0% 0% / 0.6); }
+.lightbox__close:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+
+/* dock 绘图按钮加载态 */
+.dock__btn--imagegen.is-loading { pointer-events: none; opacity: 0.6; }
+.dock__btn--imagegen.is-loading .ic { animation: breathe 2s ease-in-out infinite; }
+
 /* ===== composer：接管原生输入框 ===== */
 .composer {
   display: flex;

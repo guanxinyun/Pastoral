@@ -1117,6 +1117,78 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
   line-height: 1.5;
 }
 
+/* ===== 气泡内图片（文生图 / AI 内嵌图） ===== */
+.bub__body img {
+  display: block;
+  max-width: min(100%, 480px);
+  height: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-paper);
+  margin-top: 0.8em;
+  cursor: pointer;
+  transition: border-color var(--t-base) var(--ease-soft),
+              box-shadow var(--t-base) var(--ease-soft),
+              transform var(--t-base) var(--ease-soft);
+}
+.bub__body img:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-glow-amber);
+  transform: scale(1.01);
+}
+.bub__body figure { margin: 0.8em 0 0; max-width: min(100%, 480px); }
+.bub__body figcaption {
+  margin-top: 4px;
+  font-family: var(--font-kai);
+  font-size: var(--font-size-2xs);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* 图片生成加载态 */
+.imagegen-loading {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px; margin-top: 0.8em;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-deep);
+  border: 1px dashed var(--color-border-strong);
+  font-family: var(--font-kai); font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  animation: inkBleed var(--t-slow) var(--ease-ink) both;
+}
+.imagegen-loading .ic { --ic: 18px; animation: breathe 2s ease-in-out infinite; }
+
+/* ===== 图片灯箱 ===== */
+.lightbox {
+  position: fixed; inset: 0; z-index: 500;
+  display: grid; place-items: center; padding: var(--space-4);
+  background: hsl(229 35% 8% / 0.85); backdrop-filter: blur(8px);
+  animation: inkBleed var(--t-base) var(--ease-ink) both;
+  cursor: pointer;
+}
+.lightbox[hidden] { display: none; }
+.lightbox__img {
+  max-width: min(90vw, 1200px); max-height: 85vh;
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-float);
+  object-fit: contain; cursor: default;
+  animation: toastIn var(--t-slow) var(--ease-page) both;
+}
+.lightbox__close {
+  position: absolute; top: var(--space-4); right: var(--space-4);
+  width: 40px; height: 40px; display: grid; place-items: center;
+  border-radius: var(--radius-full);
+  color: hsl(0 0% 90%); background: hsl(0 0% 0% / 0.4);
+  border: 1px solid hsl(0 0% 100% / 0.15);
+  cursor: pointer;
+  transition: all var(--t-base) var(--ease-soft);
+}
+.lightbox__close:hover { color: white; background: hsl(0 0% 0% / 0.6); }
+.lightbox__close:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+
+/* dock 绘图按钮加载态 */
+.dock__btn--imagegen.is-loading { pointer-events: none; opacity: 0.6; }
+.dock__btn--imagegen.is-loading .ic { animation: breathe 2s ease-in-out infinite; }
+
 /* ===== composer：接管原生输入框 ===== */
 .composer {
   display: flex;
@@ -2028,6 +2100,7 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
           <button class="dock__btn" data-act="cook" data-tip="快捷烹饪"><span class="ic" data-i="pot"></span></button>
           <button class="dock__btn" data-act="water" data-tip="一键浇灌"><span class="ic" data-i="water"></span></button>
           <button class="dock__btn" data-act="rest" data-tip="小憩片刻"><span class="ic" data-i="bed"></span></button>
+          <button class="dock__btn dock__btn--imagegen" data-act="imagegen" data-tip="绘制场景" id="imagegenBtn" hidden><span class="ic" data-i="paintbrush"></span></button>
           <button class="dock__btn dock__btn--primary" data-act="endday" data-tip="归寝入眠"><span class="ic" data-i="moon"></span></button>
         </div>
       </footer>
@@ -2042,6 +2115,14 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
 
   <!-- 内联吐司（不脱离文档流过远，固定于书容器右上） -->
   <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <!-- 图片灯箱 -->
+  <div class="lightbox" id="imageLightbox" hidden aria-modal="true" role="dialog" aria-label="图片预览">
+    <img class="lightbox__img" id="lightboxImg" src="" alt="生成的场景图" />
+    <button class="lightbox__close" id="lightboxClose" type="button" aria-label="关闭预览">
+      <span class="ic" data-i="close"></span>
+    </button>
+  </div>
 
   <!-- 满足感粒子层（固定，不占文档流） -->
   <div class="burst-layer" id="burstLayer" aria-hidden="true"></div>
@@ -2427,6 +2508,8 @@ const ICONS = {
   /* ---------- 作物 ---------- */
   carrot:   '<path d="M12 21 9 8h6z"/><path d="M12 8c-1-2 0-4 2-5-1 2 0 3 1 4M12 8c1-2 3-2 4-1-2 0-2 2-2 3"/>',
   cabbage:  '<circle cx="12" cy="13" r="5.5"/><path d="M12 7.5c-2 0-3 2-3 4M12 7.5c2 0 3 2 3 4M8 11.5c-2 1-2 3-1 4M16 11.5c2 1 2 3 1 4"/>',
+
+  paintbrush:'<path d=\"M18.5 3.5l2 2-9.5 9.5-3 1 1-3z\"/><path d=\"M14.5 7.5l2 2\"/><path d=\"M9 15c-1.5.5-3 2-3.5 4.5 2.5-.5 4-2 4.5-3.5\"/>',
 
   /* ---------- 伪同层 / 视口 ---------- */
   expand:   '<path d="M9.5 4.5H4.5V9.5"/><path d="M14.5 4.5h5V9.5"/><path d="M4.5 14.5v5h5"/><path d="M19.5 14.5v5h-5"/>',
@@ -5923,6 +6006,218 @@ const Chat = (function () {
 window.Chat = Chat;
 
 
+/* === imagegen.js === */
+/* ============================================================
+   暮归旅店 · 文生图模块（ImageGen）
+   通过酒馆"前端助手"扩展的事件系统调用图像生成 API。
+   玩家手动触发 → 提取最新 AI 叙事 → 生成图片 → 嵌入气泡 + 灯箱
+   ============================================================ */
+const ImageGen = (function () {
+  'use strict';
+
+  const EVENT_REQUEST  = 'generate-image-request';
+  const EVENT_RESPONSE = 'generate-image-response';
+  const MAX_PROMPT_LEN = 500;
+  const TIMEOUT_MS     = 60000;
+
+  let busy = false;
+  let requestCounter = 0;
+  const imageCache = new Map(); // message_id → { data, prompt }
+
+  /* ---------- 环境检测 ---------- */
+  function hasEventApi() {
+    return typeof eventOn === 'function'
+        && typeof eventEmit === 'function'
+        && typeof eventRemoveListener === 'function';
+  }
+
+  /* ---------- Prompt 提取 ---------- */
+  function htmlToText(html) {
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    return (temp.textContent || temp.innerText || '').trim();
+  }
+
+  function extractPrompt() {
+    const messages = Chat.messages;
+    if (!messages || !messages.length) return { text: '', messageId: null };
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      if (msg.role === 'user' || Number(msg.message_id) === 0) continue;
+      const raw = msg.message || '';
+      if (!raw.trim()) continue;
+      const html = Extract.extractCleanContent(raw);
+      let text = htmlToText(html);
+      if (!text) continue;
+      if (text.length > MAX_PROMPT_LEN) text = text.slice(0, MAX_PROMPT_LEN);
+      return { text, messageId: msg.message_id };
+    }
+    return { text: '', messageId: null };
+  }
+
+  /* ---------- DOM 操作 ---------- */
+  function findBubbleBody(messageId) {
+    if (messageId == null) return null;
+    const bub = document.querySelector('.bub[data-mid="' + messageId + '"]');
+    return bub ? bub.querySelector('.bub__body') : null;
+  }
+
+  function showLoading(body) {
+    removeLoading(body);
+    const el = document.createElement('div');
+    el.className = 'imagegen-loading';
+    el.setAttribute('data-imagegen-loading', '');
+    el.innerHTML = '<span class="ic" data-i="paintbrush"></span><span>正在绘制场景……</span>';
+    if (window.Icon) Icon.render(el);
+    body.appendChild(el);
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  function removeLoading(body) {
+    if (!body) return;
+    const el = body.querySelector('[data-imagegen-loading]');
+    if (el) el.remove();
+  }
+
+  function doInjectImage(body, base64Data, prompt) {
+    if (body.querySelector('.imagegen-result')) return;
+    const figure = document.createElement('figure');
+    figure.className = 'imagegen-result';
+    const img = document.createElement('img');
+    img.src = 'data:image/png;base64,' + base64Data;
+    img.alt = '场景绘图';
+    img.loading = 'lazy';
+    img.addEventListener('click', function () { openLightbox(img.src); });
+    figure.appendChild(img);
+    if (prompt) {
+      const caption = document.createElement('figcaption');
+      const display = prompt.length > 60 ? prompt.slice(0, 60) + '…' : prompt;
+      caption.textContent = display;
+      figure.appendChild(caption);
+    }
+    body.appendChild(figure);
+    figure.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  function injectImage(body, base64Data, prompt, messageId) {
+    removeLoading(body);
+    imageCache.set(messageId, { data: base64Data, prompt: prompt });
+    doInjectImage(body, base64Data, prompt);
+  }
+
+  /** Chat 轮询重绘后，从缓存重新注入图片 */
+  function reinjectCachedImages() {
+    imageCache.forEach(function (entry, mid) {
+      const bub = document.querySelector('.bub[data-mid="' + mid + '"]');
+      if (!bub) { imageCache.delete(mid); return; }
+      const body = bub.querySelector('.bub__body');
+      if (!body) return;
+      doInjectImage(body, entry.data, entry.prompt);
+    });
+  }
+
+  /* ---------- 灯箱 ---------- */
+  function openLightbox(src) {
+    const box = document.getElementById('imageLightbox');
+    const img = document.getElementById('lightboxImg');
+    if (!box || !img) return;
+    img.src = src;
+    box.hidden = false;
+  }
+
+  function closeLightbox() {
+    const box = document.getElementById('imageLightbox');
+    if (box) box.hidden = true;
+    const img = document.getElementById('lightboxImg');
+    if (img) img.src = '';
+  }
+
+  /* ---------- 按钮状态 ---------- */
+  function setButtonLoading(on) {
+    const btn = document.getElementById('imagegenBtn');
+    if (!btn) return;
+    btn.classList.toggle('is-loading', !!on);
+    btn.disabled = !!on;
+  }
+
+  /* ---------- 核心：发起图像生成请求 ---------- */
+  function generate() {
+    if (busy) { toast('warn', '绘图进行中', '请等待当前绘图完成。'); return; }
+    if (!hasEventApi()) { toast('error', '无法绘图', '未检测到酒馆事件系统，请确认已安装前端助手扩展。'); return; }
+    if (Chat.generating || Chat.busy) { toast('warn', '请稍候', '主模型正在生成中，请等待完成后再绘图。'); return; }
+
+    var extracted = extractPrompt();
+    var prompt = extracted.text;
+    var messageId = extracted.messageId;
+    if (!prompt) { toast('warn', '无可用内容', '未找到可用的 AI 叙事内容来生成图片。'); return; }
+
+    var body = findBubbleBody(messageId);
+    if (!body) { toast('warn', '无可用气泡', '未找到可注入图片的消息气泡。'); return; }
+
+    var requestId = 'pastoral-img-' + Date.now() + '-' + (++requestCounter);
+    busy = true;
+    setButtonLoading(true);
+    showLoading(body);
+    toast('info', '开始绘图', '正在根据最新叙事生成场景图……');
+
+    var timeoutTimer = setTimeout(function () {
+      if (!busy) return;
+      eventRemoveListener(EVENT_RESPONSE, handler);
+      busy = false;
+      setButtonLoading(false);
+      removeLoading(findBubbleBody(messageId));
+      toast('error', '绘图超时', '图像生成请求超过 60 秒未响应，请检查前端助手扩展是否正常运行。');
+    }, TIMEOUT_MS);
+
+    var handler = function (responseData) {
+      if (!responseData || responseData.id !== requestId) return;
+      eventRemoveListener(EVENT_RESPONSE, handler);
+      clearTimeout(timeoutTimer);
+      busy = false;
+      setButtonLoading(false);
+      var currentBody = findBubbleBody(messageId);
+      if (responseData.success && responseData.imageData) {
+        if (currentBody) injectImage(currentBody, responseData.imageData, prompt, messageId);
+        else imageCache.set(messageId, { data: responseData.imageData, prompt: prompt });
+        toast('success', '绘图完成', '场景图已嵌入对话中，点击可放大查看。');
+      } else {
+        if (currentBody) removeLoading(currentBody);
+        toast('error', '绘图失败', responseData.error || '图像生成失败，未返回图片数据。');
+      }
+    };
+
+    eventOn(EVENT_RESPONSE, handler);
+    eventEmit(EVENT_REQUEST, { id: requestId, prompt: prompt, width: null, height: null });
+  }
+
+  /* ---------- 初始化 ---------- */
+  function init() {
+    var btn = document.getElementById('imagegenBtn');
+    if (!btn) return;
+
+    // 仅酒馆环境且事件 API 可用时显示按钮
+    if (hasEventApi()) btn.hidden = false;
+    else { btn.hidden = true; return; }
+
+    // 灯箱事件
+    var lightbox = document.getElementById('imageLightbox');
+    if (lightbox) lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeLightbox(); });
+    var closeBtn = document.getElementById('lightboxClose');
+    if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+    document.addEventListener('keydown', function (e) {
+      var box = document.getElementById('imageLightbox');
+      if (e.key === 'Escape' && box && !box.hidden) closeLightbox();
+    });
+
+    // Chat 重绘后重新注入缓存图片
+    window.addEventListener('pastoral:chat', reinjectCachedImages);
+  }
+
+  return { init: init, generate: generate, openLightbox: openLightbox, get busy() { return busy; } };
+})();
+window.ImageGen = ImageGen;
+
+
 /* === render.js === */
 /* ============================================================
    暮归旅店 · 数据驱动渲染器
@@ -7749,6 +8044,7 @@ window.Intro = Intro;
       case 'water': Chat.compose('浇灌所有农田'); break;
       case 'rest': Chat.compose('小憩片刻，恢复精力'); break;
       case 'endday': confirmEndday(); break;
+      case 'imagegen': if (window.ImageGen) ImageGen.generate(); break;
     }
   }
 
@@ -7942,6 +8238,9 @@ window.Intro = Intro;
 
     // 全局消息接管：400ms 高频轮询 + 气泡右键菜单 + composer
     Chat.init();
+
+    // 文生图模块
+    if (window.ImageGen) ImageGen.init();
 
     // 首屏渲染
     Render.state = MVU.getState();

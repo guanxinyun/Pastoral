@@ -153,6 +153,7 @@
           <button class="dock__btn" data-act="cook" data-tip="快捷烹饪"><span class="ic" data-i="pot"></span></button>
           <button class="dock__btn" data-act="water" data-tip="一键浇灌"><span class="ic" data-i="water"></span></button>
           <button class="dock__btn" data-act="rest" data-tip="小憩片刻"><span class="ic" data-i="bed"></span></button>
+          <button class="dock__btn dock__btn--imagegen" data-act="imagegen" data-tip="绘制场景" id="imagegenBtn" hidden><span class="ic" data-i="paintbrush"></span></button>
           <button class="dock__btn dock__btn--primary" data-act="endday" data-tip="归寝入眠"><span class="ic" data-i="moon"></span></button>
         </div>
       </footer>
@@ -167,6 +168,14 @@
 
   <!-- 内联吐司（不脱离文档流过远，固定于书容器右上） -->
   <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <!-- 图片灯箱 -->
+  <div class="lightbox" id="imageLightbox" hidden aria-modal="true" role="dialog" aria-label="图片预览">
+    <img class="lightbox__img" id="lightboxImg" src="" alt="生成的场景图" />
+    <button class="lightbox__close" id="lightboxClose" type="button" aria-label="关闭预览">
+      <span class="ic" data-i="close"></span>
+    </button>
+  </div>
 
   <!-- 满足感粒子层（固定，不占文档流） -->
   <div class="burst-layer" id="burstLayer" aria-hidden="true"></div>

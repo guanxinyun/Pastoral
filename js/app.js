@@ -471,6 +471,7 @@
       case 'water': Chat.compose('浇灌所有农田'); break;
       case 'rest': Chat.compose('小憩片刻，恢复精力'); break;
       case 'endday': confirmEndday(); break;
+      case 'imagegen': if (window.ImageGen) ImageGen.generate(); break;
     }
   }
 
@@ -664,6 +665,9 @@
 
     // 全局消息接管：400ms 高频轮询 + 气泡右键菜单 + composer
     Chat.init();
+
+    // 文生图模块
+    if (window.ImageGen) ImageGen.init();
 
     // 首屏渲染
     Render.state = MVU.getState();
