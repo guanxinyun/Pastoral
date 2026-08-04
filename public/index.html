@@ -967,7 +967,8 @@ body.is-immersive .journal__stream {
 }
 .journal__stream::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
 
-/* 一键到底浮动按钮（仅沉浸式剧情页，上滑离开底部时浮出） */
+/* 一键到底浮动按钮（游戏/沉浸模式，上滑离开底部时浮出）
+   按钮已移至 body 直接子级，避免 .book 的 bookIntro 动画 transform 破坏 position:fixed */
 .scroll-bottom-btn {
   position: fixed;
   right: 14px;
@@ -987,7 +988,7 @@ body.is-immersive .journal__stream {
   transform: translateY(8px);
   pointer-events: none;
   transition: opacity var(--t-base) var(--ease-soft), transform var(--t-base) var(--ease-soft), color var(--t-base) var(--ease-soft), border-color var(--t-base) var(--ease-soft), box-shadow var(--t-base) var(--ease-soft);
-  z-index: 20;
+  z-index: 50;
 }
 .scroll-bottom-btn .ic { --ic: 22px; width: 22px; height: 22px; }
 body.is-immersive .scroll-bottom-btn.is-visible,
@@ -997,6 +998,8 @@ body.is-game .scroll-bottom-btn.is-visible {
   transform: translateY(0);
   pointer-events: auto;
 }
+/* 手机沉浸模式切到经营页时隐藏按钮 */
+body.mobile-page--ledger .scroll-bottom-btn { display: none; }
 .scroll-bottom-btn:hover { color: var(--color-primary); border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber), var(--shadow-paper); }
 .scroll-bottom-btn:active { transform: translateY(1px); }
 .scroll-bottom-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
@@ -2029,13 +2032,13 @@ body.is-game .scroll-bottom-btn.is-visible {
         </div>
       </footer>
 
-      <!-- 一键到底：剧情页上滑后浮出，点击滚回最新消息 -->
-      <button class="scroll-bottom-btn" id="scrollBottomBtn" type="button" aria-label="回到底部" data-tip="回到底部">
-        <span class="ic" data-i="chevronD"></span>
-      </button>
-
     </section>
   </main>
+
+  <!-- 一键到底：剧情页上滑后浮出，点击滚回最新消息（必须在 .book 外部，否则 bookIntro 动画的 transform 会破坏 position:fixed） -->
+  <button class="scroll-bottom-btn" id="scrollBottomBtn" type="button" aria-label="回到底部" data-tip="回到底部">
+    <span class="ic" data-i="chevronD"></span>
+  </button>
 
   <!-- 内联吐司（不脱离文档流过远，固定于书容器右上） -->
   <div class="toast-stack" id="toastStack" aria-live="polite"></div>
@@ -7877,16 +7880,31 @@ window.Intro = Intro;
     const book = document.querySelector('.book');
     if (!btn || !stream || !page) return;
 
-    /* 判断当前实际的滚动容器：
-       - 桌面沉浸式 → #stream 内部滚动
-       - 手机沉浸式剧情页 → #pageRight 整页滚动
-       - 非沉浸式 (dynamic iframe) → .book 滚动 */
+    /* 判断当前实际的滚动容器（按模式优先级）：
+       1. dynamic iframe 非沉浸 → .book 整体滚动（子元素全部 overflow:visible）
+       2. 手机沉浸式剧情页 → #pageRight 整页滚动
+       3. 桌面沉浸式 → #stream 内部滚动
+       用 computed overflow 判断谁才是真正的滚动容器，避免误判 */
+    const hasOverflowScroll = (el) => {
+      if (!el) return false;
+      const s = getComputedStyle(el);
+      return /(auto|scroll)/.test(s.overflowY);
+    };
+
+    const isScrollable = (el) => el && el.scrollHeight - el.clientHeight > 1;
+
     const getScrollTarget = () => {
-      const isScrollable = (el) => el && el.scrollHeight - el.clientHeight > 1;
+      // dynamic iframe 非沉浸：.book 是唯一有 overflow-y:auto 的容器
+      if (book && hasOverflowScroll(book) && isScrollable(book)) return book;
+      // 桌面沉浸 / 酒馆固定高度：#stream 有 overflow-y:auto
+      if (hasOverflowScroll(stream) && isScrollable(stream)) return stream;
+      // 手机沉浸剧情页：#pageRight 滚动
+      if (hasOverflowScroll(page) && isScrollable(page)) return page;
+      // fallback：谁能滚就用谁
+      if (isScrollable(book)) return book;
       if (isScrollable(stream)) return stream;
       if (isScrollable(page)) return page;
-      if (book && isScrollable(book)) return book;
-      return stream; // fallback
+      return stream;
     };
 
     const nearBottom = (el) => !el || el.scrollHeight - el.scrollTop - el.clientHeight < 120;

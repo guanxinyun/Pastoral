@@ -157,13 +157,13 @@
         </div>
       </footer>
 
-      <!-- 一键到底：剧情页上滑后浮出，点击滚回最新消息 -->
-      <button class="scroll-bottom-btn" id="scrollBottomBtn" type="button" aria-label="回到底部" data-tip="回到底部">
-        <span class="ic" data-i="chevronD"></span>
-      </button>
-
     </section>
   </main>
+
+  <!-- 一键到底：剧情页上滑后浮出，点击滚回最新消息（必须在 .book 外部，否则 bookIntro 动画的 transform 会破坏 position:fixed） -->
+  <button class="scroll-bottom-btn" id="scrollBottomBtn" type="button" aria-label="回到底部" data-tip="回到底部">
+    <span class="ic" data-i="chevronD"></span>
+  </button>
 
   <!-- 内联吐司（不脱离文档流过远，固定于书容器右上） -->
   <div class="toast-stack" id="toastStack" aria-live="polite"></div>

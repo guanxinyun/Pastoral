@@ -602,16 +602,31 @@
     const book = document.querySelector('.book');
     if (!btn || !stream || !page) return;
 
-    /* 判断当前实际的滚动容器：
-       - 桌面沉浸式 → #stream 内部滚动
-       - 手机沉浸式剧情页 → #pageRight 整页滚动
-       - 非沉浸式 (dynamic iframe) → .book 滚动 */
+    /* 判断当前实际的滚动容器（按模式优先级）：
+       1. dynamic iframe 非沉浸 → .book 整体滚动（子元素全部 overflow:visible）
+       2. 手机沉浸式剧情页 → #pageRight 整页滚动
+       3. 桌面沉浸式 → #stream 内部滚动
+       用 computed overflow 判断谁才是真正的滚动容器，避免误判 */
+    const hasOverflowScroll = (el) => {
+      if (!el) return false;
+      const s = getComputedStyle(el);
+      return /(auto|scroll)/.test(s.overflowY);
+    };
+
+    const isScrollable = (el) => el && el.scrollHeight - el.clientHeight > 1;
+
     const getScrollTarget = () => {
-      const isScrollable = (el) => el && el.scrollHeight - el.clientHeight > 1;
+      // dynamic iframe 非沉浸：.book 是唯一有 overflow-y:auto 的容器
+      if (book && hasOverflowScroll(book) && isScrollable(book)) return book;
+      // 桌面沉浸 / 酒馆固定高度：#stream 有 overflow-y:auto
+      if (hasOverflowScroll(stream) && isScrollable(stream)) return stream;
+      // 手机沉浸剧情页：#pageRight 滚动
+      if (hasOverflowScroll(page) && isScrollable(page)) return page;
+      // fallback：谁能滚就用谁
+      if (isScrollable(book)) return book;
       if (isScrollable(stream)) return stream;
       if (isScrollable(page)) return page;
-      if (book && isScrollable(book)) return book;
-      return stream; // fallback
+      return stream;
     };
 
     const nearBottom = (el) => !el || el.scrollHeight - el.scrollTop - el.clientHeight < 120;
