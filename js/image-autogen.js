@@ -1,7 +1,7 @@
 /* ============================================================
    暮归旅店 · 自动文生图模块（ImageAutoGen）
-   从 AI 消息中提取 <image>...</image> 标签，自动触发图像生成，
-   图片缓存至 IndexedDB 持久化，DOM 重绘后自动重注入。
+   从 AI 消息中提取 <image>...</image> 标签，在对应位置显示
+   "生成图片"按钮，玩家点击后触发生成，图片缓存至 IndexedDB。
    ============================================================ */
 const ImageAutoGen = (function () {
   'use strict';
@@ -10,13 +10,14 @@ const ImageAutoGen = (function () {
   var EVENT_REQUEST  = 'generate-image-request';
   var EVENT_RESPONSE = 'generate-image-response';
   var TIMEOUT_MS     = 90000;
-  var CONCURRENT     = 2;
   var MAX_CACHE      = 200;
 
   /* slotId → { prompt, messageId, status, requestId, error } */
   var pending  = new Map();
   /* slotId → base64Data */
   var memCache = new Map();
+  /* slotId → prompt（注册表，用于按钮点击时取 prompt） */
+  var promptRegistry = new Map();
   var counter  = 0;
 
   /* ---------- FNV-1a 哈希（稳定 slotId） ---------- */
@@ -124,16 +125,9 @@ const ImageAutoGen = (function () {
       }
     }
 
-    // 注册到 pending（去重）
+    // 注册 prompt（不自动触发，等用户点击）
     blocks.forEach(function (b) {
-      if (memCache.has(b.slotId) || pending.has(b.slotId)) return;
-      pending.set(b.slotId, {
-        prompt: b.prompt,
-        messageId: b.messageId,
-        status: 'check-cache',
-        requestId: null,
-        error: null
-      });
+      promptRegistry.set(b.slotId, b.prompt);
     });
 
     return result;
@@ -142,12 +136,8 @@ const ImageAutoGen = (function () {
   /* ---------- 工具：构建图片 src ---------- */
   function toDataUri(raw) {
     if (!raw) return '';
-    // 已是完整 data URI
     if (raw.indexOf('data:') === 0) return raw;
-    // 已是完整 URL（http/blob）
     if (raw.indexOf('http') === 0 || raw.indexOf('blob:') === 0) return raw;
-    // 纯 base64 → 自动检测格式
-    // JPEG: /9j/  PNG: iVBOR  WebP: UklGR  GIF: R0lGO
     if (raw.indexOf('/9j/') === 0) return 'data:image/jpeg;base64,' + raw;
     if (raw.indexOf('UklGR') === 0) return 'data:image/webp;base64,' + raw;
     if (raw.indexOf('R0lGO') === 0) return 'data:image/gif;base64,' + raw;
@@ -170,6 +160,21 @@ const ImageAutoGen = (function () {
     slot.appendChild(figure);
   }
 
+  function showButton(slot, slotId) {
+    slot.innerHTML = '';
+    var btn = document.createElement('button');
+    btn.className = 'imgslot-btn';
+    btn.type = 'button';
+    btn.innerHTML = '<span class="ic" data-i="paintbrush"></span><span>生成图片</span>';
+    if (window.Icon) Icon.render(btn);
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      requestGenerate(slotId);
+    });
+    slot.appendChild(btn);
+  }
+
   function showLoading(slot) {
     slot.innerHTML = '';
     var el = document.createElement('div');
@@ -186,17 +191,20 @@ const ImageAutoGen = (function () {
     var msg = document.createElement('span');
     msg.textContent = '绘图失败：' + (message || '未知错误');
     el.appendChild(msg);
-    var retry = document.createElement('span');
+    var retry = document.createElement('button');
     retry.className = 'imgslot-retry';
+    retry.type = 'button';
     retry.textContent = '重试';
-    retry.addEventListener('click', function () {
-      var entry = pending.get(slotId);
-      if (entry) { entry.status = 'queued'; entry.error = null; triggerGeneration(); }
+    retry.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      requestGenerate(slotId);
     });
     el.appendChild(retry);
     slot.appendChild(el);
   }
 
+  /** 每次 DOM 重绘后，根据状态填充所有占位符 */
   function reinjectAll() {
     var slots = document.querySelectorAll('[data-imgslot]');
     slots.forEach(function (slot) {
@@ -218,11 +226,43 @@ const ImageAutoGen = (function () {
         return;
       }
 
-      // 生成失败 → 显示错误
+      // 生成失败 → 显示错误+重试
       if (entry && entry.status === 'error') {
         if (!slot.querySelector('.imgslot-error')) showError(slot, entry.error, slotId);
         return;
       }
+
+      // 默认：显示"生成图片"按钮（仅酒馆环境）
+      if (promptRegistry.has(slotId) && hasEventApi()) {
+        if (!slot.querySelector('.imgslot-btn')) showButton(slot, slotId);
+        return;
+      }
+    });
+  }
+
+  /* ---------- 用户点击按钮触发生成 ---------- */
+  function requestGenerate(slotId) {
+    if (!hasEventApi()) { toast('error', '无法绘图', '未检测到酒馆事件系统。'); return; }
+    var prompt = promptRegistry.get(slotId);
+    if (!prompt) { toast('warn', '无可用内容', '未找到该位置的绘图关键词。'); return; }
+
+    // 先检查 IndexedDB 缓存
+    loadFromDB(slotId).then(function (cached) {
+      if (cached) {
+        memCache.set(slotId, cached);
+        reinjectAll();
+        return;
+      }
+      // 未缓存 → 发起生成
+      pending.set(slotId, {
+        prompt: prompt,
+        messageId: null,
+        status: 'generating',
+        requestId: null,
+        error: null
+      });
+      reinjectAll();
+      fireRequest(slotId, pending.get(slotId));
     });
   }
 
@@ -237,7 +277,6 @@ const ImageAutoGen = (function () {
       entry.status = 'error';
       entry.error = '生成超时（90s）';
       reinjectAll();
-      triggerGeneration();
     }, TIMEOUT_MS);
 
     var handler = function (resp) {
@@ -256,75 +295,15 @@ const ImageAutoGen = (function () {
         toast('error', '绘图失败', entry.error);
       }
       reinjectAll();
-      triggerGeneration(); // 启动队列中下一个
     };
 
     eventOn(EVENT_RESPONSE, handler);
     eventEmit(EVENT_REQUEST, { id: requestId, prompt: entry.prompt, width: null, height: null });
   }
 
-  /* ---------- 带并发控制的批量触发 ---------- */
-  function triggerGeneration() {
-    // 守卫：主模型还在生成中，不触发图片生成
-    if (window.Chat && Chat.generating) return;
-    if (!hasEventApi()) return;
-
-    // 1. 先检查 IndexedDB 缓存（异步）
-    var toCheck = [];
-    pending.forEach(function (info, slotId) {
-      if (info.status === 'check-cache') toCheck.push(slotId);
-    });
-
-    if (toCheck.length) {
-      var checked = 0;
-      toCheck.forEach(function (slotId) {
-        loadFromDB(slotId).then(function (cached) {
-          if (cached) {
-            memCache.set(slotId, cached);
-            pending.delete(slotId);
-          } else {
-            var info = pending.get(slotId);
-            if (info) info.status = 'queued';
-          }
-          checked++;
-          if (checked === toCheck.length) {
-            reinjectAll();
-            startQueued();
-          }
-        });
-      });
-      return;
-    }
-
-    startQueued();
-  }
-
-  function startQueued() {
-    if (!hasEventApi()) return;
-
-    // 计算当前活跃数
-    var active = 0;
-    pending.forEach(function (e) { if (e.status === 'generating') active++; });
-
-    // FIFO 启动新请求
-    pending.forEach(function (info, slotId) {
-      if (active >= CONCURRENT) return;
-      if (info.status !== 'queued') return;
-      info.status = 'generating';
-      active++;
-      fireRequest(slotId, info);
-    });
-
-    reinjectAll();
-  }
-
   /* ---------- 初始化 ---------- */
   function init() {
-    window.addEventListener('pastoral:chat', function () {
-      reinjectAll();
-      triggerGeneration();
-    });
-    // 启动时清理过期缓存
+    window.addEventListener('pastoral:chat', reinjectAll);
     pruneCache();
   }
 

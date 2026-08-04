@@ -787,6 +787,29 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
 .imgslot:empty { display: none; }
 .imgslot .imagegen-loading { margin-top: 0; }
 .imgslot .imagegen-result { margin-top: 0; }
+
+/* "生成图片"按钮 */
+.imgslot-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 16px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-deep);
+  color: var(--color-text-muted);
+  font-family: var(--font-kai); font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast),
+              border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.imgslot-btn .ic { --ic: 14px; }
+.imgslot-btn:hover {
+  background: hsl(var(--color-primary) / 0.12);
+  border-color: hsl(var(--color-primary));
+  color: hsl(var(--color-primary));
+  box-shadow: var(--shadow-sm);
+}
+.imgslot-btn:active { transform: scale(0.97); }
+
 .imgslot-error {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 14px;
@@ -799,8 +822,12 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
 .imgslot-error .imgslot-retry {
   margin-left: auto;
   cursor: pointer;
-  text-decoration: underline;
+  padding: 2px 10px;
+  border: 1px solid hsl(0 40% 40%);
+  border-radius: var(--radius-full);
+  background: transparent;
   color: hsl(var(--color-primary));
+  font-family: var(--font-kai); font-size: var(--font-size-xs);
   transition: opacity var(--transition-fast);
 }
 .imgslot-error .imgslot-retry:hover { opacity: 0.7; }
