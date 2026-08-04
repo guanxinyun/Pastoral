@@ -59,12 +59,10 @@ const ImageAutoGen = (function () {
   }
 
   /**
-   * 触发 st-chatu8 的 LLM 图片生成流程：
-   * 1. 临时取消隐藏目标楼层（在视口内可见位置，让 st-chatu8 能正确读取）
-   * 2. 在目标 .mes_text 上触发 dblclick 事件
-   * 3. 等待 st-chatu8 的操作面板弹出
-   * 4. 自动点击"图片生成"按钮
-   * 5. 恢复隐藏
+   * 触发 st-chatu8 的操作面板（图片生成/角色设计等）：
+   * 1. 临时取消隐藏目标楼层
+   * 2. 桌面端 → dblclick；移动端 → 模拟三连击 touchstart/touchend
+   * 3. 等待面板弹出后恢复隐藏（面板由用户自行操作）
    */
   function triggerFloorLLMImageGen(messageId) {
     var d = parentDoc();
@@ -83,7 +81,7 @@ const ImageAutoGen = (function () {
     try { computedDisplay = parentWin.getComputedStyle(mesEl).display; } catch (e) { /* cross-origin */ }
     var wasHidden = mesEl.style.display === 'none' || computedDisplay === 'none';
 
-    // 临时取消隐藏 — 放在视口中央（不是 -9999px），让 getBoundingClientRect 返回有效坐标
+    // 临时取消隐藏 — 放在视口中央，让 getBoundingClientRect 返回有效坐标
     if (wasHidden) {
       mesEl.style.setProperty('display', 'block', 'important');
       mesEl.style.setProperty('position', 'fixed', 'important');
@@ -105,53 +103,77 @@ const ImageAutoGen = (function () {
       });
     }
 
-    // 触发 dblclick — 使用视口中央坐标
+    // 计算坐标
+    var rect = mesText.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+    if (!cx || !cy || cx < 0 || cy < 0) {
+      cx = (parentWin.innerWidth || 800) / 2;
+      cy = (parentWin.innerHeight || 600) / 2;
+    }
+
+    // 检测移动端
+    var isMobile = ('ontouchstart' in parentWin) || (parentWin.navigator && parentWin.navigator.maxTouchPoints > 0);
+
     try {
-      var rect = mesText.getBoundingClientRect();
-      var cx = rect.left + rect.width / 2;
-      var cy = rect.top + rect.height / 2;
-      // 如果坐标异常（元素太小），用视口中央
-      if (!cx || !cy || cx < 0 || cy < 0) {
-        cx = (parentWin.innerWidth || 800) / 2;
-        cy = (parentWin.innerHeight || 600) / 2;
+      if (isMobile) {
+        // 移动端：模拟三连击 touchstart → touchend × 3
+        // st-chatu8 要求 timeSinceLastTap > 0 且 < 350ms，所以需要间隔发送
+        var fireTap = function (n) {
+          var touchObj = new Touch({
+            identifier: Date.now(),
+            target: mesText,
+            clientX: cx, clientY: cy,
+            pageX: cx, pageY: cy
+          });
+          mesText.dispatchEvent(new TouchEvent('touchstart', {
+            bubbles: true, cancelable: true, view: parentWin,
+            touches: [touchObj], targetTouches: [touchObj], changedTouches: [touchObj]
+          }));
+          mesText.dispatchEvent(new TouchEvent('touchend', {
+            bubbles: true, cancelable: true, view: parentWin,
+            touches: [], targetTouches: [], changedTouches: [touchObj]
+          }));
+          if (n < 3) {
+            setTimeout(function () { fireTap(n + 1); }, 50);
+          }
+        };
+        fireTap(1);
+      } else {
+        // 桌面端：dblclick
+        mesText.dispatchEvent(new MouseEvent('dblclick', {
+          bubbles: true, cancelable: true, view: parentWin,
+          clientX: cx, clientY: cy
+        }));
       }
-      var evt = new MouseEvent('dblclick', {
-        bubbles: true, cancelable: true, view: parentWin,
-        clientX: cx, clientY: cy
-      });
-      mesText.dispatchEvent(evt);
     } catch (e) {
       toast('error', '触发失败', String(e && e.message || e));
       restoreHidden();
       return;
     }
 
-    // 等待 st-chatu8 的操作面板弹出，然后自动点击"图片生成"
+    // 等待面板弹出后延迟恢复隐藏（不自动点击，让用户自行选择操作）
     var attempts = 0;
-    var maxAttempts = 20; // 最多等 2 秒
+    var maxAttempts = 20;
     var pollTimer = setInterval(function () {
       attempts++;
       var bubble = d.querySelector('.st-chatu8-click-trigger-bubble');
       if (bubble) {
         clearInterval(pollTimer);
-        // 找到"图片生成"按钮并点击
-        var btns = bubble.querySelectorAll('button');
-        var found = false;
-        for (var i = 0; i < btns.length; i++) {
-          var txt = (btns[i].textContent || '').trim();
-          if (txt.indexOf('图片生成') >= 0) {
-            btns[i].click();
-            found = true;
-            break;
+        toast('info', 'LLM 生图', '第 ' + messageId + ' 楼的操作面板已打开。');
+        // 面板关闭后再恢复隐藏
+        var closeAttempts = 0;
+        var closeTimer = setInterval(function () {
+          closeAttempts++;
+          if (!d.querySelector('.st-chatu8-click-trigger-bubble')) {
+            clearInterval(closeTimer);
+            setTimeout(restoreHidden, 2000);
           }
-        }
-        if (!found) {
-          toast('warn', '面板异常', '未在操作面板中找到"图片生成"按钮。');
-        } else {
-          toast('info', 'LLM 生图', '已触发第 ' + messageId + ' 楼的 LLM 图片生成。');
-        }
-        // 延迟恢复隐藏（给 st-chatu8 的 handlePromptRequest 时间读取 DOM）
-        setTimeout(restoreHidden, 5000);
+          if (closeAttempts > 300) { // 30 秒超时
+            clearInterval(closeTimer);
+            restoreHidden();
+          }
+        }, 100);
         return;
       }
       if (attempts >= maxAttempts) {
