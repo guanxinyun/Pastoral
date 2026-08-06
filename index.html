@@ -5345,7 +5345,22 @@ const MVU = {
       if (typeof getLastMessageId !== 'function') return false;
       throw new Error('MVU 写回接口未就绪' + (this.initError ? '：' + (this.initError.message || this.initError) : ''));
     }
-    const target = messageId == null ? this.latestMessageId() : messageId;
+    let target = messageId == null ? this.latestMessageId() : messageId;
+    // 验证目标楼层仍然存在；第二 API 耗时期间聊天可能已变化
+    if (typeof getChatMessages === 'function' && Number.isFinite(Number(target))) {
+      try {
+        const found = getChatMessages(Number(target));
+        if (!Array.isArray(found) || found.length === 0) {
+          const fallback = this.latestMessageId();
+          console.warn('[Pastoral][MVU]', '楼层回退', { original: target, fallback });
+          target = fallback;
+        }
+      } catch (e) {
+        const fallback = this.latestMessageId();
+        console.warn('[Pastoral][MVU]', '楼层验证异常，回退', { original: target, fallback, error: e && e.message || e });
+        target = fallback;
+      }
+    }
     await this.api.replaceMvuData(data, { type: 'message', message_id: target });
     this.rememberValid(data, target);
     return true;
@@ -5879,6 +5894,28 @@ const ApiEngine = (function () {
     return Array.isArray(found) && found[0] ? found[0] : null;
   }
 
+  /** 验证楼层号仍然存在；第二 API 耗时期间聊天可能已变化。 */
+  function validatedMessageId(messageId) {
+    // 先用 getChatMessages 确认该楼层仍然存在
+    if (typeof getChatMessages === 'function') {
+      try {
+        const found = getChatMessages(messageId);
+        if (Array.isArray(found) && found.length > 0) return messageId;
+      } catch (e) { /* 楼层号超出范围，走回退 */ }
+    }
+    // 回退到当前最新楼层
+    if (typeof getLastMessageId === 'function') {
+      try {
+        const fallback = Number(getLastMessageId());
+        if (Number.isFinite(fallback) && fallback >= 0) {
+          log(PREFIX_SECOND, '楼层回退', { original: messageId, fallback });
+          return fallback;
+        }
+      } catch (e) { /* ignore */ }
+    }
+    return messageId;
+  }
+
   async function applyUpdate(messageId, original, baseline, generated) {
     if (typeof Mvu === 'undefined' || typeof Mvu.parseMessage !== 'function' || typeof Mvu.replaceMvuData !== 'function') {
       throw new Error('MVU 接口未就绪');
@@ -5888,8 +5925,9 @@ const ApiEngine = (function () {
     if (!parsed) throw new Error('MVU 未解析出有效变量更新');
     const merged = Extract.replaceUpdateVariable(original, generated.updateTag);
     if (typeof setChatMessages !== 'function') throw new Error('当前环境无法写回聊天楼层');
-    await setChatMessages([{ message_id: messageId, message: merged }], { refresh: 'none' });
-    await Mvu.replaceMvuData(parsed, { type: 'message', message_id: messageId });
+    const safeId = validatedMessageId(messageId);
+    await setChatMessages([{ message_id: safeId, message: merged }], { refresh: 'none' });
+    await Mvu.replaceMvuData(parsed, { type: 'message', message_id: safeId });
     return merged;
   }
 
