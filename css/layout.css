@@ -632,7 +632,7 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
 .scroll-top-btn {
   position: fixed;
   right: 14px;
-  bottom: 136px;
+  bottom: 148px;
   width: 44px;
   height: 44px;
   display: grid;
@@ -863,7 +863,7 @@ body.mobile-page--ledger .scroll-top-btn { display: none; }
   margin-top: var(--space-3);
   font-size: var(--font-size-xs);
   padding: 4px 12px;
-  opacity: 0.55;
+  opacity: 0.75;
   transition: opacity var(--transition-fast);
 }
 .bub__body > .llm-gen-btn:hover { opacity: 1; }

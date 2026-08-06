@@ -160,24 +160,9 @@ const ImageAutoGen = (function () {
       var bubble = d.querySelector('.st-chatu8-click-trigger-bubble');
       if (bubble) {
         clearInterval(pollTimer);
-        // 沉浸模式下临时降低 iframe z-index，让父窗口面板可见
-        var frame = null;
-        try { frame = window.frameElement; } catch (e) { /* cross-origin */ }
-        if (!frame) {
-          try {
-            var frames = d.querySelectorAll('iframe');
-            for (var fi = 0; fi < frames.length; fi++) {
-              if (frames[fi].contentWindow === window) { frame = frames[fi]; break; }
-            }
-          } catch (e) { /* ignore */ }
-        }
-        var hadZIndex = false;
-        var origZIndex = '';
-        if (frame && frame.classList.contains('pastoral-immersive')) {
-          hadZIndex = true;
-          origZIndex = frame.style.zIndex || '';
-          frame.style.setProperty('z-index', '1', 'important');
-        }
+        // 沉浸模式下临时退出沉浸，让父窗口面板可见
+        var wasImmersive = window.Host && Host.immersive;
+        if (wasImmersive) Host.setImmersive(false);
         toast('info', 'LLM 生图', '第 ' + messageId + ' 楼的操作面板已打开。');
         // 面板关闭后再恢复隐藏
         var closeAttempts = 0;
@@ -185,19 +170,13 @@ const ImageAutoGen = (function () {
           closeAttempts++;
           if (!d.querySelector('.st-chatu8-click-trigger-bubble')) {
             clearInterval(closeTimer);
-            // 恢复 iframe z-index
-            if (hadZIndex && frame) {
-              if (origZIndex) frame.style.zIndex = origZIndex;
-              else frame.style.removeProperty('z-index');
-            }
+            // 恢复沉浸模式
+            if (wasImmersive && window.Host) Host.setImmersive(true);
             setTimeout(restoreHidden, 2000);
           }
           if (closeAttempts > 300) { // 30 秒超时
             clearInterval(closeTimer);
-            if (hadZIndex && frame) {
-              if (origZIndex) frame.style.zIndex = origZIndex;
-              else frame.style.removeProperty('z-index');
-            }
+            if (wasImmersive && window.Host) Host.setImmersive(true);
             restoreHidden();
           }
         }, 100);
