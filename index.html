@@ -6156,6 +6156,24 @@ const Chat = (function () {
 
     el.appendChild(meta);
     el.appendChild(body);
+
+    // AI 气泡（非 0 楼）：直接内联 LLM 生图按钮，不依赖后续注入
+    if (role === 'ai' && Number(msg.message_id) > 0 && hasApi()) {
+      const llmBtn = document.createElement('button');
+      llmBtn.className = 'imgslot-btn imgslot-btn--llm llm-gen-btn';
+      llmBtn.type = 'button';
+      llmBtn.innerHTML = '<span class="ic" data-i="sparkles"></span><span>LLM生图</span>';
+      if (window.Icon) Icon.render(llmBtn);
+      llmBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (window.ImageAutoGen && ImageAutoGen.triggerFloorLLMImageGen) {
+          ImageAutoGen.triggerFloorLLMImageGen(Number(msg.message_id));
+        }
+      });
+      body.appendChild(llmBtn);
+    }
+
     return el;
   }
 
