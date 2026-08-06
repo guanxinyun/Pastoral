@@ -199,7 +199,22 @@ const MVU = {
       if (typeof getLastMessageId !== 'function') return false;
       throw new Error('MVU 写回接口未就绪' + (this.initError ? '：' + (this.initError.message || this.initError) : ''));
     }
-    const target = messageId == null ? this.latestMessageId() : messageId;
+    let target = messageId == null ? this.latestMessageId() : messageId;
+    // 验证目标楼层仍然存在；第二 API 耗时期间聊天可能已变化
+    if (typeof getChatMessages === 'function' && Number.isFinite(Number(target))) {
+      try {
+        const found = getChatMessages(Number(target));
+        if (!Array.isArray(found) || found.length === 0) {
+          const fallback = this.latestMessageId();
+          console.warn('[Pastoral][MVU]', '楼层回退', { original: target, fallback });
+          target = fallback;
+        }
+      } catch (e) {
+        const fallback = this.latestMessageId();
+        console.warn('[Pastoral][MVU]', '楼层验证异常，回退', { original: target, fallback, error: e && e.message || e });
+        target = fallback;
+      }
+    }
     await this.api.replaceMvuData(data, { type: 'message', message_id: target });
     this.rememberValid(data, target);
     return true;
