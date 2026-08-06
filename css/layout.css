@@ -628,6 +628,41 @@ body.mobile-page--ledger .scroll-bottom-btn { display: none; }
 .scroll-bottom-btn:active { transform: translateY(1px); }
 .scroll-bottom-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
 
+/* 一键到顶浮动按钮（与到底按钮配对，在顶部时隐藏） */
+.scroll-top-btn {
+  position: fixed;
+  right: 14px;
+  bottom: 136px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface));
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-paper);
+  color: var(--color-text-soft);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity var(--t-base) var(--ease-soft), transform var(--t-base) var(--ease-soft), color var(--t-base) var(--ease-soft), border-color var(--t-base) var(--ease-soft), box-shadow var(--t-base) var(--ease-soft);
+  z-index: 50;
+}
+.scroll-top-btn .ic { --ic: 22px; width: 22px; height: 22px; }
+body.is-immersive .scroll-top-btn.is-visible,
+body.is-game .scroll-top-btn.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+body.mobile-page--ledger .scroll-top-btn { display: none; }
+.scroll-top-btn:hover { color: var(--color-primary); border-color: var(--color-primary); box-shadow: var(--shadow-glow-amber), var(--shadow-paper); }
+.scroll-top-btn:active { transform: translateY(-1px); }
+.scroll-top-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+
 /* 气泡 */
 .bub {
   position: relative;

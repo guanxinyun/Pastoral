@@ -20,6 +20,7 @@
   let keyboardWasOpen = false;
   let mobileBaselineHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
   let updateScrollBottom = () => {};
+  let updateScrollTop = () => {};
 
   function isMobileViewport() { return window.innerWidth < 900; }
 
@@ -67,6 +68,7 @@
       const target = pages[mobilePage];
       if (target) target.scrollTop = mobileScrollPositions[mobilePage];
       updateScrollBottom();
+      updateScrollTop();
     });
     queueMobileViewportSync();
   }
@@ -654,6 +656,54 @@
     requestAnimationFrame(sync);
   }
 
+  /* ---------- 剧情页：一键到顶 ---------- */
+  function setupScrollTop() {
+    const btn = document.getElementById('scrollTopBtn');
+    const stream = document.getElementById('stream');
+    const page = document.getElementById('pageRight');
+    const book = document.querySelector('.book');
+    if (!btn || !stream || !page) return;
+
+    const hasOverflowScroll = (el) => {
+      if (!el) return false;
+      const s = getComputedStyle(el);
+      return /(auto|scroll)/.test(s.overflowY);
+    };
+    const isScrollable = (el) => el && el.scrollHeight - el.clientHeight > 1;
+    const getScrollTarget = () => {
+      if (book && hasOverflowScroll(book) && isScrollable(book)) return book;
+      if (hasOverflowScroll(stream) && isScrollable(stream)) return stream;
+      if (hasOverflowScroll(page) && isScrollable(page)) return page;
+      if (isScrollable(book)) return book;
+      if (isScrollable(stream)) return stream;
+      if (isScrollable(page)) return page;
+      return stream;
+    };
+
+    const nearTop = (el) => !el || el.scrollTop < 120;
+
+    const sync = () => {
+      const target = getScrollTarget();
+      btn.classList.toggle('is-visible', !nearTop(target));
+    };
+
+    const toTop = () => {
+      const target = getScrollTarget();
+      if (target && target.scrollHeight - target.clientHeight > 1) {
+        target.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      btn.classList.remove('is-visible');
+    };
+
+    stream.addEventListener('scroll', sync, { passive: true });
+    page.addEventListener('scroll', sync, { passive: true });
+    if (book) book.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('pastoral:chat', () => requestAnimationFrame(sync));
+    btn.addEventListener('click', toTop);
+    updateScrollTop = sync;
+    requestAnimationFrame(sync);
+  }
+
   /* ---------- 初始化 ---------- */
   async function init() {
     Icon.render(document);
@@ -720,6 +770,7 @@
     }
     queueMobileViewportSync();
     setupScrollBottom();
+    setupScrollTop();
     const setBtn = $('#settingsBtn'); if (setBtn) setBtn.addEventListener('click', () => openSettings());
     window.addEventListener('pastoral:open-settings', (event) => openSettings(event.detail || { page: 'api' }));
 
@@ -737,6 +788,7 @@
       syncFullscreenBtn();
       syncMobileImmersiveState(entering);
       requestAnimationFrame(updateScrollBottom);
+      requestAnimationFrame(updateScrollTop);
     });
 
     // 1s 状态轮询（对话流由 Chat 以 400ms 独立轮询）

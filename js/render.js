@@ -478,7 +478,7 @@
           return `<div class="recipe" data-recipe="${name}">
             <div class="recipe__head"><span class="ic" data-i="pot" style="--ic:16px;color:var(--color-primary)"></span><span class="recipe__name">${name}</span><span class="pill pill--amber">难度 ${diff}</span></div>
             <div class="recipe__mats">材料：${ResourceIcon.materialMarkup((r && r.材料) || '随性发挥', Render.state)}</div>
-            <div class="recipe__foot"><span class="card__sub">设施 · ${fac}</span><span class="num" style="color:var(--color-primary)">${price} 银</span></div>
+            <div class="recipe__foot"><span class="card__sub">设施 · ${fac}</span><span class="num" style="color:var(--color-primary)">${Money.formatCopper(price)}</span></div>
           </div>`;
         }).join('')
       : emptyState('scroll', '尚无食谱', '获得配方后将显示于此。');
@@ -528,7 +528,7 @@
           ${dimBars(v && v.影响力, 10)}
           <div class="row row--between" style="margin-top:4px">
             <span class="card__sub">产出 · ${produce}${cd > 0 ? `（${cd}日）` : (ready ? '（就绪）' : '')}</span>
-            <span class="card__sub">维护 · <span class="num">${maint} 银</span></span>
+            <span class="card__sub">维护 · <span class="num">${Money.formatCopper(maint)}</span></span>
           </div>
           ${rune && rune !== '无' ? `<div class="row" style="margin-top:4px"><span class="pill pill--mint"><span class="ic" data-i="sparkle" style="--ic:12px"></span>符文 · ${rune}</span></div>` : ''}
         </div>`;
@@ -547,7 +547,7 @@
           <div class="card__sub" style="margin-bottom:4px">${(v && v.功能描述) || ''}</div>
           ${dimBars(v && v.影响力, 10)}
           ${cond ? `<div class="cond-list">解锁：${cond}</div>` : ''}
-          <div class="cost-list"><span class="cost-item">${cash} 银</span><span class="cost-item">${mat}</span></div>
+          <div class="cost-list"><span class="cost-item">${Money.formatCopper(cash)}</span><span class="cost-item">${mat}</span></div>
           ${neg ? `<div class="card__sub" style="color:var(--color-danger);margin-top:4px">⚠ ${neg}</div>` : ''}
           <button class="btn btn--primary btn--sm btn--block" data-build-btn="${name}" style="margin-top:6px"><span class="ic btn__icon" data-i="hammer"></span>建造</button>
         </div>`;
@@ -906,7 +906,7 @@
       html += seeds.length ? `<div class="seed-catalog">${seeds.map(([name, seed]) => {
         const cropName = cropIconName(name);
         const seedIcon = ResourceIcon.markup(name, { className: 'building__icon', label: `${cropName}种子及同名资源`, group: '资源' });
-        return `<article class="seed-card"><div class="building__head">${seedIcon}<span class="building__name">${esc(name)}</span><span class="pill ${seed.类型 === '魔法' ? 'pill--mint' : ''}">${esc(seed.类型 || '普通')}</span></div><div class="card__sub">季节 · ${esc((seed.可种季节 || []).join('、') || '未限定')}　生长 · ${num(seed.生长天数, 0)} 日　种子价 · ${num(seed.种子价, 0)}</div><div class="quest-card__desc">产出 · ${esc(seed.产出 || '—')}　获取 · ${esc(seed.获取方式 || '—')}</div><div class="card__sub">连续收获 · ${seed.可连续收获 ? `是 / 间隔 ${num(seed.收获间隔天数, 0)} 日 / 上限 ${num(seed.收获次数上限, 1)}${seed.永续 ? ' / 永续' : ''}` : '否'}</div>${seed.特殊条件 ? `<div class="card__sub">条件 · ${esc(seed.特殊条件)}</div>` : ''}${seed.产出效果 ? `<div class="card__sub">效果 · ${esc(seed.产出效果)}</div>` : ''}${seed.描述 ? `<p class="quest-card__desc">${esc(seed.描述)}</p>` : ''}<button class="btn btn--sm" data-seed-use="${esc(name)}">用于播种</button></article>`;
+        return `<article class="seed-card"><div class="building__head">${seedIcon}<span class="building__name">${esc(name)}</span><span class="pill ${seed.类型 === '魔法' ? 'pill--mint' : ''}">${esc(seed.类型 || '普通')}</span></div><div class="card__sub">季节 · ${esc((seed.可种季节 || []).join('、') || '未限定')}　生长 · ${num(seed.生长天数, 0)} 日　种子价 · ${Money.formatCopper(num(seed.种子价, 0))}</div><div class="quest-card__desc">产出 · ${esc(seed.产出 || '—')}　获取 · ${esc(seed.获取方式 || '—')}</div><div class="card__sub">连续收获 · ${seed.可连续收获 ? `是 / 间隔 ${num(seed.收获间隔天数, 0)} 日 / 上限 ${num(seed.收获次数上限, 1)}${seed.永续 ? ' / 永续' : ''}` : '否'}</div>${seed.特殊条件 ? `<div class="card__sub">条件 · ${esc(seed.特殊条件)}</div>` : ''}${seed.产出效果 ? `<div class="card__sub">效果 · ${esc(seed.产出效果)}</div>` : ''}${seed.描述 ? `<p class="quest-card__desc">${esc(seed.描述)}</p>` : ''}<button class="btn btn--sm" data-seed-use="${esc(name)}">用于播种</button></article>`;
       }).join('')}</div>` : emptyState('grain', '种子图鉴为空', '获得种子资料后会在这里记录。');
       container.innerHTML = html; Icon.render(container); decorateIcons(container); bindFarmActions(container);
     } else {

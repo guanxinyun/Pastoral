@@ -23,6 +23,7 @@ const ICONS = {
   lock:     '<rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
   chevronR: '<path d="M9.5 5l7 7-7 7"/>',
   chevronD: '<path d="M5 9.5l7 7 7-7"/>',
+  chevronU: '<path d="M5 14.5l7-7 7 7"/>',
 
   /* ---------- 状态 / 资源 ---------- */
   coin:     '<circle cx="12" cy="12" r="8"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2.1.5 3L12 18.4 9.4 19.9l.5-3-2.2-2.1 3-.4z"/>',
