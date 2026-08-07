@@ -198,6 +198,8 @@ async function requestVariable({ id, prompt, api }) {
 
 每次网络尝试最多做一次格式纠正；`maxRetries=N` 表示总网络尝试最多 `N+1` 次。超时按唯一 `generation_id` 尝试 `stopGenerationById`，但停止失败仍按超时处理。API Key 不进入提示词、日志或状态事件。
 
+`generate` / `generateRaw` 的返回可能是 `string`，也可能是 `{ content, tool_calls }`。变量任务需要纯文本：`typeof result === 'string'` 直接用；`result.content` 为字符串则取它；只有 `tool_calls` 而没有正文时明确抛错（"目标模型返回了 tool_calls 而不是文本"），不要把 tool_calls 当正文或退化成"空响应"这类无用错误。连接测试用辅助接口 `getModelList({ apiurl, key })`，返回模型名字符串数组；当前酒馆版本不提供该函数时抛错，Key 同样不进日志。
+
 ---
 
 ## 6. 固定预设
@@ -235,6 +237,17 @@ function launchWithFixedPreset(targetName, generateConfig) {
 
 锁只覆盖约 3 秒的全局预设切换/捕获窗口；网络 Promise 必须在锁外等待。任务只通过 `user_input` 发送一次，不同时使用 `injects`。
 
+### 深度注入与作者注释
+
+迁移推荐默认 `blockDepthEntries: false`，即设置页默认**不勾选**"屏蔽世界书按深度注入条目与作者注释"。只有显式 `true` 才生成覆盖：
+
+```javascript
+// 仅 blockDepthEntries === true 时发送
+{ chat_history: { with_depth_entries: false, author_note: '' } }
+```
+
+`chatHistory`（none 模式 `ordered_prompts` 是否加入 `chat_history`）与 `blockDepthEntries`（是否强制关闭深度世界书条目和作者注释）是两个独立开关，不要混用。跨宿主实测表明不勾选时深度条目和作者注释更可能按预期注入；只有确认污染变量任务后才允许玩家主动勾选屏蔽。最终行为必须在目标设备上用真实请求内容核验。旧设置首次加载迁移到版本 2 并采用 `false` 默认。
+
 ---
 
 ## 7. 伪零层
@@ -259,6 +272,8 @@ function allMessages() {
 同源时父页只隐藏非 0 楼视觉；原始聊天记录仍存在。聚合气泡保留 `data-message-id`，编辑/删除始终使用真实 ID，0 楼禁止编辑删除。跨源访问父文档失败时只放弃视觉接管，不影响卡内 UI。
 
 主剧情推荐 `/send 文本` 后 `/trigger await=true`，结合消息事件与短轮询确认 `id > beforeId` 的新 AI 楼；不能只依赖单一“生成结束”事件。
+
+重绘去重用轻量哈希：`hashOf(list) = 消息数 + '_' + 最后一楼字符数 + '_' + (生成中 ? 1 : 0)`，与上次相同就跳过 DOM 重绘。注意它比较的是末楼**字符数**而非内容，所以同长度编辑不会触发刷新——编辑、发送、触发等动作必须显式把 `lastHash` 置 `null` 来强制下次重绘。新楼确认一律用 `id > beforeId`，不要用消息数或长度比较。
 
 ---
 
@@ -438,6 +453,7 @@ function extractAndReplace(rawText, messageId) {
 - 三套入口都只在 `hasEventApi()` 为真（酒馆环境）时显示；LLM 生图还要求父文档可访问。
 - 图片是纯显示资产，清除站点数据会丢失；IndexedDB 不可用时自动占位退化为每次重生成，不阻断。
 - 不要把 prompt、imageData 写进 MVU、消息原文或日志。
+- 反馈统一走 `toast(type, title, msg)`（type 为 info/success/warn/error），不用 `alert`。
 
 ---
 
@@ -465,6 +481,7 @@ ok(publicHtml === rootHtml, '根目录与 Vercel 构建产物完全一致');
 - [ ] 原文、选项、变量标签先分流，显示正则只处理正文。
 - [ ] 不可信 HTML 经过成熟 Sanitizer。
 - [ ] 聚合气泡保留真实 `message_id`，0 楼不可编辑删除。
+- [ ] 重绘哈希比较末楼字符数，编辑/发送/触发显式置 `lastHash=null` 强制刷新；新楼用 `id > beforeId` 确认。
 
 ### MVU 与补丁
 
@@ -479,6 +496,8 @@ ok(publicHtml === rootHtml, '根目录与 Vercel 构建产物完全一致');
 - [ ] 主生成前 baseline 不被异步修改。
 - [ ] 固定预设等待 1 秒、捕获 2 秒，并恢复名称和 `in_use`。
 - [ ] 网络等待不占预设事务锁，任务只发送一次。
+- [ ] `generate`/`generateRaw` 返回 `tool_calls`-only 时判失败；`getModelList` 不可用时抛错。
+- [ ] `blockDepthEntries` 默认 `false`，与 `chatHistory` 独立；只有 `true` 才发深度覆盖。
 
 ### 移动与本地资产
 
