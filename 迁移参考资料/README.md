@@ -339,7 +339,126 @@ async function renderCustomIcon(blob, container, fallbackHtml) {
 
 ---
 
-## 10. 验收清单
+## 10. 图标系统
+
+全站图标是 `icons.js` 里的 `ICONS` 字典，不是外部图片文件。每项是 SVG 路径片段（`viewBox="0 0 24 24"`、`stroke=currentColor`、手绘线稿风格），通过 `Icon.render` 扫描注入：
+
+```javascript
+const Icon = {
+  get(name) {
+    const m = ICONS[name] || ICONS.sparkle; // 未知名称回退 sparkle
+    return `<svg viewBox="0 0 24 24" class="icon-fill" aria-hidden="true" focusable="false">${m}</svg>`;
+  },
+  render(root = document) {
+    root.querySelectorAll('[data-i]').forEach((el) => {
+      el.innerHTML = Icon.get(el.dataset.i);
+    });
+  },
+  set(el, name) { el.dataset.i = name; el.innerHTML = Icon.get(name); },
+};
+```
+
+HTML 里只写占位 `<span class="ic" data-i="paintbrush"></span>`，初始化和每次动态插入 DOM 后都要调用 `Icon.render(container)`。`stroke=currentColor` 让颜色继承 CSS；`.icon-fill` 在父级 `:hover` 时触发墨水填充。运行时新建的按钮（文生图占位、LLM 生图按钮等）必须在挂载后补一次 `Icon.render`，否则占位空白。迁移时要么照搬 `ICONS` 字典与扫描器，要么换用自己的图标体系但保留 `data-i` 契约，否则按钮旁的图标会整片丢失。
+
+---
+
+## 11. 沉浸模式
+
+`Host.setImmersive(on)` 是宿主显示模式开关，影响 iframe、父文档和原生全屏三层：
+
+```javascript
+function setImmersive(on) {
+  immersive = !!on;
+  const frame = selfFrame();      // iframe 自身
+  const d = parentDoc();           // 同源父文档，跨源为 null
+  if (frame) frame.classList.toggle('pastoral-immersive', immersive);
+  if (d && d.body) d.body.classList.toggle('pastoral-immersive-lock', immersive);
+  document.documentElement.classList.toggle('is-immersive', immersive);
+  document.body.classList.toggle('is-immersive', immersive);
+  immersive ? requestNativeFullscreen() : exitNativeFullscreen();
+  window.dispatchEvent(new CustomEvent('pastoral:immersive', { detail: { on: immersive } }));
+  return immersive;
+}
+```
+
+要点：
+
+- 原生全屏只请求 iframe 自身（`frame.requestFullscreen()`），不让父页面根节点进全屏，避免楼层边框一起放大。
+- 全屏需要用户手势且 iframe 需 `allowfullscreen`；失败时 `position:fixed` 钉满仍作为降级，不能让 UI 卡死。
+- 父文档 `pastoral-immersive-lock` 锁住父滚动条，需要同源访问；跨源时 `parentDoc()` 返回 null，只降级到卡内样式。
+- 外部 Esc 退出原生全屏时，`fullscreenchange` 监听同步收起钉满状态，避免状态错位。
+- `pastoral:immersive` 事件供其他模块联动：文生图楼层伪装触发 st-chatu8 面板前临时退出沉浸，面板关闭后再恢复原状态。
+
+移动端默认经营页、可切经营/剧情；桌面端沉浸仍双页等分。沉浸不是数据状态，重绘后不自动恢复，需由调用方或持久化决定。
+
+---
+
+## 12. 文生图
+
+文生图依赖酒馆"前端助手"扩展的事件系统（`eventOn` / `eventEmit` / `eventRemoveListener` 全局函数），**不是** TavernHelper。三套互补入口共享同一事件契约：
+
+```javascript
+// 请求（emit）
+eventEmit('generate-image-request', { id: requestId, prompt, width: null, height: null });
+// 响应（listen，按 id 匹配后立即移除）
+eventOn('generate-image-response', handler);
+// handler 收到 { id, success, imageData, error }
+```
+
+`imageData` 可能是裸 base64、data URI 或 http/blob URL，统一用 `toDataUri` 嗅探前缀：`/9j/`→jpeg、`UklGR`→webp、`R0lGO`→gif、其余→png。每次请求唯一 `id`（`pastoral-img-<ts>-<n>` 或 `pastoral-auto-<ts>-<n>`），响应按 `id` 匹配；超时必须移除监听并清 loading。
+
+### 手动绘图（ImageGen）
+
+dock 按钮，从最新一条 AI 楼提取 prompt：优先 `<image>...</image>` 标签内容，否则取清洗后正文的纯文本，截断到 500 字。60 秒超时。结果注入对应气泡 body 并挂灯箱。图片按 `message_id` 存内存缓存，`pastoral:chat` 重绘后重新注入。主模型生成中（`Chat.generating || Chat.busy`）禁止绘图。
+
+### 自动占位绘图（ImageAutoGen）
+
+正文提取阶段调用 `extractAndReplace(raw, messageId)`：找出全部 `<image>...</image>`，每个替换为 `<span data-imgslot="slotId">` 占位并注册 prompt。`slotId = fnv32(messageId + '#' + idx + '#' + prompt)`，FNV-1a 哈希保证重绘后稳定。占位处默认显示"生成图片"按钮，点击先查 IndexedDB 缓存（store 名 `ImageCache`，上限 200 条 LRU 清理），未命中再发请求。90 秒超时，失败显示错误 + 重试。图片只存缓存，不写回消息原文或 MVU。
+
+```javascript
+function extractAndReplace(rawText, messageId) {
+  const RE = /<image>([\s\S]*?)<\/image>/gi;
+  // 从后往前替换 <image> 标签为 <span data-imgslot> 占位，避免偏移错位
+  // slotId = fnv32(messageId + '#' + idx + '#' + prompt)，注册到 promptRegistry 等玩家点击
+}
+```
+
+### LLM 生图（楼层伪装触发 st-chatu8）
+
+每条 AI 气泡底部内联"LLM生图"按钮（在 `chat.js` 渲染气泡时直接挂载，不依赖后续注入）。点击 `triggerFloorLLMImageGen(messageId)`：
+
+1. 在父文档找 `div.mes[mesid="messageId"] .mes_text`（Host CSS 隐藏了非 0 楼，但 DOM 仍在）。
+2. 临时取消隐藏并定位到视口中央：`display:block; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); opacity:0; pointer-events:none; z-index:-1; max-height:1px; overflow:hidden`，让 `getBoundingClientRect` 返回有效坐标。
+3. 桌面端派发 `dblclick`；移动端派发 3 次 `touchstart`+`touchend`、间隔 50ms（st-chatu8 要求 `0 < timeSinceLastTap < 350ms`）。坐标无效时回退到视口中央。
+4. 轮询 `.st-chatu8-click-trigger-bubble`（最多 2 秒），出现后 `Host.setImmersive(false)` 退出沉浸让面板可见；不自动点击，交给玩家操作。
+5. 面板关闭后再轮询（最多 30 秒），恢复沉浸模式并 2 秒后清除临时样式。
+
+约束：
+
+- 三套入口都只在 `hasEventApi()` 为真（酒馆环境）时显示；LLM 生图还要求父文档可访问。
+- 图片是纯显示资产，清除站点数据会丢失；IndexedDB 不可用时自动占位退化为每次重生成，不阻断。
+- 不要把 prompt、imageData 写进 MVU、消息原文或日志。
+
+---
+
+## 13. 构建产物
+
+部署产物是单个自包含 `index.html`：所有 `js/*.js` 与 CSS 内联，无 CDN 或运行时外部文件依赖。`test/build.js` 校验：
+
+- 根目录 `index.html` 与 Vercel 输出目录 `public/index.html` 都已生成；
+- 两者逐字节相同。
+
+```javascript
+ok(fs.existsSync(rootOutput), '根目录 index.html 已生成');
+ok(fs.existsSync(publicOutput), 'Vercel 输出目录 public/index.html 已生成');
+ok(publicHtml === rootHtml, '根目录与 Vercel 构建产物完全一致');
+```
+
+迁移时保留单文件内联打包方式：不要为卡片引入运行时外部 JS/CSS 依赖；发布前跑构建测试，确认根目录与 `public/` 产物一致后再部署。
+
+---
+
+## 14. 验收清单
 
 ### 消息与正文
 
@@ -368,5 +487,27 @@ async function renderCustomIcon(blob, container, fallbackHtml) {
 - [ ] 上传格式、2 MiB、100 个上限和损坏图片均处理。
 - [ ] 地图坐标、农田坐标、作物/种子共享和畜牧名称优先级正确。
 - [ ] 清除站点数据会丢失个人图片的事实已告知玩家。
+
+### 图标与沉浸
+
+- [ ] `Icon.render` 在初始化和每次动态插入 DOM 后都调用，无空白 `data-i` 占位。
+- [ ] 沉浸模式只全屏 iframe 自身，失败时降级 `position:fixed` 不卡死。
+- [ ] 跨源父文档访问失败时沉浸只降级到卡内样式，不报错。
+- [ ] 外部 Esc 退出全屏能同步收起沉浸状态。
+- [ ] 临时退出沉浸（如 LLM 生图）在面板关闭后恢复原状态。
+
+### 文生图
+
+- [ ] 仅酒馆环境且事件 API 可用时显示入口；LLM 生图额外要求父文档可访问。
+- [ ] 主模型生成中禁止手动绘图。
+- [ ] 请求 `id` 唯一，响应按 `id` 匹配后立即移除监听；超时清 loading。
+- [ ] `<image>` 占位 slotId 跨重绘稳定，IndexedDB 缓存命中不重复生成。
+- [ ] 楼层伪装临时样式在面板关闭后清除，沉浸状态恢复。
+- [ ] 图片、prompt 不写回消息原文、MVU 或日志；缓存丢失有降级。
+
+### 构建产物
+
+- [ ] 单文件内联 `index.html`，无运行时外部依赖。
+- [ ] 根目录与 `public/` 产物逐字节一致后才部署。
 
 **迁移原则：把酒馆当宿主，把 0 楼当视图，把真实消息 ID 当数据坐标，把完整 MvuData 当事务对象，把模型文本当不可信补丁，把全局预设切换当需要保存与回滚的短事务。**
