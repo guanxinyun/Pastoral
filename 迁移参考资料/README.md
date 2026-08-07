@@ -5,10 +5,12 @@
 ## 0. 需要附带的接口切片
 
 - `_types_split/04-chat-message.txt`：读取、修改、删除真实消息。
-- `_types_split/06-generate.txt`：`generate`、`generateRaw`、`custom_api`。
+- `_types_split/06-generate.txt`：`generate`、`generateRaw`、`custom_api`、`getModelList`、`stopGenerationById`。
 - `_types_split/09-preset.txt`：当前预设、载入与替换。
-- `_types_split/14-events.txt`：生成与消息生命周期事件。
-- `_types_split/15-ejs-mvu.txt`：完整 `MvuData` 读写与解析。
+- `_types_split/11-script-regex.txt`：`formatAsTavernRegexedString` 显示正则。
+- `_types_split/14-events.txt`：生成与消息生命周期事件，以及 `eventOn`/`eventEmit`/`eventRemoveListener` 事件 API（文生图依赖）。
+- `_types_split/15-ejs-mvu.txt`：完整 `MvuData` 读写与解析、`waitGlobalInitialized`。
+- `_types_split/16-sillytavern.txt`：`executeSlashCommands` / `executeSlashCommandsWithOptions` 斜杠命令执行。
 - `slash_command_split/INDEX.txt` 与包含 `/send`、`/trigger`、`/setinput` 的对应分片。
 
 所有 TavernHelper 函数都是 iframe 中的全局函数，而不是 `window.TavernHelper.method()`。
