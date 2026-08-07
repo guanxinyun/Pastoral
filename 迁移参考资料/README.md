@@ -47,6 +47,8 @@ const Host = {
 | `getLastMessageId()` | 当前最新真实楼 | 最新显示状态 |
 | 流程捕获的 `messageId` | 本次新 AI 楼 | 异步结果精确写回 |
 
+驱动宿主用斜杠命令。`runSlash(cmd)` 优先调用 `executeSlashCommandsWithOptions(cmd)`，降级到 `executeSlashCommands(cmd)`（两者都是 TavernHelper 全局函数）。三条核心命令：`/setinput 文本` 填入原生输入框（`intend(text)` 即 `runSlash('/setinput ' + text)`）、`/send 文本` 写入玩家行动、`/trigger await=true` 触发生成。架构原则：前端**不本地改游戏状态**，所有玩家动作经 `/setinput` -> `/send` -> `/trigger` 交给 AI，状态只由 MVU 回写。
+
 ---
 
 ## 2. 正文提取
@@ -498,6 +500,7 @@ ok(publicHtml === rootHtml, '根目录与 Vercel 构建产物完全一致');
 - [ ] 网络等待不占预设事务锁，任务只发送一次。
 - [ ] `generate`/`generateRaw` 返回 `tool_calls`-only 时判失败；`getModelList` 不可用时抛错。
 - [ ] `blockDepthEntries` 默认 `false`，与 `chatHistory` 独立；只有 `true` 才发深度覆盖。
+- [ ] 斜杠命令经 `executeSlashCommandsWithOptions`/`executeSlashCommands` 执行；玩家动作走 `/setinput`->`/send`->`/trigger`，前端不本地改状态。
 
 ### 移动与本地资产
 
